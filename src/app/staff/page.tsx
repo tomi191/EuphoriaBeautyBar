@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarX2, Plus } from "lucide-react";
+import { CalendarX2, MessageCircle, Phone, Plus } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc } from "@/lib/booking/time";
@@ -34,6 +34,13 @@ function durationLabel(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return m ? `${h} ч ${m} мин` : `${h} ч`;
+}
+
+// Изчиства телефона за tel:/viber: линкове — оставя само водещ + и цифри.
+function dialNumber(phone: string) {
+  const trimmed = phone.trim();
+  const plus = trimmed.startsWith("+") ? "+" : "";
+  return plus + trimmed.replace(/\D/g, "");
 }
 
 export default async function StaffSchedulePage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
@@ -115,10 +122,32 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                     <span className={"shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " + st.cls}>{st.label}</span>
                   </div>
                   {client && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {client.name}
-                      {client.phone ? ` · ${client.phone}` : ""}
-                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+                      <span>
+                        {client.name}
+                        {client.phone ? ` · ${client.phone}` : ""}
+                      </span>
+                      {client.phone && (
+                        <span className="inline-flex items-center gap-1">
+                          <a
+                            href={`tel:${dialNumber(client.phone)}`}
+                            aria-label={`Обади се на ${client.name}`}
+                            title="Обади се"
+                            className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                          >
+                            <Phone className="size-3.5" strokeWidth={2.2} />
+                          </a>
+                          <a
+                            href={`viber://chat?number=${dialNumber(client.phone)}`}
+                            aria-label={`Пиши във Viber на ${client.name}`}
+                            title="Viber"
+                            className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                          >
+                            <MessageCircle className="size-3.5" strokeWidth={2.2} />
+                          </a>
+                        </span>
+                      )}
+                    </div>
                   )}
                   <div className="mt-1.5 flex items-center justify-between gap-2">
                     <p className="text-xs font-semibold text-primary">

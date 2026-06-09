@@ -96,6 +96,53 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   }
 }
 
+/**
+ * Изпълнителят премества свой час (reschedule) за нов начален момент. Запазва
+ * продължителността на стария час; проверява time-off конфликт и хваща EXCLUDE
+ * constraint-а (друг зает час) през 23P01.
+ */
+export async function rescheduleMyBooking(id: string, newStartISO: string) {
+  const { resource } = await requireStaff();
+
+  const booking = await db.query.bookings.findFirst({
+    where: (b, { and, eq }) => and(eq(b.id, id), eq(b.resourceId, resource.id)),
+  });
+  if (!booking) {
+    return { ok: false as const, error: "Часът не е намерен или не е твой." };
+  }
+  if (booking.status === "cancelled" || booking.status === "no_show") {
+    return { ok: false as const, error: "Този час не може да се мести." };
+  }
+
+  const newStart = new Date(newStartISO);
+  if (Number.isNaN(newStart.getTime())) {
+    return { ok: false as const, error: "Невалиден час." };
+  }
+  const durationMs = booking.endAt.getTime() - booking.startAt.getTime();
+  const newEnd = new Date(newStart.getTime() + durationMs);
+
+  if (await hasTimeOffConflict(resource.id, newStart, newEnd)) {
+    return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
+  }
+
+  try {
+    await db
+      .update(schema.bookings)
+      .set({ startAt: newStart, endAt: newEnd, updatedAt: new Date() })
+      .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
+    revalidatePath("/staff/board");
+    revalidatePath("/staff");
+    revalidatePath("/admin/bookings");
+    return { ok: true as const };
+  } catch (err: unknown) {
+    const e = err as { code?: string; message?: string };
+    if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {
+      return { ok: false as const, error: "Този час вече е зает. Избери друг." };
+    }
+    throw err;
+  }
+}
+
 /** Изпълнителят отменя свой час. */
 export async function cancelMyBooking(id: string) {
   const { resource } = await requireStaff();

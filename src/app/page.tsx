@@ -8,6 +8,7 @@ import { FeaturedGallery } from "@/components/sections/featured-gallery";
 import { BrandStory } from "@/components/sections/brand-story";
 import { CtaBooking } from "@/components/sections/cta-booking";
 import { FaqContactSection } from "@/components/sections/faq-contact-section";
+import { LocationMap } from "@/components/sections/location-map";
 import { InstagramSection } from "@/components/sections/instagram-section";
 import { LineDivider } from "@/components/brand/line-divider";
 import { db } from "@/lib/db";
@@ -39,6 +40,7 @@ export default async function Home() {
       </div>
       <LineDivider />
       <FaqContactSection />
+      <LocationMap />
       <InstagramSection />
       <div id="contact">
         <CtaBooking />

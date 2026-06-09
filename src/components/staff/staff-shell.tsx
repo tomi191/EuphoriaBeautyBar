@@ -3,12 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Scissors, Clock, User, LogOut } from "lucide-react";
+import { CalendarDays, LayoutGrid, Scissors, Clock, User, LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/staff", label: "График", icon: CalendarDays, exact: true },
+  { href: "/staff/board", label: "Дъска", icon: LayoutGrid, exact: false },
   { href: "/staff/services", label: "Услуги", icon: Scissors, exact: false },
   { href: "/staff/hours", label: "Часове", icon: Clock, exact: false },
   { href: "/staff/profile", label: "Профил", icon: User, exact: false },
