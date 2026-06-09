@@ -14,9 +14,13 @@
  *   { type: "quote"; text; author? }
  *   { type: "list"; items[] }
  *   { type: "callout"; variant: "tip" | "info"; title; text }
+ *   { type: "image"; src; alt }
  */
 
 import type { BlogBlock } from "@/lib/data/blog";
+
+/** Самостоятелен ред-изображение: ![alt](url). Хваща и празен alt. */
+const IMAGE_LINE_RE = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
 
 /** Сваля inline markdown маркъри (bold/italic/code/links) до чист текст. */
 function stripInline(s: string): string {
@@ -70,6 +74,21 @@ export function markdownToBlocks(markdown: string): BlogBlock[] {
 
     // Празни редове — пропускай
     if (trimmed === "") {
+      i++;
+      continue;
+    }
+
+    // Неразрешен placeholder за изображение (KIE липсва/fail) — пропускай тихо,
+    // за да не остане суров HTML коментар в тялото.
+    if (/^<!--\s*image:[\s\S]*?-->$/.test(trimmed)) {
+      i++;
+      continue;
+    }
+
+    // Самостоятелно inline изображение: ![alt](url)
+    const img = trimmed.match(IMAGE_LINE_RE);
+    if (img) {
+      blocks.push({ type: "image", src: img[2], alt: stripInline(img[1]) });
       i++;
       continue;
     }
@@ -134,12 +153,16 @@ export function markdownToBlocks(markdown: string): BlogBlock[] {
       continue;
     }
 
-    // Параграф — събира редове до празен ред или нов блок
+    // Параграф — събира редове до празен ред или нов блок. Самостоятелен
+    // image ред и placeholder коментар също прекъсват параграфа, за да се
+    // рендират като отделен image блок, не да се слепят в текста.
     const paraLines: string[] = [];
     while (
       i < lines.length &&
       lines[i].trim() !== "" &&
-      !/^(#{1,6}\s+|>\s?|([-*+]|\d+[.)])\s+)/.test(lines[i].trim())
+      !/^(#{1,6}\s+|>\s?|([-*+]|\d+[.)])\s+)/.test(lines[i].trim()) &&
+      !IMAGE_LINE_RE.test(lines[i].trim()) &&
+      !/^<!--\s*image:[\s\S]*?-->$/.test(lines[i].trim())
     ) {
       paraLines.push(lines[i].trim());
       i++;

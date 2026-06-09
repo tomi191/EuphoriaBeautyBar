@@ -15,7 +15,8 @@ export type BlogBlock =
   | { type: "h3"; text: string }
   | { type: "quote"; text: string; author?: string }
   | { type: "list"; items: string[] }
-  | { type: "callout"; variant: "tip" | "info"; title: string; text: string };
+  | { type: "callout"; variant: "tip" | "info"; title: string; text: string }
+  | { type: "image"; src: string; alt: string };
 
 // Статичните blog постове са премахнати — съдържанието вече живее в БД
 // (таблица `blogPosts`, status="published") и се чете през `blog-store.ts`

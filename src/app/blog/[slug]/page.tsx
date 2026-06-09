@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PostRenderer } from "@/components/blog/post-renderer";
+import { AuthorBio } from "@/components/blog/author-bio";
+import { ShareButtons } from "@/components/blog/share-buttons";
 import { getPublishedPosts, getPublishedPost } from "@/lib/data/blog-store";
 import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema } from "@/lib/schema";
@@ -88,6 +90,9 @@ export default async function BlogPostPage({ params }: Params) {
                 </span>
               </div>
             </Reveal>
+            <Reveal delay={0.5}>
+              <ShareButtons title={post.title} className="mt-6" />
+            </Reveal>
           </div>
 
           {post.cover && (
@@ -111,6 +116,12 @@ export default async function BlogPostPage({ params }: Params) {
         <section>
           <div className="mx-auto max-w-3xl px-4 pb-24 lg:px-8">
             <PostRenderer blocks={post.content} />
+
+            <div className="mt-12 border-t border-border/40 pt-8">
+              <ShareButtons title={post.title} />
+            </div>
+
+            <AuthorBio />
           </div>
         </section>
       </article>
@@ -176,7 +187,13 @@ export default async function BlogPostPage({ params }: Params) {
             dateModified: post.date,
             ...(post.cover && { image: `${siteConfig.url}${post.cover}` }),
             mainEntityOfPage: { "@type": "WebPage", "@id": `${siteConfig.url}/blog/${post.slug}` },
-            author: { "@type": "Person", name: siteConfig.founder, url: `${siteConfig.url}/za-nas` },
+            author: {
+              "@type": "Person",
+              name: "Снежана Саблева",
+              jobTitle: "Собственик и фризьор-стилист",
+              url: `${siteConfig.url}/za-nas`,
+              worksFor: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+            },
             publisher: {
               "@type": "Organization",
               name: siteConfig.name,

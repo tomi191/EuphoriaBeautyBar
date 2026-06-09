@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        // Cover изображения от Supabase Storage (AI генерирани блог корици)
+        protocol: "https",
+        hostname: "rljuzmvaytfptcjpwquu.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
   async headers() {

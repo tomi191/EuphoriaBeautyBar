@@ -4,6 +4,17 @@
  * Пренесен as-is от peptidlabs — доказан срещу Gemini + Claude отговори.
  */
 
+/**
+ * Грешка „JSON-ът се парсна, но липсва задължително поле". Разграничава се от
+ * fail при самото парсване, за да даде ясно съобщение нагоре по веригата.
+ */
+class MissingFieldError extends Error {
+  constructor(public readonly field: string) {
+    super(`Missing required field: ${field}`);
+    this.name = "MissingFieldError";
+  }
+}
+
 export function parseJSONResponse<T extends Record<string, unknown>>(
   raw: string,
   requiredFields: string[] = [],
@@ -17,12 +28,18 @@ export function parseJSONResponse<T extends Record<string, unknown>>(
   const m = clean.match(/\{[\s\S]*\}/);
   if (m) clean = m[0];
 
+  // Пазим последната „липсващо поле" грешка отделно: ако JSON-ът се парсна
+  // успешно, но дадено поле липсва, искаме точно това съобщение — не общото
+  // „невалиден JSON", което подвежда диагнозата.
+  let lastMissingField: MissingFieldError | null = null;
+
   // Стратегия 1: директно
   try {
     const out = JSON.parse(clean) as T;
     requireFields(out, requiredFields);
     return out;
-  } catch {
+  } catch (e) {
+    if (e instanceof MissingFieldError) lastMissingField = e;
     /* fall through */
   }
 
@@ -52,7 +69,8 @@ export function parseJSONResponse<T extends Record<string, unknown>>(
     const out = JSON.parse(repaired) as T;
     requireFields(out, requiredFields);
     return out;
-  } catch {
+  } catch (e) {
+    if (e instanceof MissingFieldError) lastMissingField = e;
     /* fall through */
   }
 
@@ -79,17 +97,28 @@ export function parseJSONResponse<T extends Record<string, unknown>>(
     }
     requireFields(out, requiredFields);
     return out as T;
-  } catch {
+  } catch (e) {
+    if (e instanceof MissingFieldError) lastMissingField = e;
     /* nothing */
   }
 
-  throw new Error(`Could not parse AI response. Preview: ${clean.slice(0, 200)}`);
+  // Ако някоя стратегия е парснала валиден JSON, но е липсвало поле — дай
+  // точната диагноза. Иначе наистина не успяхме да извлечем валиден JSON.
+  if (lastMissingField) {
+    throw new Error(
+      `AI отговорът е валиден JSON, но липсва задължително поле "${lastMissingField.field}". Preview: ${clean.slice(0, 200)}`,
+    );
+  }
+
+  throw new Error(
+    `AI отговорът не е валиден JSON (вероятно отрязан или с грешен формат). Preview: ${clean.slice(0, 200)}`,
+  );
 }
 
 function requireFields(o: Record<string, unknown>, fields: string[]) {
   for (const f of fields) {
     if (o[f] === undefined || o[f] === null) {
-      throw new Error(`Missing required field: ${f}`);
+      throw new MissingFieldError(f);
     }
   }
 }

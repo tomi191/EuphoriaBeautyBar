@@ -94,6 +94,7 @@ export async function POST(req: Request) {
         cover: result.cover,
         readingMinutes: result.readingMinutes,
         tags: result.tags,
+        keywords: result.keywords,
         status: "draft",
         blocks: result.contentBlocks.length,
         model: result.model,

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Lightbulb, Info } from "lucide-react";
 import type { BlogBlock } from "@/lib/data/blog";
 
@@ -48,6 +49,25 @@ export function PostRenderer({ blocks }: { blocks: BlogBlock[] }) {
                   </li>
                 ))}
               </ul>
+            );
+          case "image":
+            return (
+              <figure key={i} className="my-10">
+                <div className="relative aspect-[16/9] overflow-hidden rounded-md border border-border bg-secondary">
+                  <Image
+                    src={block.src}
+                    alt={block.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 768px"
+                    className="object-cover"
+                  />
+                </div>
+                {block.alt && (
+                  <figcaption className="mt-3 text-center text-sm text-muted-foreground">
+                    {block.alt}
+                  </figcaption>
+                )}
+              </figure>
             );
           case "callout":
             const Icon = block.variant === "tip" ? Lightbulb : Info;

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Sparkles, X } from "lucide-react";
+import { Lightbulb, ListChecks, Loader2, Plus, Sparkles, Wand2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,13 @@ interface GeneratedPost {
   blocks: number;
 }
 
+interface TopicSuggestion {
+  topic: string;
+  keywords: string[];
+  rationale: string;
+  searchIntent: string;
+}
+
 export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -46,6 +53,98 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
   const [keywords, setKeywords] = React.useState<string[]>([]);
   const [newKeyword, setNewKeyword] = React.useState("");
   const [result, setResult] = React.useState<GeneratedPost | null>(null);
+
+  // Suggest-keywords / suggest-topics
+  const [suggestingKeywords, setSuggestingKeywords] = React.useState(false);
+  const [suggestingTopics, setSuggestingTopics] = React.useState(false);
+  const [topicSuggestions, setTopicSuggestions] = React.useState<TopicSuggestion[]>([]);
+
+  /** Авто ключови думи: вика suggest-keywords с темата → попълва chips. */
+  async function suggestKeywords() {
+    const t = topic.trim();
+    if (t.length < 3) {
+      toast.error("Въведи първо тема (поне 3 символа).");
+      return;
+    }
+    setSuggestingKeywords(true);
+    try {
+      const res = await fetch("/api/admin/blog/suggest-keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: t }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Грешка при предложение.");
+      const suggested: string[] = Array.isArray(data.keywords) ? data.keywords : [];
+      if (suggested.length === 0) {
+        toast.error("AI не върна ключови думи.");
+        return;
+      }
+      // Merge без дубликати (case-insensitive).
+      setKeywords((prev) => {
+        const seen = new Set(prev.map((k) => k.toLowerCase()));
+        const merged = [...prev];
+        for (const k of suggested) {
+          if (!seen.has(k.toLowerCase())) {
+            merged.push(k);
+            seen.add(k.toLowerCase());
+          }
+        }
+        return merged;
+      });
+      toast.success(`Добавени ${suggested.length} ключови думи.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Грешка при предложение.");
+    } finally {
+      setSuggestingKeywords(false);
+    }
+  }
+
+  /** Предложи теми: вика suggest-topics → показва списък с предложения. */
+  async function suggestTopics() {
+    setSuggestingTopics(true);
+    try {
+      const res = await fetch("/api/admin/blog/suggest-topics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: category === AUTO ? undefined : category,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Грешка при предложение.");
+      const list: TopicSuggestion[] = Array.isArray(data.suggestions) ? data.suggestions : [];
+      if (list.length === 0) {
+        toast.error("AI не върна теми.");
+        return;
+      }
+      setTopicSuggestions(list);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Грешка при предложение.");
+    } finally {
+      setSuggestingTopics(false);
+    }
+  }
+
+  /** Клик върху предложена тема: попълва темата + ключовите думи. */
+  function applySuggestion(s: TopicSuggestion) {
+    setTopic(s.topic);
+    if (s.keywords.length > 0) {
+      setKeywords(() => {
+        const seen = new Set<string>();
+        const out: string[] = [];
+        for (const k of s.keywords) {
+          if (k && !seen.has(k.toLowerCase())) {
+            out.push(k);
+            seen.add(k.toLowerCase());
+          }
+        }
+        return out;
+      });
+    }
+    setTopicSuggestions([]);
+    toast.success("Темата е попълнена.");
+  }
 
   function addKeyword() {
     const v = newKeyword.trim();
@@ -63,6 +162,7 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
     setKeywords([]);
     setNewKeyword("");
     setResult(null);
+    setTopicSuggestions([]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -143,7 +243,24 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Тема</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Тема</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={suggestTopics}
+                  disabled={suggestingTopics}
+                >
+                  {suggestingTopics ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Lightbulb className="size-3.5" />
+                  )}
+                  Предложи теми
+                </Button>
+              </div>
               <Input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -151,6 +268,39 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
                 required
                 minLength={4}
               />
+
+              {topicSuggestions.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-border bg-secondary/30 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <ListChecks className="size-3.5" /> Кликни тема, за да я попълниш
+                  </p>
+                  <ul className="space-y-1.5">
+                    {topicSuggestions.map((s, i) => (
+                      <li key={i}>
+                        <button
+                          type="button"
+                          onClick={() => applySuggestion(s)}
+                          className="w-full rounded-lg border border-transparent bg-card/60 p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-card"
+                        >
+                          <span className="block text-sm font-medium text-foreground">
+                            {s.topic}
+                          </span>
+                          {s.rationale && (
+                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                              {s.rationale}
+                            </span>
+                          )}
+                          {s.keywords.length > 0 && (
+                            <span className="mt-1 block truncate text-[11px] text-primary/80">
+                              {s.keywords.join(" · ")}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -171,7 +321,24 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
             </div>
 
             <div className="space-y-2">
-              <Label>Ключови думи (по избор)</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Ключови думи (по избор)</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={suggestKeywords}
+                  disabled={suggestingKeywords}
+                >
+                  {suggestingKeywords ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="size-3.5" />
+                  )}
+                  Авто ключови думи
+                </Button>
+              </div>
               <div className="flex gap-2">
                 <Input
                   value={newKeyword}
@@ -210,8 +377,9 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Генерацията отнема около 20–60 секунди. Корицата изисква настроени KIE и Supabase
-              Storage — ако липсват, статията се записва без изображение.
+              Ако оставиш ключовите думи празни, AI ги извежда сам от темата. Генерацията отнема
+              около 20-60 секунди. Корицата изисква настроени KIE и Supabase Storage; ако липсват,
+              статията се записва без изображение.
             </p>
 
             <DialogFooter>

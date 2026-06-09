@@ -37,18 +37,18 @@ export interface CoverImageResult {
   durationSeconds: number;
 }
 
-/** Сцена според категорията — реалистична салонна/продуктова фотография. */
+/** Сцена според категорията — РЕАЛНА фотография (не илюстрация/рисунка). */
 function sceneForCategory(category?: string): string {
   switch (category) {
     case "Маникюр":
-      return "Elegant close-up of well-groomed hands with a fresh natural manicure resting on a soft linen surface, a few professional nail-care tools and a bottle of nail polish softly out of focus.";
+      return "Real photograph: a close-up of a woman's well-groomed hands with a fresh, natural manicure resting on a soft linen surface; a few professional nail-care tools and a glass bottle of nail polish sit softly out of focus nearby. Realistic skin texture and natural nail shine.";
     case "Терапии":
-      return "Editorial salon scene: glass treatment ampoules and a hair-care serum bottle on a clean stone counter, a soft towel and a strand of healthy glossy hair as composition props.";
+      return "Real photograph of a premium hair salon detail: glossy, freshly treated healthy hair catching soft window light, with a professional hair-care serum bottle and a folded towel softly out of focus on a clean stone counter. Realistic hair strands, true-to-life reflections.";
     case "Wellness":
-      return "Calm spa-like editorial scene: a softly lit massage or facial-care setting with a folded towel, a sprig of fresh sage, and a small ceramic bowl, serene and inviting.";
+      return "Real photograph of a calm spa setting: a softly lit facial-care or relaxation scene with a folded cotton towel, a sprig of fresh sage and a small ceramic bowl on a clean surface. Serene, natural, realistic textures.";
     case "Грижа за коса":
     default:
-      return "Editorial beauty photography of healthy, glossy, well-styled hair in soft natural light, with a premium hair-care product bottle softly out of focus beside it on a clean surface.";
+      return "Real photograph of a woman with healthy, glossy, beautifully styled hair in soft natural daylight inside a bright premium salon; a hair-care product bottle sits softly out of focus beside her. Realistic hair detail, natural skin, lifelike lighting.";
   }
 }
 
@@ -63,10 +63,13 @@ function buildPrompt(input: CoverImageInput): string {
     `Topic: ${input.topic}.`,
     subjectHint,
     sceneForCategory(input.category),
-    "16:9 horizontal cover image, magazine-grade composition, photorealistic, shallow depth of field.",
-    "Color palette: warm sage green, soft nude and beige tones, creamy off-white background, gentle natural daylight. Calm, premium, feminine — modern beauty salon aesthetic. Absolutely no purple or violet.",
+    // Силни фотографски cue-ове — карат image модела да върне СНИМКА, не рисунка.
+    "This MUST be a photorealistic professional photograph — shot on a full-frame DSLR camera, 50mm lens, f/2.0, shallow depth of field, true-to-life detail, realistic skin and hair texture, natural soft daylight.",
+    "NOT an illustration, NOT a drawing, NOT a painting, NOT a 3D render, NOT cartoon, NOT digital art, NOT vector. A real photo only.",
+    "16:9 horizontal cover image, magazine-grade editorial composition.",
+    "Color palette: warm sage green, soft nude and beige tones, creamy off-white background, gentle natural light. Calm, premium, feminine — modern beauty salon aesthetic. Absolutely no purple or violet anywhere.",
     "ABSOLUTELY NO text anywhere in the image — no labels, no captions, no logos, no signs, no readable writing of any kind.",
-    "Tasteful, editorial, trustworthy — for a beauty salon journal article.",
+    "Tasteful, trustworthy, real — for a beauty salon journal article.",
   ]
     .filter(Boolean)
     .join(" ");
