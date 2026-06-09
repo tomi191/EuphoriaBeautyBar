@@ -1,0 +1,299 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand custom tokens — извлечени от логото */
+  --color-purple: var(--purple);
+  --color-purple-deep: var(--purple-deep);
+  --color-mint: var(--mint);
+  --color-mint-soft: var(--mint-soft);
+  --color-blush: var(--blush);
+  --color-blush-soft: var(--blush-soft);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-cream: var(--cream);
+
+  --font-display: var(--font-manrope);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-cormorant);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-glow: 0 0 80px -20px var(--purple);
+  --shadow-mint: 0 0 60px -16px var(--mint);
+  --shadow-soft: 0 8px 32px -12px oklch(0.15 0.02 290 / 0.16);
+  --shadow-elegant: 0 24px 56px -20px oklch(0.10 0.02 290 / 0.22);
+
+  --animate-aurora: aurora 14s ease infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-fade-in: fadeIn 0.6s ease-out;
+  --animate-slide-up: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee-vertical: marquee-vertical 40s linear infinite;
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-spin-slow: spin 30s linear infinite;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  /* Warm cream основа — beauty salon усещане, не tech */
+  --background: oklch(0.975 0.01 75);         /* warm cream */
+  --foreground: oklch(0.18 0.01 290);         /* soft ink — не absolute black */
+
+  --card: oklch(0.99 0.005 75);               /* по-светло cream за cards */
+  --card-foreground: oklch(0.18 0.01 290);
+
+  --popover: oklch(0.995 0.005 75);
+  --popover-foreground: oklch(0.18 0.01 290);
+
+  --primary: oklch(0.47 0.085 162);           /* deep sage — signature от логото */
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.94 0.025 75);          /* warm beige tint */
+  --secondary-foreground: oklch(0.22 0.02 290);
+
+  --muted: oklch(0.95 0.015 75);
+  --muted-foreground: oklch(0.45 0.018 290);
+
+  --accent: oklch(0.83 0.08 168);             /* sage mint от логото */
+  --accent-foreground: oklch(0.18 0.04 170);
+
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.88 0.015 75);
+  --input: oklch(0.93 0.012 75);
+  --ring: oklch(0.47 0.085 162);
+
+  /* Brand tokens — реалните цвята от логото: салвия + blush + ink + сиво */
+  --ink: oklch(0.10 0.005 290);
+  --paper: oklch(0.995 0 0);
+  --cream: oklch(0.965 0.012 75);
+  --purple: oklch(0.58 0.09 162);             /* repoint → sage (логото няма лилаво) */
+  --purple-deep: oklch(0.40 0.075 163);
+  --mint: oklch(0.83 0.08 168);
+  --mint-soft: oklch(0.93 0.04 168);
+  --blush: oklch(0.88 0.06 25);                /* блед розов от логото */
+  --blush-soft: oklch(0.95 0.025 25);
+}
+
+.dark {
+  --background: oklch(0.13 0.008 290);        /* warm-tinted near black */
+  --foreground: oklch(0.95 0.008 75);
+
+  --card: oklch(0.17 0.012 290);
+  --card-foreground: oklch(0.95 0.008 75);
+
+  --popover: oklch(0.17 0.012 290);
+  --popover-foreground: oklch(0.95 0.008 75);
+
+  --primary: oklch(0.80 0.08 165);
+  --primary-foreground: oklch(0.13 0.01 290);
+
+  --secondary: oklch(0.22 0.025 290);
+  --secondary-foreground: oklch(0.95 0.015 75);
+
+  --muted: oklch(0.18 0.015 290);
+  --muted-foreground: oklch(0.65 0.015 75);
+
+  --accent: oklch(0.80 0.08 168);
+  --accent-foreground: oklch(0.13 0.04 170);
+
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.24 0.015 290);
+  --input: oklch(0.20 0.012 290);
+  --ring: oklch(0.80 0.08 165);
+
+  --ink: oklch(0.95 0.008 75);
+  --paper: oklch(0.13 0.008 290);
+  --cream: oklch(0.18 0.012 290);
+  --purple: oklch(0.80 0.08 165);
+  --purple-deep: oklch(0.58 0.10 162);
+  --mint: oklch(0.80 0.08 168);
+  --mint-soft: oklch(0.28 0.05 168);
+  --blush: oklch(0.78 0.07 25);
+  --blush-soft: oklch(0.30 0.05 25);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Уважаваме prefers-reduced-motion — изключваме SMIL и CSS анимации */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    svg animate, svg animateTransform, svg animateMotion {
+      display: none !important;
+    }
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+  ::selection {
+    background: var(--purple);
+    color: var(--primary-foreground);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+    font-feature-settings: "ss01" 1, "ss02" 1;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .glass {
+    background: color-mix(in oklch, var(--background) 72%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .gradient-purple {
+    background: linear-gradient(135deg, var(--purple-deep), var(--purple), var(--mint));
+  }
+
+  .gradient-text {
+    background: linear-gradient(110deg, var(--purple-deep) 0%, var(--purple) 35%, var(--mint) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .handwritten {
+    font-family: var(--font-cormorant), serif;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .blob-mask {
+    mask-image: url("/illustrations/blob-mask.svg");
+    -webkit-mask-image: url("/illustrations/blob-mask.svg");
+    mask-size: 100% 100%;
+    -webkit-mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+  }
+
+  /* Soft tactile shadow за beauty cards — не tech sharp */
+  .soft-shadow {
+    box-shadow:
+      0 1px 2px oklch(0.20 0.02 290 / 0.04),
+      0 8px 24px oklch(0.20 0.02 290 / 0.06),
+      0 32px 64px oklch(0.20 0.02 290 / 0.04);
+  }
+
+  .ring-mint { box-shadow: 0 0 0 1px var(--mint), 0 0 60px -10px var(--mint); }
+  .ring-purple { box-shadow: 0 0 0 1px var(--purple), 0 0 60px -10px var(--purple); }
+}
+
+@keyframes aurora {
+  0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+  50% { transform: translate3d(2%, -1%, 0) rotate(180deg); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap, 2rem))); }
+}
+
+@keyframes marquee-vertical {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap, 2rem))); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes blob-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+@keyframes blob-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-30px, 25px) scale(1.05); }
+  66% { transform: translate(35px, -15px) scale(1.1); }
+}
+@keyframes blob-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(25px, 30px) scale(1.08); }
+  66% { transform: translate(-30px, -20px) scale(0.92); }
+}
+
+.animate-blob-1 { animation: blob-1 18s ease-in-out infinite; }
+.animate-blob-2 { animation: blob-2 22s ease-in-out infinite 2s; }
+.animate-blob-3 { animation: blob-3 26s ease-in-out infinite 4s; }

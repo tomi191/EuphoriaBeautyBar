@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <!-- soft mint arc behind -->
+  <path d="M 30 180 Q 30 30 160 30 Q 290 30 290 180" stroke="oklch(0.83 0.08 168)" stroke-width="22" opacity="0.55" fill="none"/>
+  <!-- main arc line -->
+  <path d="M 30 180 Q 30 30 160 30 Q 290 30 290 180" stroke="currentColor" stroke-width="1.8" fill="none"/>
+
+  <!-- baseline -->
+  <line x1="20" y1="180" x2="300" y2="180" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- decorative little dot at the apex -->
+  <circle cx="160" cy="30" r="5" fill="oklch(0.88 0.06 25)" opacity="0.85"/>
+  <circle cx="160" cy="30" r="5" stroke="currentColor" stroke-width="1.2" fill="none"/>
+
+  <!-- side dots -->
+  <circle cx="30" cy="180" r="3" fill="currentColor"/>
+  <circle cx="290" cy="180" r="3" fill="currentColor"/>
+
+  <!-- inner small arc echo -->
+  <path d="M 70 180 Q 70 70 160 70 Q 250 70 250 180" stroke="currentColor" stroke-width="1" opacity="0.4" fill="none"/>
+</svg>

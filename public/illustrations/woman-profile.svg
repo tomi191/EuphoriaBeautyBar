@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" fill="none">
+  <!-- pastel mint blob (същия sage от лого) -->
+  <path d="M 70 220 Q 50 150 100 110 Q 160 80 195 130 Q 220 180 180 230 Q 130 290 80 250 Q 60 235 70 220 Z"
+        fill="oklch(0.83 0.08 168)" opacity="0.55"/>
+  <!-- blush blob (розовия от лого) -->
+  <ellipse cx="265" cy="180" rx="45" ry="55" fill="oklch(0.88 0.06 25)" opacity="0.5"/>
+  <!-- continuous-line woman profile -->
+  <path d="M 200 60
+           C 240 60 280 90 290 140
+           C 295 170 285 195 270 215
+           C 260 230 245 240 230 245
+           C 220 248 215 250 215 260
+           C 218 285 240 290 250 305
+           C 260 320 240 340 215 345
+           C 195 348 180 340 175 325
+           C 170 305 175 280 165 265
+           C 145 240 100 235 80 200
+           C 60 165 75 110 130 80
+           C 155 65 180 60 200 60 Z"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- hair flow lines -->
+  <path d="M 78 195 Q 50 240 65 295 Q 80 340 120 360"
+        stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <path d="M 92 215 Q 70 270 100 325"
+        stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <!-- closed eye -->
+  <path d="M 232 145 Q 250 142 265 150" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- lips hint -->
+  <path d="M 255 195 Q 263 200 270 195" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- earring dot -->
+  <circle cx="225" cy="225" r="3" fill="oklch(0.55 0.02 290)"/>
+</svg>

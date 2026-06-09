@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 280" fill="none">
+  <path d="M 60 100 Q 80 50 140 60 Q 200 75 195 130 Q 185 180 130 175 Q 70 170 55 130 Q 55 110 60 100 Z"
+        fill="oklch(0.83 0.08 168)" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.55;0.4" dur="6s" repeatCount="indefinite"/>
+  </path>
+  <circle cx="200" cy="80" r="22" fill="oklch(0.88 0.06 25)" opacity="0.5">
+    <animate attributeName="r" values="22;26;22" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- top blade group — отваря/затваря около pivot (155,140) -->
+  <g style="transform-origin: 155px 140px; transform-box: view-box;">
+    <path d="M 90 70 L 220 200" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="80" cy="65" rx="22" ry="14" transform="rotate(-30 80 65)" stroke="currentColor" stroke-width="2" fill="none"/>
+    <animateTransform attributeName="transform" type="rotate"
+                      values="0 155 140; -7 155 140; 0 155 140"
+                      dur="4.5s" repeatCount="indefinite"/>
+  </g>
+  <!-- bottom blade group — opposite -->
+  <g style="transform-origin: 155px 140px; transform-box: view-box;">
+    <path d="M 90 210 L 220 80" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="80" cy="215" rx="22" ry="14" transform="rotate(30 80 215)" stroke="currentColor" stroke-width="2" fill="none"/>
+    <animateTransform attributeName="transform" type="rotate"
+                      values="0 155 140; 7 155 140; 0 155 140"
+                      dur="4.5s" repeatCount="indefinite"/>
+  </g>
+
+  <circle cx="155" cy="140" r="4" fill="currentColor"/>
+
+  <path d="M 60 250 Q 100 235 145 248 Q 195 263 240 245"
+        stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.45" fill="none"/>
+</svg>

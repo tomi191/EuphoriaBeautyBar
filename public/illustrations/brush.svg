@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" fill="none">
+  <!-- mint backdrop -->
+  <ellipse cx="160" cy="110" rx="155" ry="65" fill="oklch(0.83 0.08 168)" opacity="0.35"/>
+  <!-- blush spot -->
+  <circle cx="60" cy="55" r="18" fill="oklch(0.88 0.06 25)" opacity="0.55"/>
+
+  <!-- handle -->
+  <path d="M 18 100
+           L 95 95
+           L 95 130
+           L 18 125
+           Q 8 122 8 113
+           Q 8 103 18 100 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.55"/>
+
+  <!-- handle accent rings -->
+  <line x1="40" y1="100" x2="40" y2="125" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <line x1="60" y1="98" x2="60" y2="127" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+
+  <!-- brush oval body -->
+  <ellipse cx="190" cy="113" rx="100" ry="55" stroke="currentColor" stroke-width="1.8" fill="oklch(0.88 0.06 25)" fill-opacity="0.4"/>
+
+  <!-- bristles — точки около овала -->
+  <g fill="currentColor">
+    <circle cx="120" cy="80" r="2"/>
+    <circle cx="135" cy="68" r="2"/>
+    <circle cx="155" cy="60" r="2"/>
+    <circle cx="180" cy="55" r="2"/>
+    <circle cx="205" cy="55" r="2"/>
+    <circle cx="230" cy="60" r="2"/>
+    <circle cx="252" cy="70" r="2"/>
+    <circle cx="270" cy="85" r="2"/>
+    <circle cx="278" cy="105" r="2"/>
+    <circle cx="278" cy="125" r="2"/>
+    <circle cx="270" cy="145" r="2"/>
+    <circle cx="252" cy="158" r="2"/>
+    <circle cx="230" cy="167" r="2"/>
+    <circle cx="205" cy="172" r="2"/>
+    <circle cx="180" cy="172" r="2"/>
+    <circle cx="155" cy="167" r="2"/>
+    <circle cx="135" cy="158" r="2"/>
+    <circle cx="120" cy="145" r="2"/>
+  </g>
+
+  <!-- inner pad ring -->
+  <ellipse cx="190" cy="113" rx="78" ry="40" stroke="currentColor" stroke-width="1" opacity="0.5" fill="none"/>
+
+  <!-- center dot -->
+  <circle cx="190" cy="113" r="3" fill="currentColor"/>
+</svg>

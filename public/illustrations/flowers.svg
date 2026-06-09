@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 320" fill="none">
+  <ellipse cx="160" cy="120" rx="70" ry="80" fill="oklch(0.88 0.06 25)" opacity="0.4">
+    <animate attributeName="ry" values="80;86;80" dur="6s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="80" cy="200" rx="55" ry="40" fill="oklch(0.83 0.08 168)" opacity="0.45"/>
+
+  <path d="M 130 300 Q 128 240 135 180 Q 140 130 155 90"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- bloom 1 — bloom pulse -->
+  <g style="transform-origin: 160px 115px; transform-box: view-box;">
+    <path d="M 155 90
+             Q 165 70 185 75 Q 195 90 180 100
+             Q 200 95 205 115 Q 195 135 175 130
+             Q 185 150 165 158 Q 145 153 145 135
+             Q 125 138 122 118 Q 130 100 150 105
+             Q 140 88 155 90 Z"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          fill="oklch(0.95 0.025 25)" fill-opacity="0.6"/>
+    <circle cx="160" cy="115" r="6" fill="currentColor"/>
+    <animateTransform attributeName="transform" type="scale"
+                      values="1 1; 1.06 1.06; 1 1" dur="5s" repeatCount="indefinite"
+                      additive="sum"/>
+  </g>
+
+  <path d="M 132 215 Q 95 200 80 175 Q 105 195 132 215 Z"
+        stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+        fill="oklch(0.83 0.08 168)" fill-opacity="0.5"/>
+  <path d="M 80 175 L 132 215" stroke="currentColor" stroke-width="0.8" opacity="0.5" fill="none"/>
+
+  <path d="M 200 300 Q 210 250 220 200 Q 225 165 232 140"
+        stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+  <!-- bud — sway -->
+  <g style="transform-origin: 232px 140px; transform-box: view-box;">
+    <path d="M 232 140
+             Q 250 130 248 110 Q 240 100 230 110
+             Q 218 125 232 140 Z"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M 235 132 Q 240 122 240 115" stroke="currentColor" stroke-width="1" opacity="0.6" fill="none"/>
+    <animateTransform attributeName="transform" type="rotate"
+                      values="0 232 140; 4 232 140; 0 232 140; -4 232 140; 0 232 140"
+                      dur="6s" repeatCount="indefinite"/>
+  </g>
+
+  <path d="M 215 240 Q 245 232 255 215 Q 230 228 215 240 Z"
+        stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"
+        fill="oklch(0.83 0.08 168)" fill-opacity="0.4"/>
+
+  <path d="M 50 305 Q 100 295 150 305 Q 200 315 270 302"
+        stroke="currentColor" stroke-width="1" opacity="0.4" fill="none"/>
+</svg>

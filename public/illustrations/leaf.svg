@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 280" fill="none">
+  <!-- backdrop blob mint -->
+  <ellipse cx="110" cy="140" rx="95" ry="120" fill="oklch(0.83 0.08 168)" opacity="0.35"/>
+
+  <!-- main leaf -->
+  <path d="M 110 30
+           Q 175 60 180 150
+           Q 175 220 110 245
+           Q 50 220 45 150
+           Q 50 60 110 30 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.83 0.08 168)" fill-opacity="0.45"/>
+
+  <!-- main vein -->
+  <path d="M 110 30 L 110 245" stroke="currentColor" stroke-width="1.4" opacity="0.7"/>
+
+  <!-- side veins -->
+  <g stroke="currentColor" stroke-width="1" opacity="0.55" fill="none">
+    <path d="M 110 65 Q 130 75 155 85"/>
+    <path d="M 110 65 Q 90 75 65 85"/>
+    <path d="M 110 100 Q 135 110 168 120"/>
+    <path d="M 110 100 Q 85 110 52 120"/>
+    <path d="M 110 140 Q 138 148 175 152"/>
+    <path d="M 110 140 Q 82 148 45 152"/>
+    <path d="M 110 180 Q 132 188 162 188"/>
+    <path d="M 110 180 Q 88 188 58 188"/>
+    <path d="M 110 215 Q 125 220 145 218"/>
+    <path d="M 110 215 Q 95 220 75 218"/>
+  </g>
+
+  <!-- decorative dot accent -->
+  <circle cx="190" cy="70" r="3" fill="currentColor" opacity="0.5"/>
+  <circle cx="35" cy="200" r="2.5" fill="currentColor" opacity="0.5"/>
+</svg>

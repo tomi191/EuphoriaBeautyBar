@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" fill="none">
+  <ellipse cx="130" cy="125" rx="115" ry="105" fill="oklch(0.83 0.08 168)" opacity="0.35"/>
+  <circle cx="220" cy="40" r="16" fill="oklch(0.88 0.06 25)" opacity="0.55">
+    <animate attributeName="r" values="16;19;16" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <ellipse cx="130" cy="125" rx="85" ry="110" stroke="currentColor" stroke-width="2" fill="oklch(0.99 0.005 75)" fill-opacity="0.6"/>
+  <ellipse cx="130" cy="125" rx="72" ry="97" stroke="currentColor" stroke-width="1" opacity="0.4" fill="none"/>
+
+  <path d="M 90 60 Q 70 100 78 160" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.5" fill="none"/>
+  <path d="M 100 50 Q 88 80 92 120" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.4" fill="none"/>
+
+  <line x1="130" y1="235" x2="130" y2="290" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="130" cy="297" rx="32" ry="8" stroke="currentColor" stroke-width="2" fill="oklch(0.99 0.005 75)" fill-opacity="0.6"/>
+
+  <circle cx="130" cy="240" r="5" fill="currentColor"/>
+
+  <!-- twinkling sparkles -->
+  <circle cx="155" cy="80" r="2" fill="currentColor" opacity="0.5">
+    <animate attributeName="opacity" values="0.1;0.9;0.1" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="170" cy="170" r="2.5" fill="currentColor" opacity="0.4">
+    <animate attributeName="opacity" values="0.1;0.8;0.1" dur="2.6s" begin="0.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="115" cy="195" r="1.5" fill="currentColor" opacity="0.5">
+    <animate attributeName="opacity" values="0.1;0.7;0.1" dur="2.2s" begin="1.4s" repeatCount="indefinite"/>
+  </circle>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+  <path d="M 50 2
+           C 75 2 95 22 95 50
+           C 95 72 88 88 70 95
+           C 50 100 22 96 8 80
+           C -2 60 4 32 22 14
+           C 32 4 42 2 50 2 Z"
+        fill="black"/>
+</svg>

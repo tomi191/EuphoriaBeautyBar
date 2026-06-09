@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" fill="none">
+  <!-- mint petno зад -->
+  <path d="M 30 180 Q 20 100 75 90 Q 130 100 145 170 Q 130 240 80 240 Q 30 230 30 180 Z"
+        fill="oklch(0.83 0.08 168)" opacity="0.4"/>
+  <!-- blush accent -->
+  <circle cx="155" cy="100" r="20" fill="oklch(0.88 0.06 25)" opacity="0.55"/>
+
+  <!-- bullet (the lipstick top) — slanted -->
+  <path d="M 70 30
+           L 130 50
+           L 115 100
+           L 75 95 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.88 0.06 25)" fill-opacity="0.7"/>
+
+  <!-- top tip slant line -->
+  <line x1="70" y1="30" x2="115" y2="100" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>
+
+  <!-- swivel ring -->
+  <rect x="65" y="100" width="65" height="14" stroke="currentColor" stroke-width="1.6" fill="oklch(0.99 0.005 75)" fill-opacity="0.5"/>
+
+  <!-- main barrel — glossy -->
+  <path d="M 60 114
+           L 135 114
+           Q 142 114 142 122
+           L 142 270
+           Q 142 285 128 285
+           L 67 285
+           Q 53 285 53 270
+           L 53 122
+           Q 53 114 60 114 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.5"/>
+
+  <!-- shine streak -->
+  <path d="M 65 125 L 65 270" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- bottom accent rings -->
+  <line x1="53" y1="265" x2="142" y2="265" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <circle cx="98" cy="295" r="3" fill="currentColor" opacity="0.5"/>
+</svg>

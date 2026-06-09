@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 280" fill="none">
+  <!-- mint backdrop -->
+  <path d="M 40 130 Q 70 80 150 90 Q 230 100 250 150 Q 240 200 170 200 Q 90 210 50 175 Q 30 155 40 130 Z"
+        fill="oklch(0.83 0.08 168)" opacity="0.4"/>
+  <!-- blush dot -->
+  <circle cx="270" cy="220" r="20" fill="oklch(0.88 0.06 25)" opacity="0.55"/>
+
+  <!-- straightener — две успоредни plates под лек ъгъл -->
+  <!-- top plate -->
+  <path d="M 70 90
+           L 195 75
+           Q 215 75 215 90
+           L 215 105
+           L 70 120 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.55"/>
+  <!-- bottom plate -->
+  <path d="M 70 145
+           L 215 130
+           L 215 145
+           Q 215 160 195 162
+           L 70 175 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.55"/>
+
+  <!-- hinge -->
+  <circle cx="220" cy="125" r="8" stroke="currentColor" stroke-width="1.6" fill="oklch(0.88 0.06 25)" fill-opacity="0.4"/>
+  <circle cx="220" cy="125" r="3" fill="currentColor"/>
+
+  <!-- handle на двете страни -->
+  <path d="M 215 90 L 285 65 Q 295 60 295 70 L 295 110" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <path d="M 215 162 L 285 188 Q 295 192 295 182 L 295 142" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+
+  <!-- silky hair flowing through (curl-out lines от ляво) -->
+  <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.6">
+    <path d="M 65 100 Q 40 105 30 95"/>
+    <path d="M 65 130 Q 35 130 25 120"/>
+    <path d="M 65 150 Q 40 155 30 165"/>
+    <path d="M 70 165 Q 45 175 35 185"/>
+  </g>
+</svg>

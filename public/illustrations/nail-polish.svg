@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 300" fill="none">
+  <ellipse cx="110" cy="240" rx="90" ry="40" fill="oklch(0.88 0.06 25)" opacity="0.45">
+    <animate attributeName="ry" values="40;46;40" dur="5s" repeatCount="indefinite"/>
+  </ellipse>
+  <circle cx="55" cy="100" r="22" fill="oklch(0.83 0.08 168)" opacity="0.5"/>
+
+  <path d="M 65 140
+           L 155 140
+           Q 170 140 170 155
+           L 170 245
+           Q 170 265 150 265
+           L 70 265
+           Q 50 265 50 245
+           L 50 155
+           Q 50 140 65 140 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.88 0.06 25)" fill-opacity="0.5"/>
+  <path d="M 50 175 Q 110 168 170 175" stroke="currentColor" stroke-width="1.4" opacity="0.7" fill="none"/>
+  <rect x="90" y="120" width="40" height="22" stroke="currentColor" stroke-width="1.6" fill="oklch(0.99 0.005 75)" fill-opacity="0.6"/>
+
+  <path d="M 80 60
+           L 140 60
+           Q 152 60 152 72
+           L 152 118
+           Q 152 122 148 122
+           L 72 122
+           Q 68 122 68 118
+           L 68 72
+           Q 68 60 80 60 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.5"/>
+  <line x1="68" y1="78" x2="152" y2="78" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <line x1="68" y1="105" x2="152" y2="105" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <circle cx="110" cy="50" r="6" fill="currentColor" opacity="0.6"/>
+
+  <!-- droplet — pulse opacity като капка -->
+  <path d="M 195 200 Q 200 215 195 225 Q 188 220 195 200 Z" fill="oklch(0.88 0.06 25)" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" repeatCount="indefinite"/>
+  </path>
+</svg>

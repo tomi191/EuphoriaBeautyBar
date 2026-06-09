@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" fill="none">
+  <!-- mint backdrop -->
+  <ellipse cx="150" cy="105" rx="130" ry="55" fill="oklch(0.83 0.08 168)" opacity="0.35"/>
+  <!-- blush dot -->
+  <circle cx="245" cy="55" r="14" fill="oklch(0.88 0.06 25)" opacity="0.55"/>
+
+  <!-- comb body -->
+  <path d="M 30 90 L 270 90 L 270 130 L 30 130 Z"
+        stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="oklch(0.99 0.005 75)" fill-opacity="0.5"/>
+  <!-- comb teeth -->
+  <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <line x1="50" y1="130" x2="50" y2="170"/>
+    <line x1="65" y1="130" x2="65" y2="172"/>
+    <line x1="80" y1="130" x2="80" y2="170"/>
+    <line x1="95" y1="130" x2="95" y2="172"/>
+    <line x1="110" y1="130" x2="110" y2="170"/>
+    <line x1="125" y1="130" x2="125" y2="172"/>
+    <line x1="140" y1="130" x2="140" y2="170"/>
+    <line x1="155" y1="130" x2="155" y2="172"/>
+    <line x1="170" y1="130" x2="170" y2="170"/>
+    <line x1="185" y1="130" x2="185" y2="172"/>
+    <line x1="200" y1="130" x2="200" y2="170"/>
+    <line x1="215" y1="130" x2="215" y2="172"/>
+    <line x1="230" y1="130" x2="230" y2="170"/>
+    <line x1="245" y1="130" x2="245" y2="172"/>
+  </g>
+  <!-- handle hole -->
+  <circle cx="45" cy="110" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  <!-- decorative line above -->
+  <path d="M 60 60 Q 150 40 240 60" stroke="currentColor" stroke-width="1" opacity="0.4" fill="none"/>
+</svg>
