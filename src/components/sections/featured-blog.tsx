@@ -4,7 +4,7 @@ import { ArrowRight, Clock } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { blogPosts } from "@/lib/data/blog";
+import { getPublishedPosts } from "@/lib/data/blog-store";
 
 const dateFormatter = new Intl.DateTimeFormat("bg-BG", {
   day: "numeric",
@@ -12,8 +12,13 @@ const dateFormatter = new Intl.DateTimeFormat("bg-BG", {
   year: "numeric",
 });
 
-export function FeaturedBlog() {
-  const sorted = [...blogPosts].sort((a, b) => b.date.localeCompare(a.date));
+export async function FeaturedBlog() {
+  const posts = await getPublishedPosts();
+  // Няма публикувани статии → скрий секцията елегантно, за да не показва празно.
+  if (posts.length === 0) return null;
+
+  // getPublishedPosts вече връща най-новите първи, но сортираме за сигурност.
+  const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
   const [feature, ...rest] = sorted;
   const sidePosts = rest.slice(0, 3);
 

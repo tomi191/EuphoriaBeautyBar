@@ -8,7 +8,6 @@ import { team as teamSeed } from "../src/lib/data/team";
 import { serviceCategories as servicesSeed } from "../src/lib/data/services";
 import { testimonials as testimonialsSeed } from "../src/lib/data/testimonials";
 import { faqItems as faqSeed } from "../src/lib/data/faq";
-import { blogPosts as blogSeed } from "../src/lib/data/blog";
 import { galleryImages as gallerySeed } from "../src/lib/data/gallery";
 
 async function ensureAdmin() {
@@ -124,26 +123,8 @@ async function seedFaq() {
   console.log(`✓ FAQ: ${faqSeed.length} записа`);
 }
 
-async function seedBlog() {
-  await db.delete(schema.blogPosts);
-  for (const p of blogSeed) {
-    await db.insert(schema.blogPosts).values({
-      id: nanoid(),
-      slug: p.slug,
-      title: p.title,
-      excerpt: p.excerpt,
-      category: p.category,
-      cover: p.cover ?? null,
-      contentJson: p.content,
-      publishedAt: new Date(p.date),
-      readingMinutes: p.readingMinutes,
-      status: "published",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-  console.log(`✓ Blog: ${blogSeed.length} статии`);
-}
+// Blog seed-ът е премахнат — статиите вече се генерират през AI и живеят в БД.
+// Таблицата `blogPosts` се пълни от admin генериращия route, не от seed.
 
 async function seedGallery() {
   await db.delete(schema.galleryImages);
@@ -168,7 +149,6 @@ async function main() {
   await seedServices();
   await seedTestimonials();
   await seedFaq();
-  await seedBlog();
   await seedGallery();
   console.log("\n✅ Seed готов!");
   process.exit(0);

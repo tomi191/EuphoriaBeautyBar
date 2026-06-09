@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
-import { blogPosts } from "@/lib/data/blog";
+import { getPublishedPosts } from "@/lib/data/blog-store";
 import { montibelloProducts } from "@/lib/data/montibello";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   const now = new Date();
   const serviceCategories = await getServiceCatalog();
+  const blogPosts = await getPublishedPosts();
 
   const staticPaths = [
     "",
