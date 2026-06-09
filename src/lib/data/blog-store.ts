@@ -24,6 +24,7 @@ function toBlogPost(row: DbBlogPost): BlogPost {
     date: row.publishedAt.toISOString(),
     readingMinutes: row.readingMinutes,
     cover: row.cover ?? COVER_FALLBACK,
+    audioUrl: row.audioUrl,
     // contentJson се пази като typed BlogBlock[] (виж blog/generate route + markdown-to-blocks).
     content: (row.contentJson as BlogBlock[]) ?? [],
   };

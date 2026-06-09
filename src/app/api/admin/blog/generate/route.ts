@@ -69,6 +69,7 @@ export async function POST(req: Request) {
       excerpt: result.excerpt,
       category: result.category,
       cover: result.cover,
+      audioUrl: result.audioUrl,
       // contentJson очаква typed блокове (BlogBlock[]) — точният формат на PostRenderer.
       contentJson: result.contentBlocks,
       publishedAt: now,
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
         excerpt: result.excerpt,
         category: result.category,
         cover: result.cover,
+        audioUrl: result.audioUrl,
         readingMinutes: result.readingMinutes,
         tags: result.tags,
         keywords: result.keywords,

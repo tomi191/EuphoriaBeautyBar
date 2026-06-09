@@ -34,6 +34,19 @@ function stripInline(s: string): string {
 }
 
 /**
+ * За параграфи и списъчни елементи: запазваме inline markup за линкове
+ * [текст](url) и bold **текст**, защото PostRenderer ги парсва и рендира
+ * (вътрешните линкове като <Link>). Махаме само inline изображения и
+ * code маркъри, които нямат рендер тук. Чистим всичко друго минимално.
+ */
+function preserveInlineMarkup(s: string): string {
+  return s
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // inline изображения нямат рендер в параграф
+    .replace(/`([^`]+)`/g, "$1") // inline code → чист текст
+    .trim();
+}
+
+/**
  * Разпознава callout евристично. Моделът е инструктиран да маркира
  * съветите с префикс "Съвет:" / "Важно:" в blockquote или параграф.
  * variant "tip" за съвети, "info" за всичко друго.
@@ -146,7 +159,8 @@ export function markdownToBlocks(markdown: string): BlogBlock[] {
     if (/^([-*+]|\d+[.)])\s+/.test(trimmed)) {
       const items: string[] = [];
       while (i < lines.length && /^([-*+]|\d+[.)])\s+/.test(lines[i].trim())) {
-        items.push(stripInline(lines[i].trim().replace(/^([-*+]|\d+[.)])\s+/, "")));
+        // Запазваме inline линкове/bold в списъчните елементи (PostRenderer ги рендира).
+        items.push(preserveInlineMarkup(lines[i].trim().replace(/^([-*+]|\d+[.)])\s+/, "")));
         i++;
       }
       blocks.push({ type: "list", items });
@@ -194,7 +208,8 @@ export function markdownToBlocks(markdown: string): BlogBlock[] {
       continue;
     }
 
-    blocks.push({ type: "p", text: stripInline(paragraph) });
+    // Запазваме inline линкове/bold в параграфа (PostRenderer ги рендира).
+    blocks.push({ type: "p", text: preserveInlineMarkup(paragraph) });
   }
 
   return blocks;

@@ -6,6 +6,8 @@ export interface BlogPost {
   date: string; // ISO
   readingMinutes: number;
   cover?: string;
+  /** Публичен URL на TTS озвучаването; null/undefined ако постът няма аудио. */
+  audioUrl?: string | null;
   content: BlogBlock[];
 }
 

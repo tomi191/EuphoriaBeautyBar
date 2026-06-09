@@ -17,6 +17,7 @@ import { markdownToBlocks } from "./markdown-to-blocks";
 import { generateSlug, calculateReadingTime } from "./slug";
 import { generateCoverImage } from "./cover-image";
 import { generateInlineImages } from "./inline-images";
+import { generateBlogAudio } from "./tts";
 import type { BlogBlock } from "@/lib/data/blog";
 
 export interface GenerateInput {
@@ -49,6 +50,8 @@ export interface GenerateResult {
   contentBlocks: BlogBlock[];
   readingMinutes: number;
   cover: string | null;
+  /** Публичен URL на TTS озвучаването, или null ако се е провалило/липсват ключове. */
+  audioUrl: string | null;
   model: string;
 }
 
@@ -208,6 +211,19 @@ export async function generateBlogPost(
   const contentBlocks = markdownToBlocks(contentMarkdown);
   const readingMinutes = calculateReadingTime(contentMarkdown);
 
+  // 6. TTS озвучаване — върху финалните typed блокове (без image alt текстове).
+  //    Изолирано като cover-а: провал (липсващи Supabase ключове, Edge TTS
+  //    грешка) НЕ чупи поста — статията се записва без аудио.
+  const audioUrl = await generateBlogAudio(slug, title, contentBlocks)
+    .then((r) => r.url)
+    .catch((err) => {
+      console.warn(
+        "[BlogWriter] TTS озвучаване се провали (постът се записва без аудио):",
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    });
+
   return {
     title,
     slug,
@@ -220,6 +236,7 @@ export async function generateBlogPost(
     contentBlocks,
     readingMinutes,
     cover,
+    audioUrl,
     model: completion.model,
   };
 }

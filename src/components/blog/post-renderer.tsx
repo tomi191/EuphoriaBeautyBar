@@ -1,6 +1,73 @@
+import { Fragment, type ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Lightbulb, Info } from "lucide-react";
 import type { BlogBlock } from "@/lib/data/blog";
+
+/**
+ * Inline markdown парсер за тялото на параграфи и списъчни елементи.
+ * Поддържа линкове [текст](url) и удебеляване **текст** и връща React
+ * фрагменти. Вътрешните линкове (URL започва с „/“) се рендират като
+ * next/link <Link>; евентуални външни (http) като <a target="_blank">.
+ * Целта е internal linking към страниците с услуги (SEO).
+ */
+const INLINE_RE = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
+
+function renderInline(text: string): ReactNode {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+  let match: RegExpExecArray | null;
+
+  // Регулярният израз е global; нулираме за всеки вход.
+  INLINE_RE.lastIndex = 0;
+  while ((match = INLINE_RE.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(
+        <Fragment key={key++}>{text.slice(lastIndex, match.index)}</Fragment>,
+      );
+    }
+
+    const [, linkLabel, linkHref, boldText] = match;
+    if (linkHref !== undefined && linkLabel !== undefined) {
+      const isInternal = linkHref.startsWith("/");
+      if (isInternal) {
+        nodes.push(
+          <Link
+            key={key++}
+            href={linkHref}
+            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+          >
+            {linkLabel}
+          </Link>,
+        );
+      } else {
+        nodes.push(
+          <a
+            key={key++}
+            href={linkHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+          >
+            {linkLabel}
+          </a>,
+        );
+      }
+    } else if (boldText !== undefined) {
+      nodes.push(<strong key={key++}>{boldText}</strong>);
+    }
+
+    lastIndex = INLINE_RE.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(<Fragment key={key++}>{text.slice(lastIndex)}</Fragment>);
+  }
+
+  // Ако няма съвпадения, връщаме чистия текст.
+  return nodes.length > 0 ? nodes : text;
+}
 
 export function PostRenderer({ blocks }: { blocks: BlogBlock[] }) {
   return (
@@ -10,7 +77,7 @@ export function PostRenderer({ blocks }: { blocks: BlogBlock[] }) {
           case "p":
             return (
               <p key={i} className="text-lg leading-relaxed text-foreground/85">
-                {block.text}
+                {renderInline(block.text)}
               </p>
             );
           case "h2":
@@ -45,7 +112,7 @@ export function PostRenderer({ blocks }: { blocks: BlogBlock[] }) {
                 {block.items.map((item, j) => (
                   <li key={j} className="flex items-start gap-3 text-lg leading-relaxed text-foreground/85">
                     <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
-                    <span>{item}</span>
+                    <span>{renderInline(item)}</span>
                   </li>
                 ))}
               </ul>

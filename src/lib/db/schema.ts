@@ -137,6 +137,9 @@ export const blogPosts = pgTable("blog_posts", {
   excerpt: text("excerpt").notNull(),
   category: text("category").notNull(),
   cover: text("cover"),
+  // Публичен URL на TTS аудиото (Edge TTS → Supabase Storage bucket blog-audio).
+  // Може да е null, ако озвучаването не е генерирано/се е провалило.
+  audioUrl: text("audio_url"),
   contentJson: jsonb("content_json").notNull().$type<unknown[]>(),
   publishedAt: ts("published_at").notNull(),
   readingMinutes: integer("reading_minutes").notNull().default(5),

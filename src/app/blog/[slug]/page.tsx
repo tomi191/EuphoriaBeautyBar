@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PostRenderer } from "@/components/blog/post-renderer";
+import { BlogAudioPlayer } from "@/components/blog/blog-audio-player";
 import { AuthorBio } from "@/components/blog/author-bio";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { getPublishedPosts, getPublishedPost } from "@/lib/data/blog-store";
@@ -93,6 +94,11 @@ export default async function BlogPostPage({ params }: Params) {
             <Reveal delay={0.5}>
               <ShareButtons title={post.title} className="mt-6" />
             </Reveal>
+            {post.audioUrl && (
+              <Reveal delay={0.6}>
+                <BlogAudioPlayer url={post.audioUrl} />
+              </Reveal>
+            )}
           </div>
 
           {post.cover && (
