@@ -89,11 +89,11 @@ export default async function AboutPage() {
                 <div aria-hidden className="absolute inset-0 translate-x-5 translate-y-5 rounded-3xl bg-mint" />
                 <div className="relative h-full w-full overflow-hidden rounded-3xl border border-border/60">
                   <Image
-                    src={founder.image}
-                    alt={founder.name}
+                    src={founder.imageSalon ?? founder.image}
+                    alt={`${founder.name} в салон Euphoria`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 40vw"
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                 </div>
               </div>
