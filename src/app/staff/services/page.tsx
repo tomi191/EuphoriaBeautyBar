@@ -3,7 +3,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { StaffShell } from "@/components/staff/staff-shell";
-import { MyServices, type MyServiceOpt } from "@/components/staff/my-services";
+import { MyServices, type MyServiceOpt, type MyCategoryOpt } from "@/components/staff/my-services";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +15,17 @@ export const metadata: Metadata = {
 export default async function StaffServicesPage() {
   const { resource } = await requireStaff();
 
-  const [cats, items, mine] = await Promise.all([
+  const [cats, items, mine, allOffers] = await Promise.all([
     db.query.serviceCategories.findMany({ orderBy: (c, { asc }) => [asc(c.sortOrder)] }),
     db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.resourceId, resource.id) }),
+    // Всички предлагания — за да знаем кои услуги се ползват от ДРУГ изпълнител (не може да се трият).
+    db.query.resourceServices.findMany(),
   ]);
 
   const catById = new Map(cats.map((c) => [c.id, c]));
   const mineByItem = new Map(mine.map((m) => [m.serviceItemId, m]));
+  const offeredByOthers = new Set(allOffers.filter((o) => o.resourceId !== resource.id).map((o) => o.serviceItemId));
 
   const services: MyServiceOpt[] = items.flatMap((i) => {
     const cat = catById.get(i.categoryId);
@@ -33,6 +36,7 @@ export default async function StaffServicesPage() {
         id: i.id,
         name: i.name,
         category: cat.shortTitle,
+        groupTitle: i.groupTitle,
         offered: !!m,
         price: m?.price ?? i.price,
         priceMax: (m?.priceMax ?? i.priceMax) ?? null,
@@ -40,9 +44,16 @@ export default async function StaffServicesPage() {
         currency: m?.currency ?? i.currency,
         durationMin: m?.durationMin ?? i.durationMin,
         bufferMin: m?.bufferMin ?? i.bufferMin,
+        // Може да се изтрие от каталога само ако друг изпълнител не я предлага.
+        deletable: !offeredByOthers.has(i.id),
       },
     ];
   });
+
+  // Категориите за неговия kind — за формата „Добави услуга" (при нова група).
+  const myCategories: MyCategoryOpt[] = cats
+    .filter((c) => KIND_BY_SLUG[c.slug] === resource.kind)
+    .map((c) => ({ slug: c.slug, title: c.shortTitle }));
 
   return (
     <StaffShell>
@@ -55,7 +66,7 @@ export default async function StaffServicesPage() {
         <strong className="font-semibold">Важно:</strong> щом отметнеш поне една услуга, при онлайн записване клиентите виждат{" "}
         <strong>само отметнатите</strong>. Включи всички, които реално предлагаш — иначе останалите спират да се записват онлайн.
       </div>
-      <MyServices services={services} />
+      <MyServices services={services} categories={myCategories} />
     </StaffShell>
   );
 }
