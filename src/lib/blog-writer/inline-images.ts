@@ -192,10 +192,14 @@ export async function generateInlineImages(
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Генерирай всички слотове ПАРАЛЕЛНО. Всеки слот е изолиран — proval-ът на
-  // един не сваля останалите. Връща { match, url|null }.
-  const results = await Promise.all(
-    slots.map(async (slot, idx) => {
+  // ПОСЛЕДОВАТЕЛНО генериране с по 2 опита на слот. Паралелните KIE заявки
+  // (3 inline + cover едновременно) даваха мрежови "fetch failed" — sequential
+  // + retry е по-бавно (~60s повече), но надеждно. Всеки слот е изолиран.
+  const results: Array<{ match: string; alt: string; url: string | null }> = [];
+  for (let idx = 0; idx < slots.length; idx++) {
+    const slot = slots[idx];
+    let url: string | null = null;
+    for (let attempt = 1; attempt <= 2 && !url; attempt++) {
       try {
         const prompt = buildInlinePrompt(input, slot.alt);
         const taskId = await kieCreate(kieKey, prompt);
@@ -216,17 +220,17 @@ export async function generateInlineImages(
         if (uploadErr) {
           throw new Error(`Inline upload failed: ${uploadErr.message}`);
         }
-        const url = `${supabaseUrl}/storage/v1/object/public/blog-images/${path}`;
-        return { match: slot.match, alt: slot.alt, url };
+        url = `${supabaseUrl}/storage/v1/object/public/blog-images/${path}`;
       } catch (err) {
         console.warn(
-          `[BlogWriter] Inline image ${idx + 1} се провали (placeholder ще бъде премахнат):`,
+          `[BlogWriter] Inline image ${idx + 1} (опит ${attempt}/2) се провали:`,
           err instanceof Error ? err.message : err,
         );
-        return { match: slot.match, alt: slot.alt, url: null as string | null };
+        if (attempt === 1) await new Promise((r) => setTimeout(r, 3000));
       }
-    }),
-  );
+    }
+    results.push({ match: slot.match, alt: slot.alt, url });
+  }
 
   // Замени успешните placeholder-и с markdown изображение; премахни провалените.
   let markdown = input.markdown;

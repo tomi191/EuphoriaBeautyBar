@@ -104,6 +104,47 @@ async function deriveKeywords(
   }
 }
 
+/**
+ * Гарантира 2 inline image placeholder-а, ако моделът не е сложил нито един
+ * (недетерминизъм). Инжектира ги след 2-рото и след последното H2 заглавие,
+ * с генерична сцена по категория — по-добре типова снимка, отколкото никаква.
+ */
+function ensureImagePlaceholders(md: string, category: string): string {
+  if (md.includes("<!-- image:")) return md;
+  const scenes: Record<string, [string, string]> = {
+    "Грижа за коса": [
+      "фризьор разресва дълга здрава коса в светъл салон",
+      "професионални продукти за коса подредени на рафт в салон",
+    ],
+    Терапии: [
+      "фризьор нанася подхранваща терапия върху кичур коса",
+      "жена с гладка лъскава коса след терапия в салона",
+    ],
+    Маникюр: [
+      "близък план на ръце със свеж нюдов маникюр",
+      "маникюристка работи прецизно върху нокти в салон",
+    ],
+    Wellness: [
+      "спокойна процедура за лице в светла козметична стая",
+      "козметични продукти и кърпи в топла салонна обстановка",
+    ],
+  };
+  const [s1, s2] = scenes[category] ?? scenes["Грижа за коса"];
+  const lines = md.split("\n");
+  const h2 = lines.reduce<number[]>((acc, l, i) => (l.startsWith("## ") ? [...acc, i] : acc), []);
+  if (h2.length < 3) return md;
+  // След заглавието на 2-рата секция и след заглавието на последната.
+  const insertions: Array<[number, string]> = [
+    [h2[1] + 1, `\n<!-- image: ${s1} -->\n`],
+    [h2[h2.length - 1] + 1, `\n<!-- image: ${s2} -->\n`],
+  ];
+  // Вмъкваме отзад напред, за да не изместим индексите.
+  for (const [idx, text] of insertions.sort((a, b) => b[0] - a[0])) {
+    lines.splice(idx, 0, text);
+  }
+  return lines.join("\n");
+}
+
 /** Нормализира категорията до позволените стойности; fallback "Грижа за коса". */
 function normalizeCategory(raw: string | undefined, requested?: string): string {
   const all = BLOG_CATEGORIES as readonly string[];
@@ -134,7 +175,11 @@ export async function generateBlogPost(
   if (keywords.length === 0) {
     keywords = await deriveKeywords(input.topic, apiKey, model, siteUrl);
   }
-  const effectiveInput: GenerateInput = { ...input, keywords };
+  // Локалните "…варна" keywords са ценни за meta/tags, но подадени на текстовия
+  // модел той ги лепи дословно в изреченията ("балаяж варна изисква…") —
+  // най-явният stuffing маркер. Затова текстът ги НЕ получава; останалите да.
+  const proseKeywords = keywords.filter((k) => !/варна/i.test(k));
+  const effectiveInput: GenerateInput = { ...input, keywords: proseKeywords };
 
   // 1. Текстова генерация
   const messages = buildMessages(effectiveInput);
@@ -158,8 +203,10 @@ export async function generateBlogPost(
   );
 
   const title = String(parsed.title).trim();
-  const rawMarkdown = String(parsed.content);
   const category = normalizeCategory(parsed.category, input.category);
+  // Гарантирани inline изображения: ако моделът пропусна placeholder-ите,
+  // инжектираме генерични по категория (LLM недетерминизъм).
+  const rawMarkdown = ensureImagePlaceholders(String(parsed.content), category);
   const tags = Array.isArray(parsed.tags)
     ? parsed.tags.map((t) => String(t)).filter(Boolean).slice(0, 6)
     : [];
