@@ -29,6 +29,10 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    // Production живее на www (Vercel redirect-ва apex → www) — и двата са доверени,
+    // иначе login от www.euphoriabeauty.eu връща 403.
+    "https://euphoriabeauty.eu",
+    "https://www.euphoriabeauty.eu",
     "http://localhost:3000",
     "http://localhost:3003",
   ],

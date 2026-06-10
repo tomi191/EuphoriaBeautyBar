@@ -22,6 +22,7 @@ function toBlogPost(row: DbBlogPost): BlogPost {
     category: row.category,
     // publishedAt е Date в БД → ISO string за <time> и dateFormatter в страниците.
     date: row.publishedAt.toISOString(),
+    updatedAt: row.updatedAt?.toISOString(),
     readingMinutes: row.readingMinutes,
     cover: row.cover ?? COVER_FALLBACK,
     audioUrl: row.audioUrl,

@@ -190,11 +190,12 @@ export default async function BlogPostPage({ params }: Params) {
             headline: post.title,
             description: post.excerpt,
             datePublished: post.date,
-            dateModified: post.date,
+            dateModified: post.updatedAt ?? post.date,
             ...(post.cover && { image: post.cover.startsWith("http") ? post.cover : `${siteConfig.url}${post.cover}` }),
             mainEntityOfPage: { "@type": "WebPage", "@id": `${siteConfig.url}/blog/${post.slug}` },
             author: {
               "@type": "Person",
+              "@id": `${siteConfig.url}/za-nas#snezhana`,
               name: "Снежана Саблева",
               jobTitle: "Собственик и фризьор-стилист",
               url: `${siteConfig.url}/za-nas`,

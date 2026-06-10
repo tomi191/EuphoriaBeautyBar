@@ -17,6 +17,7 @@ export const localBusinessSchema = {
   slogan: siteConfig.tagline,
   founder: {
     "@type": "Person",
+    "@id": `${siteConfig.url}/za-nas#snezhana`,
     name: siteConfig.founder,
     jobTitle: "Главен стилист и основател",
     knowsAbout: ["Балаяж", "Кератинови терапии", "Боядисване на коса", "Официални прически", "Корекция на цвят"],
@@ -70,9 +71,13 @@ export const localBusinessSchema = {
   brand: siteConfig.brands.map((b) => ({ "@type": "Brand", name: b })),
 };
 
+/** Единен Person entity за Снежана — реферирай чрез @id навсякъде (E-E-A-T консолидация). */
+export const PERSON_ID = `${siteConfig.url}/za-nas#snezhana`;
+
 export const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
+  "@id": PERSON_ID,
   name: siteConfig.founder,
   jobTitle: "Главен стилист и основател",
   worksFor: {
@@ -81,7 +86,7 @@ export const personSchema = {
     url: siteConfig.url,
   },
   url: `${siteConfig.url}/za-nas`,
-  image: `${siteConfig.url}/images/services/hair.jpg`,
+  image: `${siteConfig.url}/images/team/snezhana.jpg`,
   description:
     "Снежана Саблева — стилист с над 25 години опит, основател на Euphoria Hair & Beauty Bar във Варна. Експерт по балаяж, кератинови терапии и корекция на цвят.",
   knowsAbout: ["Балаяж", "Goldwell Kerasilk", "Montibello", "Корекция на цвят", "Официални прически", "Сватбени стилове"],
@@ -96,11 +101,8 @@ export const websiteSchema = {
   name: siteConfig.name,
   publisher: { "@type": "Organization", name: siteConfig.name },
   inLanguage: "bg-BG",
-  potentialAction: {
-    "@type": "SearchAction",
-    target: { "@type": "EntryPoint", urlTemplate: `${siteConfig.url}/blog?q={search_term_string}` },
-    "query-input": "required name=search_term_string",
-  },
+  // Без SearchAction: сайтът няма търсачка (/blog?q= не съществува), а
+  // Sitelinks Search Box е пенсиониран от Google (2024).
 };
 
 export const organizationSchema = {

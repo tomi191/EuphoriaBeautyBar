@@ -3,7 +3,7 @@ export const siteConfig = {
   shortName: "Euphoria",
   tagline: "Фризьор, маникюр и козметика в кв. Левски, Варна",
   description:
-    "Салон за красота в кв. Левски, Варна. Коса, нокти и лице на едно място, с професионални марки Montibello, Goldwell Kerasilk, Nashi Argan и GIGI. Записване онлайн, по телефон или Viber.",
+    "Салон за красота в кв. Левски, Варна. Коса, нокти и лице на едно място. Работим с Montibello, Goldwell и GIGI. Запази час онлайн.",
   url: "https://euphoriabeauty.eu",
   ogImage: "/og-image.png",
   locale: "bg_BG",

@@ -4,6 +4,8 @@ export interface BlogPost {
   excerpt: string;
   category: string;
   date: string; // ISO
+  /** Последна редакция (ISO) - за dateModified в schema; пада обратно към date. */
+  updatedAt?: string;
   readingMinutes: number;
   cover?: string;
   /** Публичен URL на TTS озвучаването; null/undefined ако постът няма аудио. */

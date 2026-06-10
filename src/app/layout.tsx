@@ -34,7 +34,8 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    // Кратък default (~55 зн.) — дългият се режеше в Google на ~60.
+    default: "Euphoria — салон за красота в кв. Левски, Варна",
     template: `%s · ${siteConfig.shortName}`,
   },
   description: siteConfig.description,
