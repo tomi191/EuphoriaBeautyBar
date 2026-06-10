@@ -11,8 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/logo";
 import { InstallBanner } from "@/components/staff/install-banner";
 
-export const dynamic = "force-dynamic";
-
 export default function StaffLoginPage() {
   const router = useRouter();
   const [email, setEmail] = React.useState("");

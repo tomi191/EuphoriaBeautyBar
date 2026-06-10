@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { fetchMySlots, createMyBooking, type DayScheduleResult } from "@/lib/actions/staff-bookings";
 
 export interface StaffServiceOpt {
@@ -16,13 +17,30 @@ export interface StaffServiceOpt {
   durationMin: number;
 }
 
-const selectCls = "h-12 w-full rounded-md border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
 function slotLabel(iso: string) {
   return new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 }
 function todayStr() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+/** 7 дни напред като pills (като графика) — native PWA линията, без date dropdown. */
+function weekPills() {
+  const day = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", weekday: "short" });
+  const num = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", day: "numeric" });
+  const iso = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" });
+  const base = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(base.getTime() + i * 86400000);
+    return { key: iso.format(d), day: day.format(d), num: num.format(d) };
+  });
+}
+
+function uniq(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) if (!seen.has(v)) { seen.add(v); out.push(v); }
+  return out;
 }
 
 export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) {
@@ -34,9 +52,14 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
   const [slot, setSlot] = React.useState("");
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [notes, setNotes] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
   const svc = services.find((s) => s.id === serviceId);
+  const categories = React.useMemo(() => uniq(services.map((s) => s.category)), [services]);
+  const [activeCat, setActiveCat] = React.useState(categories[0] ?? "");
+  const shown = services.filter((s) => s.category === activeCat);
+  const pills = React.useMemo(() => weekPills(), []);
 
   React.useEffect(() => {
     if (!serviceId || !date) {
@@ -61,7 +84,14 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
     }
     setSubmitting(true);
     try {
-      const res = await createMyBooking({ serviceItemId: svc.id, serviceName: svc.name, startAt: slot, clientName: name, clientPhone: phone });
+      const res = await createMyBooking({
+        serviceItemId: svc.id,
+        serviceName: svc.name,
+        startAt: slot,
+        clientName: name,
+        clientPhone: phone,
+        notes: notes.trim() || null,
+      });
       if (res.ok) {
         toast.success("Часът е записан.");
         router.push("/staff");
@@ -84,66 +114,147 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5">
-      <div className="space-y-2">
-        <Label>Услуга</Label>
-        <select className={selectCls} value={serviceId} onChange={(e) => setServiceId(e.target.value)} required>
-          <option value="">Избери услуга…</option>
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>{s.category} — {s.name} ({s.durationMin} мин)</option>
-          ))}
-        </select>
-      </div>
+    <form onSubmit={submit} className="space-y-6">
+      {/* Услуга — карти, не dropdown */}
+      <section>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Услуга</p>
+        {categories.length > 1 && (
+          <div className="mb-3 flex gap-1.5 rounded-2xl bg-cream p-1.5">
+            {categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setActiveCat(c)}
+                className={
+                  "flex-1 rounded-xl py-2 text-sm font-semibold transition-colors " +
+                  (c === activeCat ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")
+                }
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="space-y-1.5">
+          {shown.map((s) => {
+            const selected = serviceId === s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setServiceId(s.id)}
+                className={
+                  "flex w-full items-center gap-2.5 rounded-2xl border p-3.5 text-left transition-colors " +
+                  (selected ? "border-foreground bg-secondary" : "border-border bg-background hover:border-foreground/40")
+                }
+              >
+                <span
+                  className={
+                    "grid size-5 shrink-0 place-items-center rounded-full border " +
+                    (selected ? "border-foreground bg-foreground text-background" : "border-input")
+                  }
+                >
+                  {selected && <Check className="size-3" strokeWidth={3} />}
+                </span>
+                <span className="min-w-0 flex-1 font-semibold leading-tight">{s.name}</span>
+                <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{s.durationMin} мин</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-      <div className="space-y-2">
-        <Label>Дата</Label>
-        <Input type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="h-12" />
-      </div>
+      {/* Дата — pills като графика */}
+      <section>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Дата</p>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {pills.map((p) => {
+            const active = p.key === date;
+            return (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => setDate(p.key)}
+                className={
+                  "flex w-12 shrink-0 flex-col items-center rounded-2xl border py-2 transition-colors " +
+                  (active ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/40")
+                }
+              >
+                <span className={"text-[11px] font-medium " + (active ? "text-background/70" : "text-muted-foreground")}>{p.day}</span>
+                <span className="mt-0.5 text-lg font-bold tabular-nums">{p.num}</span>
+              </button>
+            );
+          })}
+        </div>
+        <Input type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="mt-2 h-11" />
+      </section>
 
-      <div className="space-y-2">
-        <Label>Час</Label>
+      {/* Час */}
+      <section>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Час</p>
         {!serviceId ? (
-          <p className="text-sm text-muted-foreground">Първо избери услуга.</p>
+          <p className="rounded-2xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">Първо избери услуга.</p>
         ) : loading ? (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Зареждам…</p>
+          <p className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background p-4 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Зареждам графика…
+          </p>
         ) : data.open === null ? (
-          <p className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">Не работиш на тази дата.</p>
+          <p className="rounded-2xl border border-border bg-secondary/50 p-4 text-center text-sm text-muted-foreground">Не работиш на тази дата.</p>
         ) : data.slots.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Няма свободни часове.</p>
+          <p className="rounded-2xl border border-border bg-background p-4 text-center text-sm text-muted-foreground">Няма свободни часове.</p>
         ) : (
           <div className="grid grid-cols-4 gap-1.5">
             {data.slots.map((s) => {
               if (s.status === "free") {
                 return (
                   <button key={s.start} type="button" onClick={() => setSlot(s.start)}
-                    className={"rounded-md border py-2 text-sm tabular-nums transition-colors " + (slot === s.start ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground/50")}>
+                    className={"rounded-xl border py-2.5 text-sm font-medium tabular-nums transition-colors " + (slot === s.start ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/50")}>
                     {slotLabel(s.start)}
                   </button>
                 );
               }
               return (
-                <span key={s.start} className={"cursor-not-allowed rounded-md py-2 text-center text-sm tabular-nums " + (s.status === "busy" ? "bg-secondary text-muted-foreground/70 line-through" : "bg-muted/30 text-muted-foreground/40")}>
+                <span key={s.start} className={"cursor-not-allowed rounded-xl py-2.5 text-center text-sm tabular-nums " + (s.status === "busy" ? "bg-secondary text-muted-foreground/70 line-through" : "bg-muted/30 text-muted-foreground/40")}>
                   {slotLabel(s.start)}
                 </span>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Име на клиента</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-12" />
+      {/* Клиент */}
+      <section className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Клиент</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Име</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-12 text-base" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Телефон</Label>
+            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12 text-base" />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label>Телефон</Label>
-          <Input value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12" />
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5">
+            Допълнителна информация <span className="font-normal text-muted-foreground">(по избор)</span>
+          </Label>
+          <Textarea
+            rows={3}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="напр. желан нюанс, алергии, предпочитания…"
+            className="text-base"
+          />
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Lock className="size-3" /> Вижда се само от теб, не от клиента.
+          </p>
         </div>
-      </div>
+      </section>
 
-      <Button type="submit" disabled={submitting || !slot} className="h-12 w-full rounded-full bg-foreground text-base text-background hover:bg-primary">
-        {submitting ? <><Loader2 className="size-4 animate-spin" /> Записване</> : <><CheckCircle2 className="size-4" /> Запиши часа</>}
+      <Button type="submit" disabled={submitting || !slot} className="h-13 w-full rounded-full bg-foreground text-base text-background hover:bg-primary">
+        {submitting ? <><Loader2 className="size-4 animate-spin" /> Записване</> : <><CheckCircle2 className="size-5" /> Запиши часа</>}
       </Button>
     </form>
   );
