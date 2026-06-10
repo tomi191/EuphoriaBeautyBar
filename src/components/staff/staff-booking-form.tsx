@@ -190,7 +190,7 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
                       setQuery("");
                     }}
                     className={
-                      "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-colors " +
+                      "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-all active:scale-[0.98] " +
                       (selected ? "border-foreground bg-secondary" : "border-border bg-background hover:border-foreground/40")
                     }
                   >
@@ -261,7 +261,7 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
               if (s.status === "free") {
                 return (
                   <button key={s.start} type="button" onClick={() => setSlot(s.start)}
-                    className={"rounded-xl border py-2.5 text-sm font-medium tabular-nums transition-colors " + (slot === s.start ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/50")}>
+                    className={"rounded-xl border py-2.5 text-sm font-medium tabular-nums transition-all active:scale-[0.98] " + (slot === s.start ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/50")}>
                     {slotLabel(s.start)}
                   </button>
                 );

@@ -23,6 +23,8 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
       if (key === "arrived") await markMyArrived(id);
       else if (key === "completed") await markMyCompleted(id);
       else await markMyNoShow(id);
+      // Леко хаптично потвърждение на успешното действие.
+      if (typeof navigator !== "undefined") navigator.vibrate?.(10);
       toast.success(
         key === "arrived" ? "Отбелязано: клиентът дойде." : key === "completed" ? "Часът е приключен." : "Отбелязано: не дойде.",
       );
@@ -40,7 +42,7 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
           type="button"
           onClick={() => run("arrived")}
           disabled={busy !== null}
-          className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background transition-colors hover:bg-primary disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background transition-all hover:bg-primary active:scale-[0.98] disabled:opacity-60"
         >
           {busy === "arrived" ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" strokeWidth={2.5} />}
           Дойде
@@ -49,7 +51,7 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
           type="button"
           onClick={() => run("no_show")}
           disabled={busy !== null}
-          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-all hover:border-destructive/40 hover:text-destructive active:scale-[0.98] disabled:opacity-60"
         >
           {busy === "no_show" ? <Loader2 className="size-3 animate-spin" /> : <UserX className="size-3" strokeWidth={2.2} />}
           Не дойде
@@ -65,7 +67,7 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
           type="button"
           onClick={() => run("completed")}
           disabled={busy !== null}
-          className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-background transition-colors hover:bg-foreground disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-background transition-all hover:bg-foreground active:scale-[0.98] disabled:opacity-60"
         >
           {busy === "completed" ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" strokeWidth={2.5} />}
           Приключих

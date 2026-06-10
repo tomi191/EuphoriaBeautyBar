@@ -60,6 +60,8 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
     setSaving(true);
     try {
       await saveMyClientNote(clientId, note);
+      // Леко хаптично потвърждение на успешното запазване.
+      if (typeof navigator !== "undefined") navigator.vibrate?.(10);
       toast.success("Бележката е запазена.");
     } catch {
       toast.error("Грешка при запазване.");
@@ -71,7 +73,7 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
   return (
     <>
       <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[85dvh] max-w-lg overflow-y-auto rounded-t-3xl border-t border-border bg-background p-5 pb-8 shadow-2xl">
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[85dvh] max-w-lg overflow-y-auto rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
 
         {loading ? (
@@ -84,7 +86,7 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
           <>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-lg font-bold leading-tight">{data.client.name}</h3>
+                <h3 className="text-base font-bold leading-tight">{data.client.name}</h3>
                 {data.client.phone && <p className="mt-0.5 text-sm text-muted-foreground">{data.client.phone}</p>}
               </div>
               {data.client.phone && (
@@ -109,14 +111,14 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
               )}
             </div>
 
-            <div className="mt-4 space-y-1.5">
+            <div className="mt-3 space-y-1.5">
               <Label htmlFor="client-note">Лична бележка</Label>
               <Textarea
                 id="client-note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Формула, предпочитания, алергии…"
-                className="min-h-24 rounded-xl text-base"
+                className="min-h-20 rounded-xl text-base"
               />
               <div className="flex justify-end">
                 <Button

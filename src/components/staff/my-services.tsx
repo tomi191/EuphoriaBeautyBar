@@ -99,7 +99,7 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
               type="button"
               onClick={() => setActiveCat(c)}
               className={
-                "flex-1 rounded-xl py-2 text-sm font-semibold transition-colors " +
+                "flex-1 rounded-xl py-2 text-sm font-semibold transition-all active:scale-[0.98] " +
                 (c === activeCat ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")
               }
             >
@@ -140,7 +140,7 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
               type="button"
               disabled={!s.offered}
               onClick={() => setEditing(s)}
-              className="min-w-0 flex-1 text-left disabled:cursor-default"
+              className="min-w-0 flex-1 text-left transition-transform active:scale-[0.98] disabled:cursor-default"
             >
               <p className="text-sm font-semibold leading-tight">{s.name}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -202,7 +202,7 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
       <Button
         onClick={() => setAdding(true)}
         variant="outline"
-        className="mt-4 h-12 w-full rounded-full border-dashed"
+        className="mt-3 h-11 w-full rounded-full border-dashed active:scale-[0.98]"
       >
         <Plus className="size-4" /> Добави нова услуга
       </Button>
@@ -272,27 +272,27 @@ function EditSheet({
   return (
     <>
       <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-5 pb-8 shadow-2xl">
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <h3 className="text-lg font-bold">{service.name}</h3>
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <h3 className="text-base font-bold">{service.name}</h3>
+        <div className="mt-3 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label>Цена</Label>
-            <Input type="number" step="0.5" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-12 text-base" />
+            <Input type="number" step="0.5" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-11 text-base" />
           </div>
           <div className="space-y-1.5">
             <Label>Продължителност (мин)</Label>
-            <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-12 text-base" />
+            <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-2.5 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label>Макс. цена (опц.)</Label>
-            <Input type="number" step="0.5" value={priceMax} onChange={(e) => setPriceMax(e.target.value === "" ? "" : Number(e.target.value))} className="h-12 text-base" placeholder="—" />
+            <Input type="number" step="0.5" value={priceMax} onChange={(e) => setPriceMax(e.target.value === "" ? "" : Number(e.target.value))} className="h-11 text-base" placeholder="—" />
           </div>
           <div className="space-y-1.5">
             <Label>Валута</Label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-12 w-full rounded-md border border-input bg-background px-3 text-base">
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-base">
               <option value="€">€</option>
               <option value="лв">лв</option>
             </select>
@@ -302,7 +302,7 @@ function EditSheet({
           <span className="text-sm font-medium">&quot;от&quot; цена (ориентировъчна)</span>
           <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
         </label>
-        <Button onClick={save} disabled={saving} className="mt-5 h-12 w-full rounded-full bg-foreground text-base text-background hover:bg-primary">
+        <Button onClick={save} disabled={saving} className="mt-4 h-11 w-full rounded-full bg-foreground text-sm text-background hover:bg-primary">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Запазване</> : "Запази"}
         </Button>
       </div>
@@ -363,20 +363,20 @@ function AddSheet({
   return (
     <>
       <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-5 pb-8 shadow-2xl">
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <h3 className="text-lg font-bold">Нова услуга</h3>
+        <h3 className="text-base font-bold">Нова услуга</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Влиза в общия ценоразпис на сайта и в онлайн записването при теб.
         </p>
-        <div className="mt-4 space-y-3">
+        <div className="mt-3 space-y-2.5">
           <div className="space-y-1.5">
             <Label>Име на услугата</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="напр. Терапия с топли ножици" className="h-12 text-base" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="напр. Терапия с топли ножици" className="h-11 text-base" />
           </div>
           <div className="space-y-1.5">
             <Label>Група (подкатегория)</Label>
-            <Input list="staff-groups" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="избери или напиши нова" className="h-12 text-base" />
+            <Input list="staff-groups" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="избери или напиши нова" className="h-11 text-base" />
             <datalist id="staff-groups">
               {groups.map((g) => (
                 <option key={g} value={g} />
@@ -386,7 +386,7 @@ function AddSheet({
           {isNewGroup && categories.length > 1 && (
             <div className="space-y-1.5">
               <Label>Категория за новата група</Label>
-              <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} className="h-12 w-full rounded-md border border-input bg-background px-3 text-base">
+              <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-base">
                 {categories.map((c) => (
                   <option key={c.slug} value={c.slug}>{c.title}</option>
                 ))}
@@ -396,11 +396,11 @@ function AddSheet({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Цена (€)</Label>
-              <Input type="number" step="0.5" min={0.5} value={price} onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))} className="h-12 text-base" />
+              <Input type="number" step="0.5" min={0.5} value={price} onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))} className="h-11 text-base" />
             </div>
             <div className="space-y-1.5">
               <Label>Продължителност (мин)</Label>
-              <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-12 text-base" />
+              <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
             </div>
           </div>
           <label className="flex items-center justify-between rounded-xl border border-border p-3">
@@ -408,7 +408,7 @@ function AddSheet({
             <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
           </label>
         </div>
-        <Button onClick={save} disabled={saving} className="mt-5 h-12 w-full rounded-full bg-foreground text-base text-background hover:bg-primary">
+        <Button onClick={save} disabled={saving} className="mt-4 h-11 w-full rounded-full bg-foreground text-sm text-background hover:bg-primary">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Добавяне</> : "Добави услугата"}
         </Button>
       </div>

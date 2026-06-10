@@ -197,7 +197,7 @@ export function BookingBoard({ days: initialDays }: { days: BoardDay[] }) {
                           setOverKey(null);
                         }}
                         className={
-                          "cursor-grab touch-none select-none rounded-xl border border-border bg-card p-2.5 shadow-sm active:cursor-grabbing " +
+                          "cursor-grab touch-none select-none rounded-xl border border-border bg-card p-2.5 shadow-sm transition-transform active:scale-[0.98] active:cursor-grabbing " +
                           (dragId === b.id ? "opacity-50" : "")
                         }
                       >

@@ -65,11 +65,11 @@ export function StaffNotifications() {
   if (state === "unsupported") return null;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-5">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-background px-3.5 py-2.5">
       <div className="flex items-center gap-2.5">
-        {state === "on" ? <Bell className="size-5 text-primary" strokeWidth={1.6} /> : <BellOff className="size-5 text-muted-foreground" strokeWidth={1.6} />}
+        {state === "on" ? <Bell className="size-4 text-primary" strokeWidth={1.6} /> : <BellOff className="size-4 text-muted-foreground" strokeWidth={1.6} />}
         <div>
-          <p className="text-sm font-medium">Известия за нови записи</p>
+          <p className="text-sm font-medium leading-tight">Известия за нови записи</p>
           <p className="text-xs text-muted-foreground">
             {state === "on" ? "Включени на това устройство" : "Получавай известие при нов час"}
           </p>

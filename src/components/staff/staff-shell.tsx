@@ -17,12 +17,26 @@ const tabs = [
 
 export function StaffShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [online, setOnline] = React.useState(true);
 
   // Регистрира service worker-а (PWA installability) на всички екранни страници.
   React.useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+  }, []);
+
+  // Следи мрежовия статус за offline индикатора.
+  React.useEffect(() => {
+    setOnline(navigator.onLine);
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
   }, []);
 
   async function handleSignOut() {
@@ -53,9 +67,15 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
         </button>
       </header>
 
+      {!online && (
+        <div className="bg-foreground/80 py-1 text-center text-xs text-background">
+          Офлайн — показвам последното заредено
+        </div>
+      )}
+
       <div className="mx-auto max-w-lg px-4 py-6">{children}</div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background">
+      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
         {tabs.map((t) => {
           const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
           return (
