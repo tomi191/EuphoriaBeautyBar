@@ -102,6 +102,26 @@ export async function createStaffAccount(resourceId: string, input: z.infer<type
   return { ok: true as const };
 }
 
+/** Админът задава НОВА парола на изпълнител (забравена парола). Затваря всички негови сесии. */
+export async function resetStaffPassword(resourceId: string, newPassword: string) {
+  await requireAdmin();
+  if (newPassword.length < 8) return { ok: false as const, error: "Минимум 8 символа." };
+
+  const resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, resourceId) });
+  if (!resource?.userId) return { ok: false as const, error: "Изпълнителят няма вход." };
+
+  const ctx = await auth.$context;
+  const hashed = await ctx.password.hash(newPassword);
+  await db
+    .update(schema.account)
+    .set({ password: hashed, updatedAt: new Date() })
+    .where(and(eq(schema.account.userId, resource.userId), eq(schema.account.providerId, "credential")));
+  // Затвори активните сесии — старата парола/устройства спират да важат.
+  await db.delete(schema.session).where(eq(schema.session.userId, resource.userId));
+
+  return { ok: true as const };
+}
+
 export async function deleteResource(id: string) {
   await requireAdmin();
   try {
