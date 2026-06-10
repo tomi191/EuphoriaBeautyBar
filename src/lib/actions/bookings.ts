@@ -80,6 +80,11 @@ export async function createBooking(input: BookingInput) {
     });
   }
 
+  // Каталожна услуга (ако е посочена) - за снимка на цената (€) и за имейла.
+  const item = data.serviceItemId
+    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
+    : undefined;
+
   try {
     const id = nanoid();
     await db.insert(schema.bookings).values({
@@ -92,6 +97,7 @@ export async function createBooking(input: BookingInput) {
       endAt: end,
       status: "confirmed",
       source: data.source,
+      priceEur: item?.price ?? null,
       notes: data.notes ?? null,
       createdBy: session.user.id,
       createdAt: new Date(),
@@ -101,12 +107,7 @@ export async function createBooking(input: BookingInput) {
 
     // Потвърждение към клиента, ако е оставил имейл (не блокира записа).
     if (data.clientEmail) {
-      const [resource, item] = await Promise.all([
-        db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, data.resourceId) }),
-        data.serviceItemId
-          ? db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
-          : Promise.resolve(undefined),
-      ]);
+      const resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, data.resourceId) });
       await sendBookingConfirmation(data.clientEmail, {
         clientName: data.clientName,
         serviceName: data.serviceName,

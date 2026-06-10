@@ -50,6 +50,7 @@ const publicSchema = z.object({
   serviceItemId: z.string().nullable().optional(), // null при няколко услуги (комбиниран запис)
   serviceName: z.string().min(1),
   priceLabel: z.string().nullable().optional(), // показва се в имейла (особено при няколко услуги)
+  priceEur: z.number().nonnegative().nullable().optional(), // снимка на сумата (€) за оборот статистиката
   durationMin: z.number().int().positive(),
   bufferMin: z.number().int().min(0),
   startAt: z.string(),
@@ -109,6 +110,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
       endAt: end,
       status: "confirmed",
       source: "online",
+      priceEur: data.priceEur ?? null,
       consentLate: true,
       createdAt: new Date(),
       updatedAt: new Date(),

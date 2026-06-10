@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -264,6 +264,8 @@ export const bookings = pgTable("bookings", {
   endAt: ts("end_at").notNull(),
   status: text("status").notNull().default("pending"),
   source: text("source").notNull().default("online"), // online | phone | walkin
+  // Снимка на цената (€) към момента на записване - за оборот статистиката. NULL при стари часове.
+  priceEur: real("price_eur"),
   notes: text("notes"),
   consentLate: boolean("consent_late").notNull().default(false),
   arrivedAt: ts("arrived_at"),
@@ -276,6 +278,24 @@ export const bookings = pgTable("bookings", {
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
 });
+
+// Лична бележка на изпълнител за клиент (формула, предпочитания). НЕ се споделя
+// между работниците - наемателите имат собствена клиентела.
+export const clientNotes = pgTable(
+  "client_notes",
+  {
+    id: text("id").primaryKey(),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    resourceId: text("resource_id")
+      .notNull()
+      .references(() => resources.id, { onDelete: "cascade" }),
+    note: text("note").notNull(),
+    updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
+  },
+  (t) => [unique().on(t.clientId, t.resourceId)],
+);
 
 export const pushSubscriptions = pgTable("push_subscriptions", {
   id: text("id").primaryKey(),
@@ -310,3 +330,4 @@ export type ResourceWorkingHour = typeof resourceWorkingHours.$inferSelect;
 export type TimeOff = typeof timeOff.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
+export type ClientNote = typeof clientNotes.$inferSelect;

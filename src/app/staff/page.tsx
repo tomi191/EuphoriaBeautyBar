@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarX2, MessageCircle, Phone, Plus } from "lucide-react";
+import { CalendarX2, MessageCircle, Phone, Plus, TrendingUp, Users } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc } from "@/lib/booking/time";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
+import { BookingStatusActions } from "@/components/staff/booking-status-actions";
+import { ClientFileTrigger } from "@/components/staff/client-file-sheet";
 import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,8 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const dayStart = sofiaWallToUtc(selectedKey, "00:00");
   const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
   const upcomingEnd = new Date(now.getTime() + 30 * 86400000);
+  // Статус бутоните („Дойде" и т.н.) имат смисъл само за днешни/минали часове.
+  const todayEnd = new Date(sofiaWallToUtc(todayKey, "00:00").getTime() + 24 * 3600000);
 
   // Дневен график + всички предстоящи часове за 30 дни напред (за search-а).
   const [bookings, upcomingRows] = await Promise.all([
@@ -96,9 +100,29 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
 
   return (
     <StaffShell>
-      <div className="mb-4">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground capitalize">{longFmt.format(dayStart)}</p>
-        <h1 className="mt-1 font-display text-2xl font-medium">Твоят ден</h1>
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground capitalize">{longFmt.format(dayStart)}</p>
+          <h1 className="mt-1 font-display text-2xl font-medium">Твоят ден</h1>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Link
+            href="/staff/clients"
+            aria-label="Клиенти"
+            title="Клиенти"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+          >
+            <Users className="size-4" strokeWidth={1.8} /> Клиенти
+          </Link>
+          <Link
+            href="/staff/profile"
+            aria-label="Оборот"
+            title="Оборот"
+            className="grid size-9 place-items-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+          >
+            <TrendingUp className="size-4" strokeWidth={1.8} />
+          </Link>
+        </div>
       </div>
 
       <ScheduleSearch upcoming={upcoming}>
@@ -148,10 +172,12 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                     </div>
                     {client && (
                       <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-                        <span>
-                          {client.name}
-                          {client.phone ? ` · ${client.phone}` : ""}
-                        </span>
+                        <ClientFileTrigger
+                          clientId={client.id}
+                          name={client.name}
+                          className="font-medium text-foreground underline decoration-border decoration-dotted underline-offset-[3px] transition-colors hover:decoration-foreground/60"
+                        />
+                        {client.phone && <span>· {client.phone}</span>}
                         {client.phone && (
                           <span className="inline-flex items-center gap-1">
                             <a
@@ -180,6 +206,9 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                       </p>
                       {(b.status === "confirmed" || b.status === "pending") && <StaffCancelButton id={b.id} />}
                     </div>
+                    {b.startAt.getTime() < todayEnd.getTime() && (b.status === "confirmed" || b.status === "arrived") && (
+                      <BookingStatusActions id={b.id} status={b.status} />
+                    )}
                     {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
                   </div>
                 </div>
