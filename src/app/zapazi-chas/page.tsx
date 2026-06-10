@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/zapazi-chas" },
 };
 
+// Винаги динамична: услугите/изпълнителите/портфолиото идват live от базата
+// (важно за актуални слотове) + премахва DB зависимостта от build-а.
+export const dynamic = "force-dynamic";
+
 export default async function BookingPage() {
   const [cats, items, resources, gallery, offerings] = await Promise.all([
     db.query.serviceCategories.findMany(),

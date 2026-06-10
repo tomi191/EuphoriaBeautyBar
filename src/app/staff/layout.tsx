@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SwRegister } from "@/components/staff/sw-register";
 
 // Manifest-ът се закача САМО на /staff страниците → инсталира се само
 // работническото приложение (scope /staff), не целият сайт.
@@ -22,5 +23,11 @@ export const viewport: Viewport = {
 };
 
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {/* SW на всички staff страници (вкл. login) — нужен за install prompt. */}
+      <SwRegister />
+      {children}
+    </>
+  );
 }

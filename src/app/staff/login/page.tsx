@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/logo";
+import { InstallBanner } from "@/components/staff/install-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default function StaffLoginPage() {
           <Logo width={150} height={44} href={null} />
         </div>
         <p className="mb-6 text-center text-sm text-muted-foreground">Вход за екипа</p>
+        <InstallBanner />
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-8">
           <div className="space-y-2">
             <Label htmlFor="email">Имейл</Label>
