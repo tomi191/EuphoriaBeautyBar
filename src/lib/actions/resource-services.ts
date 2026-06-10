@@ -161,6 +161,16 @@ export async function deleteMyService(serviceItemId: string) {
     return { ok: false as const, error: "Услугата не е от твоя тип." };
   }
 
+  // Ownership: изтриваш само услуга, която сам предлагаш — иначе staff с
+  // правилния kind би могъл да трие каталожни услуги, добавени от админ или
+  // от напуснал изпълнител.
+  const myOffer = await db.query.resourceServices.findFirst({
+    where: (rs) => and(eq(rs.serviceItemId, serviceItemId), eq(rs.resourceId, resource.id)),
+  });
+  if (!myOffer) {
+    return { ok: false as const, error: "Не предлагаш тази услуга — само админ може да я изтрие от каталога." };
+  }
+
   const otherOffer = await db.query.resourceServices.findFirst({
     where: (rs) => and(eq(rs.serviceItemId, serviceItemId), ne(rs.resourceId, resource.id)),
   });

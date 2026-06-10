@@ -8,6 +8,12 @@ export async function requireAdmin() {
   if (!session?.user) {
     redirect("/admin/login");
   }
+  // Staff акаунтите (role: "staff") са логнати потребители, но НЕ са админи —
+  // без тази проверка всеки изпълнител може да вика admin actions (reset на
+  // чужди пароли, изтриване на изпълнители).
+  if (session.user.role !== "admin") {
+    redirect("/admin/login");
+  }
   return session;
 }
 

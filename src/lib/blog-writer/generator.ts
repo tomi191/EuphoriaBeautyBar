@@ -167,7 +167,7 @@ export async function generateBlogPost(
   }
 
   const model = process.env.BLOG_OPENROUTER_MODEL || "google/gemini-3.5-flash";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://euphoriabar.bg";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.euphoriabeauty.eu";
 
   // 0. Ако не са подадени ключови думи — изведи ги автоматично от темата,
   //    за да са оптимизирани и статията, и cover промптът. Провал → [].

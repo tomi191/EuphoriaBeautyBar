@@ -133,7 +133,7 @@ function ResetPasswordButton({ resourceId, resourceName }: { resourceId: string;
             </p>
             <div className="space-y-2">
               <Label>Нова парола</Label>
-              <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="минимум 8 символа" autoComplete="off" />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="минимум 8 символа" autoComplete="new-password" />
             </div>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>

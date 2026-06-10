@@ -42,6 +42,11 @@ export async function getMyClientFile(clientId: string): Promise<ClientFileData 
 
   if (!client) return null;
 
+  // Защита на личните данни: изпълнителят вижда досие САМО на клиент, с когото
+  // има поне една резервация (или вече записана бележка). Иначе произволен
+  // clientId би разкрил име + телефон на чужд клиент.
+  if (visits.length === 0 && !noteRow) return null;
+
   return {
     client: { name: client.name, phone: client.phone },
     note: noteRow?.note ?? null,

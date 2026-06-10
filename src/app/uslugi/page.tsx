@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 
 export const metadata: Metadata = {
-  title: "Услуги",
+  title: "Услуги — коса, нокти и козметика във Варна",
   alternates: { canonical: "/uslugi" },
   description:
     "Пълен каталог услуги в Euphoria Beauty Bar — фризьорство, терапии, маникюр, педикюр и козметика с премиум продукти.",
+  openGraph: {
+    title: "Услуги — коса, нокти и козметика във Варна",
+    description: "Пълен каталог услуги в Euphoria Beauty Bar с прозрачни цени.",
+    url: "/uslugi",
+  },
 };
 
 export default async function UslugiPage() {

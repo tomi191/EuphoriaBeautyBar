@@ -70,7 +70,6 @@ export const serviceCategories: ServiceCategory[] = [
           { name: "Балаяж", price: 185, currency: "€", description: "Включва прическа и боя" },
           { name: "Кичури на фолио", price: 65, priceFrom: true, currency: "€", description: "Включва прическа и боя" },
           { name: "Боя на салона 60мл", price: 25, currency: "€", description: "Montibello, Goldwell" },
-          { name: "Терапии за коса", price: 35, priceFrom: true, priceMax: 65, currency: "€", description: "Възстановяване, хидратация, блясък" },
         ],
       },
     ],
@@ -134,7 +133,7 @@ export const serviceCategories: ServiceCategory[] = [
     slug: "manikyur-i-pedikyur",
     title: "Маникюр и Педикюр",
     shortTitle: "Маникюр",
-    tagline: "Полирани и оцветени до съвършенство",
+    tagline: "Форма и цвят, които издържат седмици",
     description: "Класически маникюр, gel лак, френски/омбре дизайни, кератинови терапии за нокти и медицински педикюр.",
     longDescription:
       "Маникюр и педикюр в стерилни условия, с форма, която издържа седмици. От естествени френски дизайни до по-сложна декорация, според това какво искаш.",
@@ -182,7 +181,7 @@ export const serviceCategories: ServiceCategory[] = [
     description:
       "Лицеви терапии според типа кожа: почистване, хидратация, anti-age, ламиниране и епилация с марки GIGI, Montibello и Esthemax.",
     longDescription:
-      "Козметичният ни кабинет работи с водещи професионални марки за интензивна грижа и видим ефект. Предлагаме персонализирани протоколи според типа кожа, възрастта и желания резултат.",
+      "Козметичният кабинет работи с GIGI, Esthemax, Montibello и SAN MARINE. Протоколът се избира според типа кожа, възрастта и желания резултат — от почистване и хидратация до anti-age процедури.",
     icon: "flower",
     heroImage: "/images/services/cosmetics.jpg",
     seoTitle: "Козметични услуги във Варна — грижа за кожата и лицето ти",

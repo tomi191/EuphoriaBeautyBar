@@ -12,12 +12,12 @@ export const faqItems: FAQItem[] = [
   {
     question: "Как да запазя час?",
     answer:
-      "По телефон +359 898 66 33 15, във Viber, през формата за контакт или от секция Контакти.",
+      "Най-бързо — онлайн от бутона „Резервирай час“: виждаш свободните часове в реално време и получаваш потвърждение по имейл. Работи и класиката: телефон +359 898 66 33 15, Viber или на място в салона.",
   },
   {
     question: "С какви продукти работите?",
     answer:
-      "Само с професионални марки: Montibello, Goldwell Kerasilk, Nashi Argan, GIGI, Esthemax, SAN MARINE и MESOESTETIC. Всички са със сертификат за качество и безопасност.",
+      "Само с професионални марки: Montibello, Goldwell Kerasilk, Nashi Argan, GIGI, Esthemax, SAN MARINE, MESOESTETIC и GENOSYS. Всички са със сертификат за качество и безопасност.",
   },
   {
     question: "Имате ли промоции и пакети?",

@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) redirect("/admin/login");
+  // role check: staff акаунтите имат сесия, но не бива да виждат admin таблото.
+  if (!session?.user || session.user.role !== "admin") redirect("/admin/login");
 
   return (
     <AdminShell user={{ name: session.user.name, email: session.user.email }}>

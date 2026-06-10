@@ -4,7 +4,9 @@ export const siteConfig = {
   tagline: "Фризьор, маникюр и козметика в кв. Левски, Варна",
   description:
     "Салон за красота в кв. Левски, Варна. Коса, нокти и лице на едно място. Работим с Montibello, Goldwell и GIGI. Запази час онлайн.",
-  url: "https://euphoriabeauty.eu",
+  // Production живее на www (Vercel прави apex → 308 → www). Canonical, sitemap,
+  // OG, schema и robots деривират оттук — трябва да сочат НЕ-redirect-ващия host.
+  url: "https://www.euphoriabeauty.eu",
   ogImage: "/og-image.png",
   locale: "bg_BG",
   founded: 2023,

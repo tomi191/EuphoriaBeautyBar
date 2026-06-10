@@ -49,7 +49,7 @@ export function BrandStory() {
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-secondary">
               <Image
                 src="/images/interior/salon-1.jpg"
-                alt="Прическа от Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+                alt="Интериорът на салон Euphoria Hair & Beauty Bar, кв. Левски, Варна"
                 fill
                 sizes="(max-width: 1024px) 100vw, 58vw"
                 quality={90}

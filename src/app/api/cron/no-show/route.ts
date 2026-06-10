@@ -13,8 +13,10 @@ export async function GET(req: Request) {
 
   const cutoff = new Date(Date.now() - GRACE_MIN * 60000);
 
+  // Покрива и pending (онлайн заявки, които никой не е потвърдил) — иначе
+  // висят завинаги и изкривяват оборотната статистика.
   const rows = await db.query.bookings.findMany({
-    where: (b, { and, eq, lt }) => and(eq(b.status, "confirmed"), lt(b.startAt, cutoff)),
+    where: (b, { and, inArray, lt }) => and(inArray(b.status, ["confirmed", "pending"]), lt(b.startAt, cutoff)),
   });
 
   let marked = 0;

@@ -61,29 +61,26 @@ export async function ReviewsSplit() {
           </div>
         </Reveal>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-2">
-          {/* GOOGLE — лява колона */}
-          <Reveal>
-            <div className="rounded-md border border-foreground/10 bg-cream p-6 md:p-8">
-              <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
-                <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">Google ревюта</p>
-                  <h3 className="mt-1 font-display text-2xl">От Google Business Profile</h3>
-                </div>
-                <a
-                  href="https://www.google.com/search?q=Euphoria+Hair+Beauty+Bar+Varna"
-                  target="_blank"
-                  rel="noopener"
-                  className="text-sm text-foreground/70 underline decoration-dotted underline-offset-4 hover:text-foreground"
-                >
-                  Виж в Google →
-                </a>
-              </header>
-              {google.length === 0 ? (
-                <p className="py-12 text-center text-sm text-muted-foreground">
-                  Свържи Google Business Profile API за да синхронизираме реални отзиви.
-                </p>
-              ) : (
+        <div className={`mt-14 grid gap-8 ${hasGoogle ? "lg:grid-cols-2" : "lg:mx-auto lg:max-w-3xl"}`}>
+          {/* GOOGLE — лява колона. Рендва се само когато има синхронизирани отзиви —
+              никога placeholder-инструкция пред публиката. */}
+          {hasGoogle && (
+            <Reveal>
+              <div className="rounded-md border border-foreground/10 bg-cream p-6 md:p-8">
+                <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">Google ревюта</p>
+                    <h3 className="mt-1 font-display text-2xl">От Google Business Profile</h3>
+                  </div>
+                  <a
+                    href="https://www.google.com/search?q=Euphoria+Hair+Beauty+Bar+Varna"
+                    target="_blank"
+                    rel="noopener"
+                    className="text-sm text-foreground/70 underline decoration-dotted underline-offset-4 hover:text-foreground"
+                  >
+                    Виж в Google →
+                  </a>
+                </header>
                 <ul className="space-y-5">
                   {google.slice(0, 3).map((r) => (
                     <li key={r.id} className="border-b border-foreground/10 pb-5 last:border-0">
@@ -107,12 +104,12 @@ export async function ReviewsSplit() {
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-          </Reveal>
+              </div>
+            </Reveal>
+          )}
 
-          {/* MANUAL — дясна колона */}
-          <Reveal delay={0.15}>
+          {/* MANUAL — дясна колона (пълна ширина, когато няма Google отзиви) */}
+          <Reveal delay={hasGoogle ? 0.15 : 0}>
             <div className="rounded-md border border-foreground/10 bg-blush-soft p-6 md:p-8">
               <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
                 <div>

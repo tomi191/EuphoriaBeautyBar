@@ -28,7 +28,7 @@ const values = [
   { icon: Scissors, title: "Премиум занаят", desc: "25+ години опит и работа само със сертифицирани продукти." },
   { icon: HeartHandshake, title: "Личен подход", desc: "Гледаме косата и начина на живот на всеки клиент, не работим по шаблон." },
   { icon: Leaf, title: "Внимателни формули", desc: "Активни вещества без агресивни сулфати, парабени и токсини." },
-  { icon: GraduationCap, title: "Постоянно обучение", desc: "Сертификати от Goldwell, Montibello, GIGI, Esthemax и SAN MARINE." },
+  { icon: GraduationCap, title: "Постоянно обучение", desc: "Сертификати на Снежана от Goldwell и Montibello; всички кабинети работят само с професионални продуктови линии." },
 ];
 
 const milestones = [

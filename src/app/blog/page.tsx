@@ -8,10 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { getPublishedPosts } from "@/lib/data/blog-store";
 
 export const metadata: Metadata = {
-  title: "Журнал",
+  title: "Журнал — грижа за коса, кожа и нокти",
   alternates: { canonical: "/blog" },
   description:
     "Статии за грижа за коса, козметика и маникюр от Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
+  openGraph: {
+    title: "Журнал — грижа за коса, кожа и нокти",
+    description: "Статии за грижа за коса, козметика и маникюр от Euphoria, Варна.",
+    url: "/blog",
+  },
 };
 
 const dateFormatter = new Intl.DateTimeFormat("bg-BG", {
