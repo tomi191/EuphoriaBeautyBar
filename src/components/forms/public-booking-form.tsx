@@ -404,8 +404,8 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
             </ul>
             <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">
               {selectedServices.some((s) => priceVaries(resolveOffering(s, performer)))
-                ? "Цените са ориентировъчни. Крайната сума зависи от дължината и състоянието на косата и използваните продукти — уточнява се на място."
-                : "Цените са ориентировъчни и може да варират според състоянието на косата и използваните продукти."}
+                ? "Цените са ориентировъчни. Крайната сума зависи от обема на работата и използваните продукти - уточнява се на място."
+                : "Цените са ориентировъчни и може да варират според обема на работата и използваните продукти."}
             </p>
           </div>
         )}
@@ -516,7 +516,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
               Салонът е затворен на тази дата. Избери друг ден.
             </p>
           ) : slots.length === 0 ? (
-            <p className="text-sm text-muted-foreground">За тази услуга няма как да се запази час на тази дата. Пробвай друг ден или се обади.</p>
+            <p className="text-sm text-muted-foreground">Няма свободни часове за тази дата. Пробвай друг ден или се обади.</p>
           ) : (
             <>
               {slots.every((s) => s.status !== "free") && (
@@ -581,7 +581,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
         <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4" />
           <span className="text-foreground/80">
-            Приемам условията: отказ само по телефон, минимум 5 часа преди часа. При закъснение или неявяване се начислява 50% от стойността на услугата.
+            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата.
           </span>
         </label>
 

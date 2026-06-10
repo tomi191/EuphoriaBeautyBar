@@ -9,6 +9,7 @@ import { montibelloProducts } from "@/lib/data/montibello";
 
 export const metadata: Metadata = {
   title: "Montibello HOP Ultra",
+  alternates: { canonical: "/montibello" },
   description:
     "Цялата линия Montibello HOP Ultra — професионална грижа за коса с Repair, Volume, Silver, Hydration, Colour и Blonde формули.",
 };

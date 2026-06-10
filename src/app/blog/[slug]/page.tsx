@@ -191,7 +191,7 @@ export default async function BlogPostPage({ params }: Params) {
             description: post.excerpt,
             datePublished: post.date,
             dateModified: post.date,
-            ...(post.cover && { image: `${siteConfig.url}${post.cover}` }),
+            ...(post.cover && { image: post.cover.startsWith("http") ? post.cover : `${siteConfig.url}${post.cover}` }),
             mainEntityOfPage: { "@type": "WebPage", "@id": `${siteConfig.url}/blog/${post.slug}` },
             author: {
               "@type": "Person",

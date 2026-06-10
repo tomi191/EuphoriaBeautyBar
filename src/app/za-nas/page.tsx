@@ -19,6 +19,7 @@ import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "За нас",
+  alternates: { canonical: "/za-nas" },
   description:
     "Историята на Euphoria Hair & Beauty Bar в кв. Левски, Варна. Основан през 2023 г. от Снежана Саблева, фризьор с над 25 години опит.",
 };

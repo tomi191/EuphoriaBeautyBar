@@ -6,6 +6,7 @@ import { galleryImages } from "@/lib/data/gallery";
 
 export const metadata: Metadata = {
   title: "Галерия",
+  alternates: { canonical: "/galeriya" },
   description:
     "Преди и след трансформации, прически, маникюри и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
 };

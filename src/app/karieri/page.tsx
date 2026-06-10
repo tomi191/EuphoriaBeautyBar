@@ -9,6 +9,7 @@ import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Места под наем",
+  alternates: { canonical: "/karieri" },
   description: "Свободни работни места под наем в Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
 };
 

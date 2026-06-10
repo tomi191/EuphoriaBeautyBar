@@ -8,6 +8,7 @@ import { getServiceCatalog } from "@/lib/data/service-catalog";
 
 export const metadata: Metadata = {
   title: "Услуги",
+  alternates: { canonical: "/uslugi" },
   description:
     "Пълен каталог услуги в Euphoria Beauty Bar — фризьорство, терапии, маникюр, педикюр и козметика с премиум продукти.",
 };

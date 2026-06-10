@@ -19,10 +19,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { product: slug } = await params;
   const product = getMontibelloProduct(slug);
-  if (!product) return {};
+  if (!product) return { robots: { index: false } };
   return {
     title: `${product.name} — Montibello`,
     description: product.shortDescription,
+    alternates: { canonical: `/montibello/${product.slug}` },
   };
 }
 

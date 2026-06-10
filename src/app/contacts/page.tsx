@@ -9,6 +9,7 @@ import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Контакти и резервации",
+  alternates: { canonical: "/contacts" },
   description:
     "Резервирай час, открий ни на картата или ни пиши директно. Euphoria Hair & Beauty Bar във Варна.",
 };

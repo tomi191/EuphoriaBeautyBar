@@ -38,7 +38,8 @@ export const metadata: Metadata = {
     template: `%s · ${siteConfig.shortName}`,
   },
   description: siteConfig.description,
-  alternates: { canonical: "/" },
+  // canonical НЕ се слага тук — наследява се от всички страници и ги обявява
+  // за дубликати на началната. Всяка страница декларира своя в metadata.
   keywords: [
     "фризьорски салон Варна",
     "балаяж Варна",

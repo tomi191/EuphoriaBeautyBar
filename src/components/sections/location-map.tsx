@@ -71,7 +71,7 @@ export function LocationMap() {
           >
             <a href={directionsHref} target="_blank" rel="noopener noreferrer">
               <Navigation className="size-4" strokeWidth={1.8} />
-              Опътване
+              Упътване
             </a>
           </Button>
         </Reveal>

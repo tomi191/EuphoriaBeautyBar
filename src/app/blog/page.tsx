@@ -9,6 +9,7 @@ import { getPublishedPosts } from "@/lib/data/blog-store";
 
 export const metadata: Metadata = {
   title: "Журнал",
+  alternates: { canonical: "/blog" },
   description:
     "Статии за грижа за коса, козметика и маникюр от Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
 };

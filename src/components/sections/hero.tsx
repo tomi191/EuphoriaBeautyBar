@@ -12,7 +12,16 @@ interface HeroProps {
   rating?: { value: number; count: number } | null;
 }
 
+/** Днешното работно време по график: Пон-Пет 09-18, Съб 09-17, Нед почивен. */
+function todayHours(): { open: boolean; label: string } {
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Sofia", weekday: "short" }).format(new Date());
+  if (wd === "Sun") return { open: false, label: "Почивен ден" };
+  if (wd === "Sat") return { open: true, label: "09:00 – 17:00" };
+  return { open: true, label: "09:00 – 18:00" };
+}
+
 export function Hero({ rating }: HeroProps) {
+  const today = todayHours();
   return (
     <section className="relative isolate min-h-[88svh] overflow-hidden bg-cream">
       {/* Фон — реалната снимка на салона */}
@@ -61,7 +70,7 @@ export function Hero({ rating }: HeroProps) {
               transition={{ duration: 0.9, delay: 0.55 }}
               className="mt-6 max-w-lg font-serif text-lg leading-relaxed italic text-foreground/80 md:text-xl"
             >
-              Работим с професионални марки като Montibello, Goldwell и GIGI. Намираме се в кв. Левски, а час запазваш по телефон или във Viber.
+              Работим с професионални марки като Montibello, Goldwell и GIGI. Намираме се в кв. Левски, а час запазваш онлайн, по телефон или във Viber.
             </motion.p>
 
             <motion.div
@@ -118,12 +127,12 @@ export function Hero({ rating }: HeroProps) {
 
         {/* Долен info ред — над непрозрачната част на воала */}
         <div className="flex items-center gap-3 border-t border-foreground/10 pt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/70">
-          <span className="relative grid size-2 place-items-center rounded-full bg-mint">
-            <span className="absolute inset-0 animate-ping rounded-full bg-mint" />
+          <span className={"relative grid size-2 place-items-center rounded-full " + (today.open ? "bg-mint" : "bg-foreground/30")}>
+            {today.open && <span className="absolute inset-0 animate-ping rounded-full bg-mint" />}
           </span>
-          Днес отворено
+          {today.open ? "Днес отворено" : "Днес почиваме"}
           <span className="inline-flex items-center gap-1.5 text-foreground/50">
-            <Clock className="size-3" /> 09:00 – 18:00
+            <Clock className="size-3" /> {today.label}
           </span>
         </div>
       </div>

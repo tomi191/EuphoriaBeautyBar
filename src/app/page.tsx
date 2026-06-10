@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Hero } from "@/components/sections/hero";
 import { FeaturedServices } from "@/components/sections/featured-services";
 import { BrandsMarquee } from "@/components/sections/brands-marquee";
@@ -12,6 +13,9 @@ import { LocationMap } from "@/components/sections/location-map";
 import { InstagramSection } from "@/components/sections/instagram-section";
 import { LineDivider } from "@/components/brand/line-divider";
 import { db } from "@/lib/db";
+
+// Canonical за началната (root layout вече не слага глобален).
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const googleReviews = await db.query.googleReviews.findMany({ columns: { rating: true } });
