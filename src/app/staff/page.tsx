@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import * as React from "react";
 import Link from "next/link";
 import { CalendarX2, MessageCircle, Phone, Plus, TrendingUp, Users } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
-import { sofiaWallToUtc } from "@/lib/booking/time";
+import { sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
@@ -78,6 +79,40 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const clientIds = [...new Set([...bookings, ...upcomingRows].map((b) => b.clientId).filter(Boolean) as string[])];
   const clients = clientIds.length ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
+
+  // Работно време за избрания ден (собствено ?? салонно) — за „свободно" прозорците.
+  const wd = sofiaWeekday(selectedKey);
+  const [ownWh, salonWh] = await Promise.all([
+    db.query.resourceWorkingHours.findFirst({
+      where: (w, { and, eq }) => and(eq(w.resourceId, resource.id), eq(w.weekday, wd)),
+    }),
+    db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }),
+  ]);
+  const wh = ownWh ?? salonWh;
+  const openAt = wh && !wh.closed && wh.openTime ? sofiaWallToUtc(selectedKey, wh.openTime) : null;
+  const closeAt = wh && !wh.closed && wh.closeTime ? sofiaWallToUtc(selectedKey, wh.closeTime) : null;
+
+  // Timeline = часове + „свободно" прозорци (>= 20 мин) между тях.
+  type TimelineItem = { kind: "booking"; b: (typeof bookings)[number] } | { kind: "gap"; start: Date; end: Date };
+  const GAP_MIN = 20 * 60000;
+  const items: TimelineItem[] = [];
+  let cursor = openAt;
+  for (const b of bookings) {
+    if (cursor && b.startAt.getTime() - cursor.getTime() >= GAP_MIN) {
+      items.push({ kind: "gap", start: cursor, end: b.startAt });
+    }
+    items.push({ kind: "booking", b });
+    if (!cursor || b.endAt.getTime() > cursor.getTime()) cursor = b.endAt;
+  }
+  if (cursor && closeAt && closeAt.getTime() - cursor.getTime() >= GAP_MIN) {
+    items.push({ kind: "gap", start: cursor, end: closeAt });
+  }
+
+  // „Сега" линията се вмъква на хронологичното ѝ място (само за днешния ден).
+  const isToday = selectedKey === todayKey;
+  const itemStart = (it: TimelineItem) => (it.kind === "booking" ? it.b.startAt : it.start);
+  const nowIndex = isToday ? items.findIndex((it) => itemStart(it).getTime() > now.getTime()) : -1;
+  const nowPos = isToday ? (nowIndex === -1 ? items.length : nowIndex) : -1;
 
   // Компактен dataset за client-side търсенето.
   const upcoming: UpcomingBooking[] = upcomingRows.map((b) => {
@@ -155,12 +190,45 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
         ) : (
           <div className="relative pl-[52px]">
             <div className="absolute bottom-2 left-[44px] top-1 w-px bg-border" />
-            {bookings.map((b) => {
+            {items.map((item, idx) => {
+              // „Сега" линия на хронологичното ѝ място (само днес).
+              const nowLine =
+                isToday && idx === nowPos ? (
+                  <div key="now" className="relative mb-3 flex items-center" aria-label="Сега">
+                    <span className="absolute -left-[52px] w-11 text-right text-[10px] font-bold tabular-nums text-destructive">
+                      {timeFmt.format(now)}
+                    </span>
+                    <span className="absolute -left-[12px] size-3 rounded-full border-2 border-background bg-destructive" />
+                    <div className="h-px flex-1 bg-destructive/60" />
+                  </div>
+                ) : null;
+
+              if (item.kind === "gap") {
+                const gapMins = Math.round((item.end.getTime() - item.start.getTime()) / 60000);
+                return (
+                  <React.Fragment key={`gap-${item.start.toISOString()}`}>
+                    {nowLine}
+                    <div className="relative mb-3">
+                      <span className="absolute -left-[52px] top-0 w-11 text-right text-xs tabular-nums text-muted-foreground/60">
+                        {timeFmt.format(item.start)}
+                      </span>
+                      <span className="absolute -left-[9px] top-1.5 size-2 rounded-full border-2 border-background bg-border" />
+                      <div className="rounded-xl border border-dashed border-border/80 px-3.5 py-2 text-xs text-muted-foreground">
+                        Свободно · {timeFmt.format(item.start)} – {timeFmt.format(item.end)} ({durationLabel(gapMins)})
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              }
+
+              const b = item.b;
               const client = b.clientId ? clientById.get(b.clientId) : undefined;
               const st = STATUS[b.status] ?? STATUS.pending;
               const mins = Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000);
               return (
-                <div key={b.id} className="relative mb-3">
+                <React.Fragment key={b.id}>
+                {nowLine}
+                <div className="relative mb-3">
                   <span className="absolute -left-[52px] top-0 w-11 text-right text-xs font-bold tabular-nums text-muted-foreground">
                     {timeFmt.format(b.startAt)}
                   </span>
@@ -212,8 +280,19 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                     {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
+            {/* „Сега" в края — когато всичко за деня е минало. */}
+            {isToday && nowPos === items.length && items.length > 0 && (
+              <div className="relative mb-3 flex items-center" aria-label="Сега">
+                <span className="absolute -left-[52px] w-11 text-right text-[10px] font-bold tabular-nums text-destructive">
+                  {timeFmt.format(now)}
+                </span>
+                <span className="absolute -left-[12px] size-3 rounded-full border-2 border-background bg-destructive" />
+                <div className="h-px flex-1 bg-destructive/60" />
+              </div>
+            )}
           </div>
         )}
       </ScheduleSearch>
