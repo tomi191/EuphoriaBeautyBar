@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -51,8 +51,10 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const [query, setQuery] = React.useState("");
 
-  const shown = list.filter((s) => s.category === activeCat);
+  const q = query.trim().toLowerCase();
+  const shown = list.filter((s) => s.category === activeCat && (q === "" || s.name.toLowerCase().includes(q)));
   const allGroups = React.useMemo(() => uniq(list.map((s) => s.groupTitle)), [list]);
 
   async function onToggle(s: MyServiceOpt) {
@@ -107,11 +109,32 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="relative mb-2">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Търси услуга…"
+          aria-label="Търси услуга"
+          className="h-11 rounded-xl pl-9 pr-10"
+        />
+        {query !== "" && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Изчисти търсенето"
+            className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
         {shown.map((s) => (
           <div
             key={s.id}
-            className={"flex items-center gap-2 rounded-2xl border border-border bg-background p-3.5 " + (s.offered ? "" : "opacity-55")}
+            className={"flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 " + (s.offered ? "" : "opacity-55")}
           >
             <button
               type="button"
@@ -119,8 +142,8 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
               onClick={() => setEditing(s)}
               className="min-w-0 flex-1 text-left disabled:cursor-default"
             >
-              <p className="font-semibold leading-tight">{s.name}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="text-sm font-semibold leading-tight">{s.name}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {s.offered ? (
                   <span className="inline-flex items-center gap-1.5">
                     {s.durationMin} мин · <span className="font-bold text-primary">{formatServicePrice(s)}</span>
@@ -169,7 +192,11 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
             )}
           </div>
         ))}
-        {shown.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Няма услуги в тази категория.</p>}
+        {shown.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {q !== "" ? "Няма услуга по това търсене." : "Няма услуги в тази категория."}
+          </p>
+        )}
       </div>
 
       <Button

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Check, Lock } from "lucide-react";
+import { Loader2, CheckCircle2, Check, Lock, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,11 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
   const svc = services.find((s) => s.id === serviceId);
   const categories = React.useMemo(() => uniq(services.map((s) => s.category)), [services]);
   const [activeCat, setActiveCat] = React.useState(categories[0] ?? "");
-  const shown = services.filter((s) => s.category === activeCat);
+  const [query, setQuery] = React.useState("");
+  /** true = списъкът е разгънат за смяна на вече избрана услуга. */
+  const [picking, setPicking] = React.useState(false);
+  const q = query.trim().toLowerCase();
+  const shown = services.filter((s) => s.category === activeCat && (q === "" || s.name.toLowerCase().includes(q)));
   const pills = React.useMemo(() => weekPills(), []);
 
   React.useEffect(() => {
@@ -115,53 +119,102 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      {/* Услуга — карти, не dropdown */}
+      {/* Услуга — карти, не dropdown; при избрана услуга списъкът се свива до 1 ред */}
       <section>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Услуга</p>
-        {categories.length > 1 && (
-          <div className="mb-3 flex gap-1.5 rounded-2xl bg-cream p-1.5">
-            {categories.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setActiveCat(c)}
-                className={
-                  "flex-1 rounded-xl py-2 text-sm font-semibold transition-colors " +
-                  (c === activeCat ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")
-                }
-              >
-                {c}
-              </button>
-            ))}
+        {svc && !picking ? (
+          <div className="flex items-center gap-2.5 rounded-xl border border-foreground bg-secondary px-3 py-2">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full border border-foreground bg-foreground text-background">
+              <Check className="size-3" strokeWidth={3} />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold leading-tight">{svc.name}</span>
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{svc.durationMin} мин</span>
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="shrink-0 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold transition-colors hover:border-foreground/40"
+            >
+              Промени
+            </button>
           </div>
-        )}
-        <div className="space-y-1.5">
-          {shown.map((s) => {
-            const selected = serviceId === s.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setServiceId(s.id)}
-                className={
-                  "flex w-full items-center gap-2.5 rounded-2xl border p-3.5 text-left transition-colors " +
-                  (selected ? "border-foreground bg-secondary" : "border-border bg-background hover:border-foreground/40")
-                }
-              >
-                <span
-                  className={
-                    "grid size-5 shrink-0 place-items-center rounded-full border " +
-                    (selected ? "border-foreground bg-foreground text-background" : "border-input")
-                  }
+        ) : (
+          <>
+            {categories.length > 1 && (
+              <div className="mb-3 flex gap-1.5 rounded-2xl bg-cream p-1.5">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setActiveCat(c)}
+                    className={
+                      "flex-1 rounded-xl py-2 text-sm font-semibold transition-colors " +
+                      (c === activeCat ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")
+                    }
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="relative mb-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                placeholder="Търси услуга…"
+                aria-label="Търси услуга"
+                className="h-11 rounded-xl pl-9 pr-10"
+              />
+              {query !== "" && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  aria-label="Изчисти търсенето"
+                  className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground"
                 >
-                  {selected && <Check className="size-3" strokeWidth={3} />}
-                </span>
-                <span className="min-w-0 flex-1 font-semibold leading-tight">{s.name}</span>
-                <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{s.durationMin} мин</span>
-              </button>
-            );
-          })}
-        </div>
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              {shown.map((s) => {
+                const selected = serviceId === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setServiceId(s.id);
+                      setPicking(false);
+                      setQuery("");
+                    }}
+                    className={
+                      "flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-colors " +
+                      (selected ? "border-foreground bg-secondary" : "border-border bg-background hover:border-foreground/40")
+                    }
+                  >
+                    <span
+                      className={
+                        "grid size-5 shrink-0 place-items-center rounded-full border " +
+                        (selected ? "border-foreground bg-foreground text-background" : "border-input")
+                      }
+                    >
+                      {selected && <Check className="size-3" strokeWidth={3} />}
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-semibold leading-tight">{s.name}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{s.durationMin} мин</span>
+                  </button>
+                );
+              })}
+              {shown.length === 0 && (
+                <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+                  Няма услуга по това търсене.
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </section>
 
       {/* Дата — pills като графика */}

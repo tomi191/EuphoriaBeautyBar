@@ -7,6 +7,7 @@ import { sofiaWallToUtc } from "@/lib/booking/time";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
+import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
 
 export const dynamic = "force-dynamic";
 
@@ -47,26 +48,49 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const { resource } = await requireStaff();
   const sp = await searchParams;
 
-  const todayKey = dateKeyFmt.format(new Date());
+  const now = new Date();
+  const todayKey = dateKeyFmt.format(now);
   const selectedKey = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : todayKey;
 
   const dayStart = sofiaWallToUtc(selectedKey, "00:00");
   const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
+  const upcomingEnd = new Date(now.getTime() + 30 * 86400000);
 
-  const bookings = await db.query.bookings.findMany({
-    where: (b, { and, eq, gte, lt, notInArray }) =>
-      and(eq(b.resourceId, resource.id), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
-    orderBy: (b, { asc }) => [asc(b.startAt)],
-  });
+  // Дневен график + всички предстоящи часове за 30 дни напред (за search-а).
+  const [bookings, upcomingRows] = await Promise.all([
+    db.query.bookings.findMany({
+      where: (b, { and, eq, gte, lt, notInArray }) =>
+        and(eq(b.resourceId, resource.id), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
+      orderBy: (b, { asc }) => [asc(b.startAt)],
+    }),
+    db.query.bookings.findMany({
+      where: (b, { and, eq, gte, lt, inArray }) =>
+        and(eq(b.resourceId, resource.id), gte(b.startAt, now), lt(b.startAt, upcomingEnd), inArray(b.status, ["confirmed", "pending", "arrived"])),
+      orderBy: (b, { asc }) => [asc(b.startAt)],
+      columns: { id: true, startAt: true, serviceName: true, clientId: true, status: true },
+    }),
+  ]);
 
-  const clientIds = [...new Set(bookings.map((b) => b.clientId).filter(Boolean) as string[])];
+  const clientIds = [...new Set([...bookings, ...upcomingRows].map((b) => b.clientId).filter(Boolean) as string[])];
   const clients = clientIds.length ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
 
+  // Компактен dataset за client-side търсенето.
+  const upcoming: UpcomingBooking[] = upcomingRows.map((b) => {
+    const client = b.clientId ? clientById.get(b.clientId) : undefined;
+    return {
+      id: b.id,
+      startAtISO: b.startAt.toISOString(),
+      serviceName: b.serviceName,
+      clientName: client?.name ?? "",
+      clientPhone: client?.phone ?? "",
+      status: b.status,
+    };
+  });
+
   // 7 дни напред за date pills
-  const base = new Date();
   const pills = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(base.getTime() + i * 86400000);
+    const d = new Date(now.getTime() + i * 86400000);
     return { key: dateKeyFmt.format(d), day: pillDay.format(d), num: pillNum.format(d) };
   });
 
@@ -77,91 +101,93 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
         <h1 className="mt-1 font-display text-2xl font-medium">Твоят ден</h1>
       </div>
 
-      <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
-        {pills.map((p) => {
-          const active = p.key === selectedKey;
-          return (
-            <Link
-              key={p.key}
-              href={p.key === todayKey ? "/staff" : `/staff?date=${p.key}`}
-              className={
-                "flex w-12 shrink-0 flex-col items-center rounded-2xl border py-2 transition-colors " +
-                (active ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/40")
-              }
-            >
-              <span className={"text-[11px] font-medium " + (active ? "text-background/70" : "text-muted-foreground")}>{p.day}</span>
-              <span className="mt-0.5 text-lg font-bold tabular-nums">{p.num}</span>
-            </Link>
-          );
-        })}
-      </div>
-
-      <InstallBanner />
-
-      {bookings.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-background p-8 text-center text-muted-foreground">
-          <CalendarX2 className="mx-auto size-8" strokeWidth={1.5} />
-          <p className="mt-3 text-sm">Няма записани часове за този ден.</p>
-        </div>
-      ) : (
-        <div className="relative pl-[52px]">
-          <div className="absolute bottom-2 left-[44px] top-1 w-px bg-border" />
-          {bookings.map((b) => {
-            const client = b.clientId ? clientById.get(b.clientId) : undefined;
-            const st = STATUS[b.status] ?? STATUS.pending;
-            const mins = Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000);
+      <ScheduleSearch upcoming={upcoming}>
+        <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
+          {pills.map((p) => {
+            const active = p.key === selectedKey;
             return (
-              <div key={b.id} className="relative mb-3">
-                <span className="absolute -left-[52px] top-0 w-11 text-right text-xs font-bold tabular-nums text-muted-foreground">
-                  {timeFmt.format(b.startAt)}
-                </span>
-                <span className="absolute -left-[10px] top-1.5 size-2.5 rounded-full border-2 border-background bg-primary" />
-                <div className={"rounded-2xl border p-3.5 " + st.block}>
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-semibold leading-tight">{b.serviceName}</p>
-                    <span className={"shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " + st.cls}>{st.label}</span>
-                  </div>
-                  {client && (
-                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-                      <span>
-                        {client.name}
-                        {client.phone ? ` · ${client.phone}` : ""}
-                      </span>
-                      {client.phone && (
-                        <span className="inline-flex items-center gap-1">
-                          <a
-                            href={`tel:${dialNumber(client.phone)}`}
-                            aria-label={`Обади се на ${client.name}`}
-                            title="Обади се"
-                            className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
-                          >
-                            <Phone className="size-3.5" strokeWidth={2.2} />
-                          </a>
-                          <a
-                            href={`viber://chat?number=${dialNumber(client.phone)}`}
-                            aria-label={`Пиши във Viber на ${client.name}`}
-                            title="Viber"
-                            className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
-                          >
-                            <MessageCircle className="size-3.5" strokeWidth={2.2} />
-                          </a>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="mt-1.5 flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-primary">
-                      {timeFmt.format(b.startAt)} – {timeFmt.format(b.endAt)} · {durationLabel(mins)}
-                    </p>
-                    {(b.status === "confirmed" || b.status === "pending") && <StaffCancelButton id={b.id} />}
-                  </div>
-                  {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
-                </div>
-              </div>
+              <Link
+                key={p.key}
+                href={p.key === todayKey ? "/staff" : `/staff?date=${p.key}`}
+                className={
+                  "flex w-12 shrink-0 flex-col items-center rounded-2xl border py-2 transition-colors " +
+                  (active ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/40")
+                }
+              >
+                <span className={"text-[11px] font-medium " + (active ? "text-background/70" : "text-muted-foreground")}>{p.day}</span>
+                <span className="mt-0.5 text-lg font-bold tabular-nums">{p.num}</span>
+              </Link>
             );
           })}
         </div>
-      )}
+
+        <InstallBanner />
+
+        {bookings.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-background p-8 text-center text-muted-foreground">
+            <CalendarX2 className="mx-auto size-8" strokeWidth={1.5} />
+            <p className="mt-3 text-sm">Няма записани часове за този ден.</p>
+          </div>
+        ) : (
+          <div className="relative pl-[52px]">
+            <div className="absolute bottom-2 left-[44px] top-1 w-px bg-border" />
+            {bookings.map((b) => {
+              const client = b.clientId ? clientById.get(b.clientId) : undefined;
+              const st = STATUS[b.status] ?? STATUS.pending;
+              const mins = Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000);
+              return (
+                <div key={b.id} className="relative mb-3">
+                  <span className="absolute -left-[52px] top-0 w-11 text-right text-xs font-bold tabular-nums text-muted-foreground">
+                    {timeFmt.format(b.startAt)}
+                  </span>
+                  <span className="absolute -left-[10px] top-1.5 size-2.5 rounded-full border-2 border-background bg-primary" />
+                  <div className={"rounded-2xl border p-3.5 " + st.block}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold leading-tight">{b.serviceName}</p>
+                      <span className={"shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " + st.cls}>{st.label}</span>
+                    </div>
+                    {client && (
+                      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+                        <span>
+                          {client.name}
+                          {client.phone ? ` · ${client.phone}` : ""}
+                        </span>
+                        {client.phone && (
+                          <span className="inline-flex items-center gap-1">
+                            <a
+                              href={`tel:${dialNumber(client.phone)}`}
+                              aria-label={`Обади се на ${client.name}`}
+                              title="Обади се"
+                              className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                            >
+                              <Phone className="size-3.5" strokeWidth={2.2} />
+                            </a>
+                            <a
+                              href={`viber://chat?number=${dialNumber(client.phone)}`}
+                              aria-label={`Пиши във Viber на ${client.name}`}
+                              title="Viber"
+                              className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                            >
+                              <MessageCircle className="size-3.5" strokeWidth={2.2} />
+                            </a>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-primary">
+                        {timeFmt.format(b.startAt)} – {timeFmt.format(b.endAt)} · {durationLabel(mins)}
+                      </p>
+                      {(b.status === "confirmed" || b.status === "pending") && <StaffCancelButton id={b.id} />}
+                    </div>
+                    {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ScheduleSearch>
 
       <Link
         href="/staff/new"
