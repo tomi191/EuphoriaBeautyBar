@@ -58,8 +58,8 @@ export function TeamSection() {
             <div aria-hidden className="absolute inset-x-6 -bottom-6 top-12 -z-10 rounded-md bg-mint" />
             <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md bg-secondary lg:aspect-[4/5]">
               <Image
-                src={founder.image}
-                alt={founder.name}
+                src={founder.imageSalon ?? founder.image}
+                alt={`${founder.name} в салон Euphoria`}
                 fill
                 sizes="(max-width: 1024px) 100vw, 60vw"
                 className="object-cover object-top"
