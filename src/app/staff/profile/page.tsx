@@ -4,6 +4,8 @@ import { getMyStats } from "@/lib/actions/staff-bookings";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffProfileForm } from "@/components/staff/profile-form";
 import { StaffNotifications } from "@/components/staff/staff-notifications";
+import { BiometricManage } from "@/components/staff/biometric-manage";
+import { passkeysEnabled } from "@/lib/passkey-support";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,14 @@ export default async function StaffProfilePage() {
       <div className="mb-3">
         <StaffNotifications />
       </div>
+
+      {passkeysEnabled && (
+        <section className="mb-3">
+          <h2 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Вход с отпечатък</h2>
+          <BiometricManage />
+        </section>
+      )}
+
       <StaffProfileForm initialName={resource.name} initialImage={resource.image} initialBio={resource.bio} />
     </StaffShell>
   );

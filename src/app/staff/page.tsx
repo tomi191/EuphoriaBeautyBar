@@ -14,6 +14,7 @@ import { BookingStatusActions } from "@/components/staff/booking-status-actions"
 import { BookingEditSheet, type EditServiceOpt } from "@/components/staff/booking-edit-sheet";
 import { ClientFileTrigger } from "@/components/staff/client-file-sheet";
 import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
+import { BiometricPrompt } from "@/components/staff/biometric-prompt";
 
 export const dynamic = "force-dynamic";
 
@@ -180,6 +181,8 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
           </Link>
         </div>
       </div>
+
+      <BiometricPrompt />
 
       <ScheduleSearch upcoming={upcoming}>
         <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">

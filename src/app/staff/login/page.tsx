@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/logo";
 import { InstallBanner } from "@/components/staff/install-banner";
+import { BiometricLoginButton } from "@/components/staff/biometric-login-button";
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -37,6 +38,7 @@ export default function StaffLoginPage() {
         </div>
         <p className="mb-6 text-center text-sm text-muted-foreground">Вход за екипа</p>
         <InstallBanner />
+        <BiometricLoginButton />
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-8">
           <div className="space-y-2">
             <Label htmlFor="email">Имейл</Label>
