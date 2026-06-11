@@ -55,4 +55,5 @@ scripts/montibello-raw.json
 
 # Хартиен график на Снежана — съдържа реални клиентски имена (GDPR); само локално
 scripts/seed-snezhana-schedule.ts
+scripts/fix-import-names.ts
 public/images/записани часове/
