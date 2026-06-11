@@ -6,11 +6,14 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { fetchPlaceReviews } from "@/lib/google-business";
+import { deleteConnection, fetchGbpReviews } from "@/lib/google-oauth";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 
 export async function syncGoogleReviews() {
   await requireAdmin();
-  const summary = await fetchPlaceReviews();
+  // Приоритет: Business Profile OAuth (всички отзиви, безплатно) →
+  // Places API ключ (5 отзива) → грешка.
+  const summary = (await fetchGbpReviews()) ?? (await fetchPlaceReviews());
   if (!summary) return { ok: false, reason: "missing-credentials" as const };
 
   // Ръчно добавените отзиви (id "manual-…") оцеляват при API sync.
@@ -38,6 +41,13 @@ export async function deleteGoogleReview(id: string) {
   await db.delete(schema.googleReviews).where(eq(schema.googleReviews.id, id));
   revalidatePath("/admin/reviews");
   revalidatePath("/");
+}
+
+/** Разкачва Google Business Profile връзката (изтрива записания refresh token). */
+export async function disconnectGoogleBusiness() {
+  await requireAdmin();
+  await deleteConnection();
+  revalidatePath("/admin/reviews");
 }
 
 const manualReviewSchema = z.object({
