@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { passkey } from "@better-auth/passkey";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 
@@ -11,8 +12,20 @@ export const auth = betterAuth({
       session: schema.session,
       account: schema.account,
       verification: schema.verification,
+      passkey: schema.passkey,
     },
   }),
+  plugins: [
+    passkey({
+      rpID: process.env.NODE_ENV === "production" ? "euphoriabeauty.eu" : "localhost",
+      rpName: "Euphoria",
+      authenticatorSelection: {
+        authenticatorAttachment: "platform",
+        residentKey: "preferred",
+        userVerification: "preferred",
+      },
+    }),
+  ],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,

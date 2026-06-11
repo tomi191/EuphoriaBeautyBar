@@ -56,6 +56,22 @@ export const verification = pgTable("verification", {
   updatedAt: ts("updated_at"),
 });
 
+export const passkey = pgTable("passkey", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  publicKey: text("public_key").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  credentialID: text("credential_id").notNull(),
+  counter: integer("counter").notNull().default(0),
+  deviceType: text("device_type").notNull(),
+  backedUp: boolean("backed_up").notNull().default(false),
+  transports: text("transports"),
+  createdAt: ts("created_at").$defaultFn(() => new Date()),
+  aaguid: text("aaguid"),
+});
+
 /* ──────────────────────────────────────
  * CMS таблици
  * ────────────────────────────────────── */
