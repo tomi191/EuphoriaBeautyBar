@@ -1,13 +1,16 @@
 /**
- * Google Place Details API integration за реални отзиви.
+ * Google Places API (New) integration за реални отзиви.
  *
  * За пълен списък ревюта (>5) е нужен Google Business Profile API + OAuth flow.
  * Place Details дава 5 most-relevant ревюта без OAuth — достатъчно за публичен widget.
  *
+ * Ползваме Places API (NEW) — legacy Place Details не е достъпен за нови
+ * Google Cloud проекти. В конзолата се активира „Places API (New)".
+ *
  * Setup:
- *   1. Създай API ключ в Google Cloud Console (Places API enabled)
- *   2. Добави GOOGLE_PLACES_API_KEY и GOOGLE_PLACE_ID в .env
- *   3. Намери Place ID на https://developers.google.com/maps/documentation/places/web-service/place-id
+ *   1. Създай API ключ в Google Cloud Console (Places API (New) enabled)
+ *   2. Добави GOOGLE_PLACES_API_KEY в .env.local + Vercel env
+ *   3. GOOGLE_PLACE_ID на салона: ChIJAadCMDVVpEAR15dn6Gh-2U4 (намерен 06.2026)
  */
 
 export interface PlaceReview {
@@ -30,46 +33,43 @@ export async function fetchPlaceReviews(): Promise<PlaceSummary | null> {
   const placeId = process.env.GOOGLE_PLACE_ID;
   if (!apiKey || !placeId) return null;
 
-  const url =
-    `https://maps.googleapis.com/maps/api/place/details/json` +
-    `?place_id=${placeId}` +
-    `&fields=rating,user_ratings_total,reviews` +
-    `&language=bg` +
-    `&key=${apiKey}`;
+  const url = `https://places.googleapis.com/v1/places/${placeId}?languageCode=bg`;
 
   try {
-    const res = await fetch(url, { next: { revalidate: 3600 } });
-    if (!res.ok) throw new Error(`Place API ${res.status}`);
+    const res = await fetch(url, {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "rating,userRatingCount,reviews",
+      },
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) throw new Error(`Places API (New) ${res.status}: ${await res.text()}`);
 
     const json = (await res.json()) as {
-      status: string;
-      result?: {
-        rating?: number;
-        user_ratings_total?: number;
-        reviews?: Array<{
-          author_name: string;
-          profile_photo_url?: string;
-          rating: number;
-          text: string;
-          language?: string;
-          time: number;
-        }>;
-      };
+      rating?: number;
+      userRatingCount?: number;
+      reviews?: Array<{
+        rating: number;
+        text?: { text: string; languageCode?: string };
+        originalText?: { text: string; languageCode?: string };
+        authorAttribution?: { displayName?: string; photoUri?: string };
+        publishTime: string;
+      }>;
     };
 
-    if (json.status !== "OK" || !json.result) return null;
-
     return {
-      rating: json.result.rating ?? 0,
-      totalReviews: json.result.user_ratings_total ?? 0,
-      reviews: (json.result.reviews ?? []).map((r) => ({
-        authorName: r.author_name,
-        authorPhoto: r.profile_photo_url,
-        rating: r.rating,
-        text: r.text,
-        language: r.language,
-        publishedAt: new Date(r.time * 1000),
-      })),
+      rating: json.rating ?? 0,
+      totalReviews: json.userRatingCount ?? 0,
+      reviews: (json.reviews ?? [])
+        .filter((r) => r.authorAttribution?.displayName && (r.text?.text || r.originalText?.text))
+        .map((r) => ({
+          authorName: r.authorAttribution!.displayName!,
+          authorPhoto: r.authorAttribution?.photoUri,
+          rating: r.rating,
+          text: r.text?.text ?? r.originalText?.text ?? "",
+          language: r.text?.languageCode ?? r.originalText?.languageCode,
+          publishedAt: new Date(r.publishTime),
+        })),
     };
   } catch (err) {
     console.error("[google-business] fetch failed", err);

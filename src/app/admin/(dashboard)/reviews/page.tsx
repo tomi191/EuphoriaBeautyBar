@@ -25,15 +25,14 @@ export default async function AdminReviewsPage() {
         <Alert className="mb-6 border-mint/40 bg-mint/15">
           <AlertTitle className="font-medium">Нужна е настройка</AlertTitle>
           <AlertDescription className="mt-2 text-sm">
-            За да теглим реални Google ревюта, добави следните в <code>.env</code>:
+            За да теглим реални Google ревюта, добави следните в <code>.env.local</code> и Vercel env:
             <ul className="mt-3 space-y-1 font-mono text-xs">
               <li>GOOGLE_PLACES_API_KEY=твоят_API_ключ</li>
-              <li>GOOGLE_PLACE_ID=твоят_Place_ID</li>
+              <li>GOOGLE_PLACE_ID=ChIJAadCMDVVpEAR15dn6Gh-2U4</li>
             </ul>
             <p className="mt-3">
-              Place ID на салона ще намериш на{" "}
-              <a className="text-primary hover:underline" target="_blank" rel="noopener" href="https://developers.google.com/maps/documentation/places/web-service/place-id">Google Place ID Finder</a>.
-              API ключ — в Google Cloud Console (с активирано <em>Places API</em>).
+              Place ID на салона е горният (намерен юни 2026). API ключ — в Google Cloud Console
+              с активирано <em>Places API (New)</em>; ограничи ключа до този API.
             </p>
           </AlertDescription>
         </Alert>

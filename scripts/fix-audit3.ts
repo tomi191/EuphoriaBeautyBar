@@ -2,7 +2,7 @@
 // One-off след одит №3 (10.06.2026): маха дублиращия ред „Терапии за коса“ от
 // категория „Фризьорски услуги“ (истинските терапии живеят в frizorski-terapii
 // със собствени цени) и синхронизира категорийните текстове с data/services.ts.
-import "dotenv/config";
+import "./load-env";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../src/lib/db";
 
