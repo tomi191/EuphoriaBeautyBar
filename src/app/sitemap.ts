@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
-import { montibelloProducts } from "@/lib/data/montibello";
+import { montibelloProducts, hasDetailPage } from "@/lib/data/montibello";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
@@ -35,7 +35,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
-    ...montibelloProducts.map((p) => ({
+    // Само продуктите с детайл страница (HOP) — останалите са display-only карти.
+    ...montibelloProducts.filter(hasDetailPage).map((p) => ({
       url: `${base}/montibello/${p.slug}`,
       lastModified: now,
       changeFrequency: "monthly" as const,
