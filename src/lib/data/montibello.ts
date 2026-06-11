@@ -714,7 +714,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     productType: "стайлинг",
     shortDescription: "Гамата за оформяне и финиш на Montibello.",
     description:
-      "Decode е цялата стайлинг гама: дефиниция, фиксация, текстура и блясък за всяка прическа. Продуктите оформят, но и пазят косата, докато го правят.\n\nРазделена е на под-линии - Zero, Curl, Smooth, Finish, Volume, Texture и Texture Men.",
+      "Decode е цялата стайлинг гама: дефиниция, фиксация, текстура и блясък за всяка прическа. Продуктите оформят, но и пазят косата, докато го правят.\n\nРазделена е на под-линии - Curl, Smooth, Finish, Volume, Texture и Texture Men.",
     officialImage: "/images/montibello/decode.jpg",
     accent: "ink",
   },

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "Montibello — каталог по категории",
     description:
       "Професионалната гама Montibello в Euphoria, Варна. Каталог по категории, покупка на място в салона.",
-    url: "/montibello",
+    url: `${siteConfig.url}/montibello`,
   },
 };
 

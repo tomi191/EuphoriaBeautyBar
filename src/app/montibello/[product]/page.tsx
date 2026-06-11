@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       title: `${product.name} — Montibello`,
       description: product.shortDescription,
-      url: `/montibello/${product.slug}`,
+      url: `${siteConfig.url}/montibello/${product.slug}`,
     },
   };
 }

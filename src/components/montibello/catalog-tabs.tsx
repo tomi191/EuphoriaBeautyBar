@@ -46,7 +46,9 @@ export function CatalogTabs({ categories, products }: CatalogTabsProps) {
           <button
             type="button"
             role="tab"
+            id={`mtab-${ALL}`}
             aria-selected={active === ALL}
+            aria-controls="montibello-panel"
             onClick={() => setActive(ALL)}
             className={tabClass(active === ALL)}
           >
@@ -57,7 +59,9 @@ export function CatalogTabs({ categories, products }: CatalogTabsProps) {
               key={c.slug}
               type="button"
               role="tab"
+              id={`mtab-${c.slug}`}
               aria-selected={active === c.slug}
+              aria-controls="montibello-panel"
               onClick={() => setActive(c.slug)}
               className={tabClass(active === c.slug)}
             >
@@ -68,7 +72,12 @@ export function CatalogTabs({ categories, products }: CatalogTabsProps) {
       </div>
 
       {/* Филтриран грид */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+      <div
+        id="montibello-panel"
+        role="tabpanel"
+        aria-labelledby={`mtab-${active}`}
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6"
+      >
         {filtered.map((p, i) => (
           <Reveal key={p.slug} delay={Math.min(i, 6) * 0.04}>
             <ProductCard product={p} />
