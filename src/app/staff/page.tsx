@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import * as React from "react";
 import Link from "next/link";
 import { CalendarX2, MessageCircle, Phone, Plus, TrendingUp, Users } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
-import { sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
+import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
 import { BookingStatusActions } from "@/components/staff/booking-status-actions";
+import { BookingEditSheet, type EditServiceOpt } from "@/components/staff/booking-edit-sheet";
 import { ClientFileTrigger } from "@/components/staff/client-file-sheet";
 import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
 
@@ -79,6 +82,24 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const clientIds = [...new Set([...bookings, ...upcomingRows].map((b) => b.clientId).filter(Boolean) as string[])];
   const clients = clientIds.length ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
+
+  // Услуги за edit формата (същата логика като /staff/new): каталог, филтриран
+  // по вида на изпълнителя, и стеснен до собствените услуги ако са куратирани.
+  const [svcItems, svcCats, mySvc] = await Promise.all([
+    db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
+    db.query.serviceCategories.findMany(),
+    db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.resourceId, resource.id) }),
+  ]);
+  const svcCatById = new Map(svcCats.map((c) => [c.id, c]));
+  const curated = mySvc.length > 0;
+  const mineByItem = new Map(mySvc.map((m) => [m.serviceItemId, m]));
+  const editServices: EditServiceOpt[] = svcItems.flatMap((i) => {
+    const cat = svcCatById.get(i.categoryId);
+    if (!cat || KIND_BY_SLUG[cat.slug] !== resource.kind) return [];
+    if (curated && !mineByItem.has(i.id)) return [];
+    const m = mineByItem.get(i.id);
+    return [{ id: i.id, name: i.name, category: cat.shortTitle, durationMin: m?.durationMin ?? i.durationMin }];
+  });
 
   // Работно време за избрания ден (собствено ?? салонно) — за „свободно" прозорците.
   const wd = sofiaWeekday(selectedKey);
@@ -272,7 +293,35 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                       <p className="text-xs font-semibold text-primary">
                         {timeFmt.format(b.startAt)} – {timeFmt.format(b.endAt)} · {durationLabel(mins)}
                       </p>
-                      {(b.status === "confirmed" || b.status === "pending") && <StaffCancelButton id={b.id} />}
+                      <div className="flex shrink-0 items-center gap-1">
+                        {(b.status === "confirmed" || b.status === "pending" || b.status === "arrived") && (
+                          <BookingEditSheet
+                            services={editServices}
+                            booking={{
+                              id: b.id,
+                              serviceItemId: b.serviceItemId,
+                              serviceName: b.serviceName,
+                              clientName: client?.name ?? "",
+                              clientPhone: client?.phone ?? "",
+                              dateStr: sofiaDateStr(b.startAt),
+                              timeStr: sofiaTimeLabel(b.startAt),
+                              durationMin: mins,
+                              notes: b.notes ?? "",
+                            }}
+                            trigger={
+                              <button
+                                type="button"
+                                aria-label="Редактирай часа"
+                                title="Редактирай"
+                                className="grid size-7 place-items-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-foreground hover:text-background"
+                              >
+                                <Pencil className="size-3.5" strokeWidth={2} />
+                              </button>
+                            }
+                          />
+                        )}
+                        {(b.status === "confirmed" || b.status === "pending") && <StaffCancelButton id={b.id} />}
+                      </div>
                     </div>
                     {b.startAt.getTime() < todayEnd.getTime() && (b.status === "confirmed" || b.status === "arrived") && (
                       <BookingStatusActions id={b.id} status={b.status} />

@@ -1,11 +1,27 @@
 "use client";
 
 import * as React from "react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { markArrived, markCompleted, cancelBooking } from "@/lib/actions/bookings";
+import {
+  BookingEditDialog,
+  type AdminEditBookingData,
+  type AdminEditServiceOpt,
+} from "@/components/admin/booking-edit-dialog";
 
-export function BookingRowActions({ id, status }: { id: string; status: string }) {
+export function BookingRowActions({
+  id,
+  status,
+  booking,
+  services,
+}: {
+  id: string;
+  status: string;
+  booking: AdminEditBookingData;
+  services: AdminEditServiceOpt[];
+}) {
   const [busy, setBusy] = React.useState(false);
 
   async function run(fn: () => Promise<void>) {
@@ -32,6 +48,17 @@ export function BookingRowActions({ id, status }: { id: string; status: string }
         <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => markCompleted(id))}>
           Завършен
         </Button>
+      )}
+      {!done && (
+        <BookingEditDialog
+          booking={booking}
+          services={services}
+          trigger={
+            <Button size="sm" variant="ghost" disabled={busy} aria-label="Редактирай" title="Редактирай">
+              <Pencil className="size-4" />
+            </Button>
+          }
+        />
       )}
       {!done && (
         <Button

@@ -184,7 +184,22 @@ export default async function AdminBookingsPage({
                     <span className={"inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium " + st.cls}>{st.label}</span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <BookingRowActions id={b.id} status={b.status} />
+                    <BookingRowActions
+                      id={b.id}
+                      status={b.status}
+                      services={services}
+                      booking={{
+                        id: b.id,
+                        serviceItemId: b.serviceItemId,
+                        serviceName: b.serviceName,
+                        clientName: c?.name ?? "",
+                        clientPhone: c?.phone ?? "",
+                        dateStr: sofiaDateStr(b.startAt),
+                        timeStr: sofiaTimeLabel(b.startAt),
+                        durationMin: Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000),
+                        notes: b.notes ?? "",
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               );
