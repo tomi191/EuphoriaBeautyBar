@@ -52,3 +52,7 @@ tmp-*
 # Montibello каталог v2 — суров извлечен резултат (човешки преглед, консумира се от
 # по-късните задачи на диска; не е source-of-truth за commit)
 scripts/montibello-raw.json
+
+# Хартиен график на Снежана — съдържа реални клиентски имена (GDPR); само локално
+scripts/seed-snezhana-schedule.ts
+public/images/записани часове/
