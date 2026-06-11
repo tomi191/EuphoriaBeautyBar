@@ -98,7 +98,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
     if (!cat || KIND_BY_SLUG[cat.slug] !== resource.kind) return [];
     if (curated && !mineByItem.has(i.id)) return [];
     const m = mineByItem.get(i.id);
-    return [{ id: i.id, name: i.name, category: cat.shortTitle, durationMin: m?.durationMin ?? i.durationMin }];
+    return [{ id: i.id, name: i.name, category: cat.shortTitle, durationMin: m?.durationMin ?? i.durationMin, bufferMin: m?.bufferMin ?? i.bufferMin }];
   });
 
   // Работно време за избрания ден (собствено ?? салонно) — за „свободно" прозорците.

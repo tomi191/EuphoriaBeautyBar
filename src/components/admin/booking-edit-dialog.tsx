@@ -21,6 +21,8 @@ export interface AdminEditServiceOpt {
   id: string;
   name: string;
   durationMin: number;
+  /** Буфер след услугата — влиза в резервирания блок (виж onServiceChange). */
+  bufferMin: number;
   category: string;
 }
 
@@ -79,7 +81,8 @@ export function BookingEditDialog({
     const svc = services.find((s) => s.id === id);
     if (svc) {
       setServiceName(svc.name);
-      setDuration(String(svc.durationMin));
+      // Резервираният блок = услуга + буфер (както при създаване).
+      setDuration(String(svc.durationMin + svc.bufferMin));
     }
   }
 
