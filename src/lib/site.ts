@@ -20,6 +20,9 @@ export const siteConfig = {
     countryName: "България",
     full: "гр. Варна, кв. Левски, ул. Петър Райчев 18",
     coordinates: { lat: 43.215001, lng: 27.913338 },
+    // Каноничен линк към локацията на салона (Google Maps споделена точка) —
+    // ползва се навсякъде, където адресът е кликаем (сайт + имейли).
+    mapsUrl: "https://maps.app.goo.gl/zibmA9gPhTDoYjoy5",
   },
   contact: {
     phone: "+359898663315",

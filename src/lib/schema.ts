@@ -55,7 +55,7 @@ export const localBusinessSchema = {
     },
   ],
   sameAs: [siteConfig.social.facebook, siteConfig.social.instagram],
-  hasMap: `https://www.google.com/maps?q=${siteConfig.address.coordinates.lat},${siteConfig.address.coordinates.lng}`,
+  hasMap: siteConfig.address.mapsUrl,
   paymentAccepted: ["Cash", "Credit Card", "Debit Card"],
   currenciesAccepted: "BGN, EUR",
   knowsAbout: [

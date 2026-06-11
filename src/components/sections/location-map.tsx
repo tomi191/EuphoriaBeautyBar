@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/site";
 
 const { lat, lng } = siteConfig.address.coordinates;
 const mapEmbedSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+const directionsHref = siteConfig.address.mapsUrl;
 
 /**
  * LocationMap — секция "Намери ни". Адрес, работно време и телефон до
@@ -35,7 +35,7 @@ export function LocationMap() {
               </span>
               <span>
                 <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Адрес</span>
-                <span className="font-medium">{siteConfig.address.full}</span>
+                <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="font-medium underline-offset-2 hover:text-primary hover:underline">{siteConfig.address.full}</a>
               </span>
             </div>
 

@@ -57,22 +57,30 @@ const wrap = (inner: string) => `
       </div>
       <div style="padding:28px">${inner}</div>
       <div style="padding:18px 28px;border-top:1px solid #f0eae1;font-size:12px;color:#8a8279;text-align:center">
-        ${esc(siteConfig.address.full)} · <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85;text-decoration:none">${siteConfig.contact.phoneFormatted}</a>
+        <a href="${siteConfig.address.mapsUrl}" style="color:#6f9e85;text-decoration:none">${esc(siteConfig.address.full)}</a> · <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85;text-decoration:none">${siteConfig.contact.phoneFormatted}</a>
       </div>
     </div>
   </div>`;
 
-const detailsTable = (rows: [string, string][]) => `
+// Трети елемент = стойността е готов HTML (не се escape-ва) — за линкове напр. адрес.
+const detailsTable = (rows: [string, string, boolean?][]) => `
   <table style="width:100%;border-collapse:collapse;margin:16px 0">
     ${rows
       .map(
-        ([k, v]) => `<tr>
+        ([k, v, isHtml]) => `<tr>
           <td style="padding:8px 0;color:#8a8279;font-size:14px;width:38%">${esc(k)}</td>
-          <td style="padding:8px 0;font-size:14px;font-weight:600">${esc(v)}</td>
+          <td style="padding:8px 0;font-size:14px;font-weight:600">${isHtml ? v : esc(v)}</td>
         </tr>`,
       )
       .join("")}
   </table>`;
+
+/** Адресът като линк към локацията на салона (за имейл detailsTable). */
+const addressCell = (): [string, string, boolean] => [
+  "Къде",
+  `<a href="${siteConfig.address.mapsUrl}" style="color:#6f9e85;text-decoration:underline">${esc(siteConfig.address.full)}</a>`,
+  true,
+];
 
 export interface BookingEmailData {
   clientName: string;
@@ -106,7 +114,7 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
         ["Изпълнител", data.performerName],
         ["Кога", when],
         ...(data.priceLabel ? ([["Ориентировъчна цена", data.priceLabel]] as [string, string][]) : []),
-        ["Къде", siteConfig.address.full],
+        addressCell(),
       ])}
       ${
         data.priceLabel
@@ -133,7 +141,7 @@ export async function sendReminder(to: string, data: BookingEmailData): Promise<
         ["Услуга", data.serviceName],
         ["Изпълнител", data.performerName],
         ["Кога", formatWhen(data.start)],
-        ["Къде", siteConfig.address.full],
+        addressCell(),
       ])}
       <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
         Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> минимум 5 часа преди часа.

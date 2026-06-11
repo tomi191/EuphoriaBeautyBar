@@ -113,7 +113,7 @@ export function SiteFooter() {
               </li>
               <li className="flex items-start gap-2 text-muted-foreground">
                 <MapPin className="mt-0.5 size-3.5 shrink-0" />
-                <span>{siteConfig.address.full}</span>
+                <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="hover:text-primary">{siteConfig.address.full}</a>
               </li>
             </ul>
           </div>

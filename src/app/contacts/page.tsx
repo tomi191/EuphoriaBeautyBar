@@ -74,7 +74,9 @@ export default function ContactsPage() {
 
             <div className="mt-10 space-y-6">
               <ContactItem icon={MapPin} title="Адрес">
-                {siteConfig.address.full}
+                <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-primary hover:underline">
+                  {siteConfig.address.full}
+                </a>
               </ContactItem>
               <ContactItem icon={Phone} title="Телефон" href={`tel:${siteConfig.contact.phone}`}>
                 {siteConfig.contact.phoneFormatted}

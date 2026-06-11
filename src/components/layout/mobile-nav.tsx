@@ -65,7 +65,7 @@ export function MobileNav() {
             <Phone className="size-4 text-primary" /> {siteConfig.contact.phoneFormatted}
           </a>
           <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(siteConfig.address.full)}`}
+            href={siteConfig.address.mapsUrl}
             target="_blank"
             rel="noopener"
             className="flex items-start gap-3 text-muted-foreground transition-colors hover:text-foreground"

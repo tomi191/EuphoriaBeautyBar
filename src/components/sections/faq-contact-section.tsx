@@ -94,7 +94,7 @@ export function FaqContactSection() {
                 </span>
                 <span>
                   <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Адрес</span>
-                  <span className="font-medium">{siteConfig.address.full}</span>
+                  <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="font-medium underline-offset-2 hover:text-primary hover:underline">{siteConfig.address.full}</a>
                 </span>
               </div>
 
