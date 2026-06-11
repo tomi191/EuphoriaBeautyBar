@@ -8,6 +8,8 @@ import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice } from "@/lib/booking/price";
+import { sofiaWallToUtc } from "@/lib/booking/time";
+import { upsertClientByPhone } from "@/lib/booking/clients";
 import { sendBookingConfirmation } from "@/lib/email/booking";
 
 export interface DayScheduleResult {
@@ -117,6 +119,63 @@ export async function createBooking(input: BookingInput) {
       }).catch(() => {});
     }
     return { ok: true as const, id };
+  } catch (err: unknown) {
+    const e = err as { code?: string; message?: string };
+    if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {
+      return { ok: false as const, error: "Този час вече е зает. Избери друг слот." };
+    }
+    throw err;
+  }
+}
+
+const editSchema = z.object({
+  serviceItemId: z.string().nullable().optional(),
+  serviceName: z.string().min(1),
+  clientName: z.string().optional(),
+  clientPhone: z.string().optional(),
+  dateStr: z.string(), // YYYY-MM-DD Sofia wall
+  timeStr: z.string(), // HH:MM Sofia wall
+  durationMin: z.coerce.number().int().min(5).max(600),
+  notes: z.string().nullable().optional(),
+});
+
+/**
+ * Admin редактира час: услуга, клиент, начало/продължителност, бележки. Запазва
+ * resourceId-а на записа (без смяна на изпълнител); проверява time-off конфликт и
+ * хваща EXCLUDE constraint-а (зает час) през 23P01.
+ */
+export async function updateBooking(id: string, input: z.infer<typeof editSchema>) {
+  await requireAdmin();
+  const d = editSchema.parse(input);
+  const booking = await db.query.bookings.findFirst({ where: (b, { eq }) => eq(b.id, id) });
+  if (!booking) return { ok: false as const, error: "Часът не е намерен." };
+  const start = sofiaWallToUtc(d.dateStr, d.timeStr);
+  const end = new Date(start.getTime() + d.durationMin * 60000);
+  if (await hasTimeOffConflict(booking.resourceId, start, end)) {
+    return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
+  }
+  const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
+  const item = d.serviceItemId
+    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, d.serviceItemId as string) })
+    : undefined;
+  const priceEur = d.serviceItemId ? item?.price ?? null : booking.priceEur;
+  try {
+    await db
+      .update(schema.bookings)
+      .set({
+        serviceItemId: d.serviceItemId ?? null,
+        serviceName: d.serviceName,
+        clientId: clientId ?? booking.clientId,
+        startAt: start,
+        endAt: end,
+        priceEur,
+        notes: d.notes ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.bookings.id, id));
+    revalidatePath("/admin/bookings");
+    revalidatePath("/staff");
+    return { ok: true as const };
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {

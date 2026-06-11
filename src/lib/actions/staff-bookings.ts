@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
+import { upsertClientByPhone } from "@/lib/booking/clients";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -59,15 +60,8 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
   }
 
-  // upsert клиент по телефон
-  let clientId: string;
-  const existing = await db.query.clients.findFirst({ where: (c, { eq }) => eq(c.phone, d.clientPhone) });
-  if (existing) {
-    clientId = existing.id;
-  } else {
-    clientId = nanoid();
-    await db.insert(schema.clients).values({ id: clientId, name: d.clientName, phone: d.clientPhone, createdAt: new Date() });
-  }
+  // upsert клиент по телефон (схемата изисква phone min(5) → не може да е null)
+  const clientId = (await upsertClientByPhone(d.clientName, d.clientPhone)) ?? "";
 
   try {
     const id = nanoid();
@@ -141,6 +135,63 @@ export async function rescheduleMyBooking(id: string, newStartISO: string) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {
       return { ok: false as const, error: "Този час вече е зает. Избери друг." };
+    }
+    throw err;
+  }
+}
+
+const editSchema = z.object({
+  serviceItemId: z.string().nullable().optional(),
+  serviceName: z.string().min(1),
+  clientName: z.string().optional(),
+  clientPhone: z.string().optional(),
+  dateStr: z.string(), // YYYY-MM-DD Sofia wall
+  timeStr: z.string(), // HH:MM Sofia wall
+  durationMin: z.coerce.number().int().min(5).max(600),
+  notes: z.string().nullable().optional(),
+});
+
+/**
+ * Изпълнителят редактира свой час: услуга, клиент, начало/продължителност, бележки.
+ * Запазва own-resource guard-а (намира и обновява само свой запис); проверява
+ * time-off конфликт и хваща EXCLUDE constraint-а (зает час) през 23P01.
+ */
+export async function editMyBooking(id: string, input: z.infer<typeof editSchema>) {
+  const { resource } = await requireStaff();
+  const d = editSchema.parse(input);
+  const booking = await db.query.bookings.findFirst({
+    where: (b, { and, eq }) => and(eq(b.id, id), eq(b.resourceId, resource.id)),
+  });
+  if (!booking) return { ok: false as const, error: "Часът не е намерен или не е твой." };
+  const start = sofiaWallToUtc(d.dateStr, d.timeStr);
+  const end = new Date(start.getTime() + d.durationMin * 60000);
+  if (await hasTimeOffConflict(resource.id, start, end)) {
+    return { ok: false as const, error: "Имаш отпуск/почивка в този период." };
+  }
+  const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
+  const priceEur = d.serviceItemId ? (await ownOffering(resource.id, d.serviceItemId)).priceEur : booking.priceEur;
+  try {
+    await db
+      .update(schema.bookings)
+      .set({
+        serviceItemId: d.serviceItemId ?? null,
+        serviceName: d.serviceName,
+        clientId: clientId ?? booking.clientId,
+        startAt: start,
+        endAt: end,
+        priceEur,
+        notes: d.notes ?? null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
+    revalidatePath("/staff");
+    revalidatePath("/staff/board");
+    revalidatePath("/admin/bookings");
+    return { ok: true as const };
+  } catch (err: unknown) {
+    const e = err as { code?: string; message?: string };
+    if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {
+      return { ok: false as const, error: "Застъпва друг час. Избери друго време." };
     }
     throw err;
   }
