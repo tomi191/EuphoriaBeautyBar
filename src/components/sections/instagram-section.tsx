@@ -11,7 +11,7 @@ const tiles = [
   { src: "/images/gallery/g-14.webp", span: "" },
   { src: "/images/gallery/g-21.webp", span: "row-span-2" },
   { src: "/images/gallery/g-28.webp", span: "" },
-  { src: "/images/blog/post-2.webp", span: "" },
+  { src: "/images/gallery/g-35.webp", span: "" },
 ];
 
 export function InstagramSection() {
