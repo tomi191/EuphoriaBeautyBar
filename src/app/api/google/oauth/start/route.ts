@@ -13,7 +13,10 @@ export async function GET(req: Request) {
   }
 
   const state = crypto.randomUUID();
-  const redirectUri = new URL("/api/google/oauth/callback", req.url).toString();
+  // База от конфигурацията, не от Host header-а на заявката (header injection
+  // hardening); fallback към req.url за локален dev.
+  const base = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https") ? process.env.NEXT_PUBLIC_SITE_URL : req.url;
+  const redirectUri = new URL("/api/google/oauth/callback", base).toString();
 
   const cookieStore = await cookies();
   cookieStore.set("gbp_oauth_state", state, {

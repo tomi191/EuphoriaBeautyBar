@@ -97,6 +97,7 @@ export const personSchema = {
 export const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": `${siteConfig.url}#website`,
   url: siteConfig.url,
   name: siteConfig.name,
   publisher: { "@type": "Organization", name: siteConfig.name },

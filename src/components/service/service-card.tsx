@@ -11,7 +11,16 @@ const iconMap = {
   flower: Flower2,
 } as const;
 
-export function ServiceCard({ category, index = 0 }: { category: ServiceCategory; index?: number }) {
+export function ServiceCard({
+  category,
+  index = 0,
+  priority = false,
+}: {
+  category: ServiceCategory;
+  index?: number;
+  /** true само за първата карта на /uslugi — тя е LCP елементът на страницата. */
+  priority?: boolean;
+}) {
   const Icon = iconMap[category.icon];
   return (
     <SpotlightCard className="group/card h-full border-border/60 bg-card">
@@ -21,6 +30,8 @@ export function ServiceCard({ category, index = 0 }: { category: ServiceCategory
             src={category.heroImage}
             alt={category.title}
             fill
+            priority={priority}
+            fetchPriority={priority ? "high" : undefined}
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover transition-transform duration-[900ms] ease-out group-hover/card:scale-110"
           />

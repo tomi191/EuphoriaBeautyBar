@@ -53,7 +53,7 @@ export function FeaturedGallery() {
                   alt={img.alt}
                   fill
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 16vw"
-                  quality={90}
+                  quality={75}
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </Link>

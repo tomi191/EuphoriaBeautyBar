@@ -26,7 +26,10 @@ const manrope = Manrope({
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "cyrillic"],
   variable: "--font-cormorant",
-  weight: ["400", "500", "600", "700"],
+  // Cormorant е само акцент-италик (font-serif italic + .handwritten) —
+  // сайтът реално ползва единствено 400 normal/italic. 8 преload-нати
+  // woff2 файла (226KB) се бореха с hero снимката за LCP.
+  weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
 });

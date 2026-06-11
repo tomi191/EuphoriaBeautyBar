@@ -219,7 +219,8 @@
   .handwritten {
     font-family: var(--font-cormorant), serif;
     font-style: italic;
-    font-weight: 500;
+    /* 400 вместо 500: позволява Cormorant да се вози само с един weight */
+    font-weight: 400;
   }
 
   .blob-mask {

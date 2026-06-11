@@ -52,7 +52,7 @@ export function BrandStory() {
                 alt="Интериорът на салон Euphoria Hair & Beauty Bar, кв. Левски, Варна"
                 fill
                 sizes="(max-width: 1024px) 100vw, 58vw"
-                quality={90}
+                quality={75}
                 className="object-cover"
               />
             </div>

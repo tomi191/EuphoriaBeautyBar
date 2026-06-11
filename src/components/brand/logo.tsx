@@ -27,7 +27,9 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
         alt="Euphoria Hair & Beauty Bar"
         width={width}
         height={height}
-        priority
+        // eager без priority: зарежда се веднага, но БЕЗ <link rel=preload> —
+        // 4 лого-preload-а се бореха с hero LCP за bandwidth.
+        loading="eager"
         className={cn("h-auto w-auto select-none object-contain", className)}
       />
     );
@@ -50,7 +52,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
           alt="Euphoria Hair & Beauty Bar"
           width={width}
           height={height}
-          priority
+          loading="eager"
           className={cn(sharedClasses, "block dark:hidden")}
         />
         <Image
@@ -58,7 +60,6 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
           alt="Euphoria Hair & Beauty Bar"
           width={width}
           height={height}
-          priority
           className={cn(sharedClasses, "hidden dark:block")}
           aria-hidden
         />
@@ -69,7 +70,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
         alt="Euphoria Hair & Beauty Bar"
         width={width}
         height={height}
-        priority
+        loading="eager"
         className={sharedClasses}
       />
     );

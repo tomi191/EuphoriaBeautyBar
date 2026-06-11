@@ -23,7 +23,9 @@ export async function GET(req: Request) {
   if (!code || !state || state !== savedState) return fail("invalid-state");
 
   try {
-    const redirectUri = new URL("/api/google/oauth/callback", req.url).toString();
+    // Същата деривация като в start route-а — двата URI-я трябва да съвпадат byte-за-byte.
+    const base = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https") ? process.env.NEXT_PUBLIC_SITE_URL : req.url;
+    const redirectUri = new URL("/api/google/oauth/callback", base).toString();
     const tokens = await exchangeCode(code, redirectUri);
     if (!tokens.refresh_token) return fail("no-refresh-token");
 

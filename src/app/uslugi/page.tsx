@@ -45,7 +45,7 @@ export default async function UslugiPage() {
           <div className="grid gap-5 md:grid-cols-2 lg:gap-6">
             {serviceCategories.map((category, idx) => (
               <Reveal key={category.slug} delay={idx * 0.08}>
-                <ServiceCard category={category} index={idx} />
+                <ServiceCard category={category} index={idx} priority={idx === 0} />
               </Reveal>
             ))}
           </div>

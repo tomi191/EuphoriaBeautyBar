@@ -68,9 +68,8 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
                 alt={card.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 60vw"
-                quality={90}
+                quality={75}
                 className="object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]"
-                priority={i < 2}
               />
 
               {/* Default gradient + collapsed view */}

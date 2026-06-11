@@ -63,7 +63,7 @@ export default async function AdminReviewsPage({
         <Alert className="mb-6 border-destructive/40 bg-destructive/10">
           <AlertTitle className="font-medium">Свързването не успя</AlertTitle>
           <AlertDescription className="mt-1 text-sm">
-            {OAUTH_ERRORS[sp.oauth_error] ?? sp.oauth_error}
+            {OAUTH_ERRORS[sp.oauth_error] ?? "Непознат проблем — виж сървърните логове."}
           </AlertDescription>
         </Alert>
       )}

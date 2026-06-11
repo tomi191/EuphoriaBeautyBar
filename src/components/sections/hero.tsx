@@ -30,7 +30,9 @@ export function Hero({ rating }: HeroProps) {
         alt="Интериорът на Euphoria Hair & Beauty Bar в кв. Левски, Варна — столове, огледала и зеленина"
         fill
         priority
-        quality={90}
+        // LCP елементът: fetchpriority=high го нарежда пред фонтовете/логата в опашката.
+        fetchPriority="high"
+        quality={75}
         sizes="100vw"
         className="-z-20 object-cover object-center"
       />

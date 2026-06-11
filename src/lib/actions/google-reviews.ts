@@ -16,20 +16,24 @@ export async function syncGoogleReviews() {
   const summary = (await fetchGbpReviews()) ?? (await fetchPlaceReviews());
   if (!summary) return { ok: false, reason: "missing-credentials" as const };
 
-  // Ръчно добавените отзиви (id "manual-…") оцеляват при API sync.
-  await db.delete(schema.googleReviews).where(notLike(schema.googleReviews.id, "manual-%"));
-  for (const r of summary.reviews) {
-    await db.insert(schema.googleReviews).values({
-      id: `${r.authorName}-${r.publishedAt.getTime()}`,
-      authorName: r.authorName,
-      authorPhoto: r.authorPhoto ?? null,
-      rating: r.rating,
-      text: r.text,
-      language: r.language ?? null,
-      publishedAt: r.publishedAt,
-      fetchedAt: new Date(),
-    });
-  }
+  // Транзакция: ако insert гръмне, delete-ът се връща — иначе публичната
+  // секция остава с полупразна таблица. Ръчните отзиви (id "manual-…")
+  // оцеляват; sync ID-тата са nanoid (без колизии от име+timestamp ключ).
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.googleReviews).where(notLike(schema.googleReviews.id, "manual-%"));
+    for (const r of summary.reviews) {
+      await tx.insert(schema.googleReviews).values({
+        id: `sync-${nanoid()}`,
+        authorName: r.authorName,
+        authorPhoto: r.authorPhoto ?? null,
+        rating: r.rating,
+        text: r.text,
+        language: r.language ?? null,
+        publishedAt: r.publishedAt,
+        fetchedAt: new Date(),
+      });
+    }
+  });
 
   revalidatePath("/admin/reviews");
   revalidatePath("/");
