@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageHeader } from "@/components/admin/page-header";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { SyncReviewsButton } from "@/components/admin/sync-reviews-button";
+import { AddGoogleReviewForm } from "@/components/admin/add-google-review-form";
 import { deleteGoogleReview } from "@/lib/actions/google-reviews";
 
 export default async function AdminReviewsPage() {
@@ -17,22 +18,28 @@ export default async function AdminReviewsPage() {
     <>
       <PageHeader
         title="Google ревюта"
-        subtitle="Реални отзиви от Google Business Profile, синхронизирани и кеширани в DB."
-        action={<SyncReviewsButton />}
+        subtitle="Отзиви от Google профила на салона — въведени ръчно (безплатно) или синхронизирани през Places API."
+        action={
+          <div className="flex items-center gap-2">
+            <AddGoogleReviewForm />
+            <SyncReviewsButton />
+          </div>
+        }
       />
 
       {!hasCredentials && (
         <Alert className="mb-6 border-mint/40 bg-mint/15">
-          <AlertTitle className="font-medium">Нужна е настройка</AlertTitle>
+          <AlertTitle className="font-medium">Как се добавят отзиви</AlertTitle>
           <AlertDescription className="mt-2 text-sm">
-            За да теглим реални Google ревюта, добави следните в <code>.env.local</code> и Vercel env:
-            <ul className="mt-3 space-y-1 font-mono text-xs">
-              <li>GOOGLE_PLACES_API_KEY=твоят_API_ключ</li>
-              <li>GOOGLE_PLACE_ID=ChIJAadCMDVVpEAR15dn6Gh-2U4</li>
-            </ul>
+            <p>
+              <strong>Безплатно (препоръчано):</strong> отвори{" "}
+              <a className="text-primary hover:underline" target="_blank" rel="noopener" href="https://www.google.com/maps/place/?q=place_id:ChIJAadCMDVVpEAR15dn6Gh-2U4">Google профила на салона</a>
+              , копирай отзив и го въведи с бутона „Добави ръчно“. Показва се веднага на сайта.
+            </p>
             <p className="mt-3">
-              Place ID на салона е горният (намерен юни 2026). API ключ — в Google Cloud Console
-              с активирано <em>Places API (New)</em>; ограничи ключа до този API.
+              <em>По избор — автоматичен sync:</em> API ключ от Google Cloud Console (<em>Places API (New)</em>) в env
+              променливите <code>GOOGLE_PLACES_API_KEY</code> + <code>GOOGLE_PLACE_ID=ChIJAadCMDVVpEAR15dn6Gh-2U4</code>.
+              Ръчно добавените отзиви се запазват и при sync.
             </p>
           </AlertDescription>
         </Alert>
