@@ -48,3 +48,7 @@ next-env.d.ts
 .playwright-mcp/
 .superpowers/
 tmp-*
+
+# Montibello каталог v2 — суров извлечен резултат (човешки преглед, консумира се от
+# по-късните задачи на диска; не е source-of-truth за commit)
+scripts/montibello-raw.json
