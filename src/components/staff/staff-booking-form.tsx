@@ -267,7 +267,7 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
                 );
               }
               return (
-                <span key={s.start} className={"cursor-not-allowed rounded-xl py-2.5 text-center text-sm tabular-nums " + (s.status === "busy" ? "bg-secondary text-muted-foreground/70 line-through" : "bg-muted/30 text-muted-foreground/40")}>
+                <span key={s.start} className={"cursor-not-allowed rounded-xl py-2.5 text-center text-sm tabular-nums " + (s.status === "busy" ? "bg-secondary text-muted-foreground line-through" : "bg-muted/30 text-muted-foreground/55")}>
                   {slotLabel(s.start)}
                 </span>
               );
@@ -281,19 +281,20 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Клиент</p>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Име</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-12 text-base" />
+            <Label htmlFor="sbf-name">Име</Label>
+            <Input id="sbf-name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-12 text-base" />
           </div>
           <div className="space-y-1.5">
-            <Label>Телефон</Label>
-            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12 text-base" />
+            <Label htmlFor="sbf-phone">Телефон</Label>
+            <Input id="sbf-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12 text-base" />
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label className="flex items-center gap-1.5">
+          <Label htmlFor="sbf-notes" className="flex items-center gap-1.5">
             Допълнителна информация <span className="font-normal text-muted-foreground">(по избор)</span>
           </Label>
           <Textarea
+            id="sbf-notes"
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

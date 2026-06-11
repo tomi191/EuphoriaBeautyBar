@@ -26,8 +26,8 @@ export function StaffNotifications() {
       setState("unsupported");
       return;
     }
-    navigator.serviceWorker
-      .register("/sw.js")
+    // SW вече е регистриран от layout-а (SwRegister) — ползвай ready, не нов register.
+    navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setState(sub ? "on" : "off"))
       .catch(() => setState("unsupported"));

@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Euphoria Екип",
   },
+  // iOS Safari игнорира webp за apple-touch-icon → дай PNG (вече има 192px).
+  icons: { apple: "/icons/pwa-192.png" },
   robots: { index: false, follow: false },
 };
 

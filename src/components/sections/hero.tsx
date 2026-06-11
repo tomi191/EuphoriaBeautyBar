@@ -133,7 +133,7 @@ export function Hero({ rating }: HeroProps) {
             {today.open && <span className="absolute inset-0 animate-ping rounded-full bg-mint" />}
           </span>
           {today.open ? "Днес отворено" : "Днес почиваме"}
-          <span className="inline-flex items-center gap-1.5 text-foreground/50">
+          <span className="inline-flex items-center gap-1.5 text-foreground/70">
             <Clock className="size-3" /> {today.label}
           </span>
         </div>

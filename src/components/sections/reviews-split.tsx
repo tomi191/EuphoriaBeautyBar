@@ -69,7 +69,7 @@ export async function ReviewsSplit() {
               <div className="rounded-md border border-foreground/10 bg-cream p-6 md:p-8">
                 <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
                   <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">Google ревюта</p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">Google ревюта</p>
                     <h3 className="mt-1 font-display text-2xl">От Google Business Profile</h3>
                   </div>
                   <a
@@ -113,7 +113,7 @@ export async function ReviewsSplit() {
             <div className="rounded-md border border-foreground/10 bg-blush-soft p-6 md:p-8">
               <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">Лични отзиви</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">Лични отзиви</p>
                   <h3 className="mt-1 font-display text-2xl">Споделени директно с нас</h3>
                 </div>
               </header>
@@ -150,7 +150,7 @@ export async function ReviewsSplit() {
                 >
                   <Star className="size-3.5 fill-foreground text-foreground" />
                   &ldquo;{t.quote.slice(0, 80)}{t.quote.length > 80 ? "…" : ""}&rdquo;
-                  <span className="text-foreground/50">— {t.name}</span>
+                  <span className="text-foreground/70">— {t.name}</span>
                 </span>
               ))}
             </Marquee>

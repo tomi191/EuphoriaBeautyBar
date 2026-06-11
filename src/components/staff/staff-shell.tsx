@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutGrid, Scissors, Clock, User, LogOut } from "lucide-react";
+import { CalendarDays, LayoutGrid, Scissors, Clock, User, LogOut, Plus } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +19,8 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [online, setOnline] = React.useState(true);
 
-  // Регистрира service worker-а (PWA installability) на всички екранни страници.
-  React.useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-  }, []);
+  // SW регистрацията е в layout-а (SwRegister), за всички staff екрани —
+  // не дублирай тук, иначе три register('/sw.js') на профил екрана.
 
   // Следи мрежовия статус за offline индикатора.
   React.useEffect(() => {
@@ -74,6 +70,17 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="mx-auto max-w-lg px-4 py-6">{children}</div>
+
+      {/* Глобален „Нов час" — достъпен от всеки екран (не само от графика). */}
+      {pathname !== "/staff/new" && (
+        <Link
+          href="/staff/new"
+          aria-label="Нов час"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] right-4 z-30 grid size-14 place-items-center rounded-full bg-primary text-background shadow-lg shadow-primary/30 transition-transform active:scale-95"
+        >
+          <Plus className="size-6" strokeWidth={2.2} />
+        </Link>
+      )}
 
       <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
         {tabs.map((t) => {

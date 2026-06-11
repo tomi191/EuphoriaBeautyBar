@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 interface BlurTextProps {
@@ -26,6 +26,12 @@ export function BlurText({
   by = "word",
 }: BlurTextProps) {
   const segments = by === "word" ? text.split(/(\s+)/) : Array.from(text);
+  const reduce = useReducedMotion();
+
+  // При намалено движение: текстът се показва наведнъж, без blur/fade/translate.
+  if (reduce) {
+    return <Tag className={cn("inline-block", className)}>{text}</Tag>;
+  }
 
   return (
     <Tag className={cn("inline-block", className)}>

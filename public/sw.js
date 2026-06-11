@@ -1,33 +1,79 @@
-// Service worker за работническото приложение (PWA) — installability + push известия + offline fallback.
-const STAFF_CACHE = "staff-pages-v1";
+// Service worker за работническото приложение (PWA) — installability + push известия + offline.
+// v2: добавен asset кеш (JS/CSS/икони) — без него standalone app е бяла страница офлайн след
+// cold start (HTML-ът се сервира, но Next.js chunk-овете гърмят). Тук:
+//  - навигации /staff → network-first с кеширан fallback (както преди);
+//  - статични asset-и (/_next/static, /icons, /images) → stale-while-revalidate (кешират се
+//    при първо online зареждане → офлайн boot работи след това; content-hashed са, безопасно).
+const STAFF_CACHE = "staff-pages-v2";
+const ASSET_CACHE = "staff-assets-v2";
+const PRECACHE = ["/icons/pwa-192.png", "/icons/pwa-512.png"];
 
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(ASSET_CACHE);
+      await cache.addAll(PRECACHE).catch(() => {});
+      await self.skipWaiting();
+    })(),
+  );
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // Почисти стари версии на staff кеша.
+      // Почисти стари версии на кешовете.
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k.startsWith("staff-pages-") && k !== STAFF_CACHE).map((k) => caches.delete(k)));
+      await Promise.all(
+        keys
+          .filter((k) => (k.startsWith("staff-pages-") || k.startsWith("staff-assets-")) && k !== STAFF_CACHE && k !== ASSET_CACHE)
+          .map((k) => caches.delete(k)),
+      );
       await self.clients.claim();
     })(),
   );
 });
 
-// Offline last-known-good: network-first САМО за навигации към /staff страници.
-// API заявки и POST-ове не се кешират.
+function isCacheableAsset(url) {
+  return (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/icons/") ||
+      url.pathname.startsWith("/images/"))
+  );
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.mode !== "navigate") return;
-
+  if (req.method !== "GET") return;
   const url = new URL(req.url);
+
+  // 1) Статични asset-и — stale-while-revalidate (важи и извън /staff scope, защото
+  //    chunk-овете се споделят; кешираме само GET към static пътищата).
+  if (isCacheableAsset(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(ASSET_CACHE);
+        const cached = await cache.match(req);
+        const network = fetch(req)
+          .then((res) => {
+            if (res.ok) cache.put(req, res.clone());
+            return res;
+          })
+          .catch(() => cached);
+        return cached || network;
+      })(),
+    );
+    return;
+  }
+
+  // 2) Навигации към /staff — network-first, кеширан fallback (last-known-good).
+  if (req.mode !== "navigate") return;
   if (url.origin !== self.location.origin || !url.pathname.startsWith("/staff")) return;
 
   event.respondWith(
     (async () => {
       try {
         const res = await fetch(req);
-        // Кеширай само успешен HTML отговор (последния добър за този URL).
         if (res.ok) {
           const cache = await caches.open(STAFF_CACHE);
           cache.put(req, res.clone());

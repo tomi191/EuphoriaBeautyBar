@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, useInView } from "motion/react";
+import { motion, useInView, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 interface SplitTextProps {
@@ -19,7 +19,13 @@ interface SplitTextProps {
 export function SplitText({ text, as: Tag = "h2", className, delay = 0, stagger = 0.025 }: SplitTextProps) {
   const ref = React.useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const reduce = useReducedMotion();
   const words = text.split(/(\s+)/);
+
+  // При намалено движение: показвай целия текст наведнъж, без per-char blur/translate.
+  if (reduce) {
+    return <Tag className={cn("inline-block", className)}>{text}</Tag>;
+  }
 
   return (
     <Tag className={cn("inline-block", className)}>

@@ -205,7 +205,7 @@ function PolicyCard({ num, title, text, accent, full }: { num: string; title: st
     <div className={`rounded-md border border-foreground/10 p-6 md:p-7 ${accent ? "bg-blush-soft" : "bg-background"} ${full ? "md:col-span-2" : ""}`}>
       <div className="flex items-baseline justify-between">
         <h3 className="font-display text-xl font-medium md:text-2xl">{title}</h3>
-        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/50">{num}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/70">{num}</span>
       </div>
       <p className="mt-3 text-sm leading-relaxed text-foreground/75 md:text-base">{text}</p>
     </div>

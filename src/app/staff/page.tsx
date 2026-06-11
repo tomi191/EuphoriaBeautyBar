@@ -209,7 +209,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                   <React.Fragment key={`gap-${item.start.toISOString()}`}>
                     {nowLine}
                     <div className="relative mb-3">
-                      <span className="absolute -left-[52px] top-0 w-11 text-right text-xs tabular-nums text-muted-foreground/60">
+                      <span className="absolute -left-[52px] top-0 w-11 text-right text-xs tabular-nums text-muted-foreground">
                         {timeFmt.format(item.start)}
                       </span>
                       <span className="absolute -left-[9px] top-1.5 size-2 rounded-full border-2 border-background bg-border" />

@@ -211,7 +211,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                     />
                   </div>
                   <div className="p-5">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">
                       {c.shortTitle}
                     </p>
                     <h3 className="mt-2 font-display text-xl">{c.title}</h3>

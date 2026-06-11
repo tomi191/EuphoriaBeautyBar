@@ -472,7 +472,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
         )}
 
         <div className="space-y-2">
-          <Label>Дата</Label>
+          <Label htmlFor="bf-date">Дата</Label>
           <div className="flex flex-wrap gap-1.5">
             {quickDates(7).map((d) => (
               <button
@@ -488,7 +488,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
               </button>
             ))}
           </div>
-          <Input type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="h-11" />
+          <Input id="bf-date" type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="h-11" />
         </div>
 
         <div className="space-y-2">
@@ -553,8 +553,8 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
                       className={
                         "cursor-not-allowed rounded-md py-2 text-center text-sm tabular-nums " +
                         (s.status === "busy"
-                          ? "bg-secondary text-muted-foreground/70 line-through"
-                          : "bg-muted/30 text-muted-foreground/40")
+                          ? "bg-secondary text-muted-foreground line-through"
+                          : "bg-muted/30 text-muted-foreground/55")
                       }
                     >
                       {slotLabel(s.start)}
@@ -568,17 +568,17 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Име</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-11" />
+            <Label htmlFor="bf-name">Име</Label>
+            <Input id="bf-name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-11" />
           </div>
           <div className="space-y-2">
-            <Label>Телефон</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-11" />
+            <Label htmlFor="bf-phone">Телефон</Label>
+            <Input id="bf-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-11" />
           </div>
         </div>
         <div className="space-y-2">
-          <Label>Имейл</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
+          <Label htmlFor="bf-email">Имейл</Label>
+          <Input id="bf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
         </div>
 
         <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
@@ -588,7 +588,11 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
           </span>
         </label>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p role="alert" aria-live="assertive" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
 
         <Button
           type="submit"

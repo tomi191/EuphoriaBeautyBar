@@ -34,7 +34,7 @@ export function LocationMap() {
                 <MapPin className="size-4" strokeWidth={1.6} />
               </span>
               <span>
-                <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/50">Адрес</span>
+                <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Адрес</span>
                 <span className="font-medium">{siteConfig.address.full}</span>
               </span>
             </div>
@@ -44,7 +44,7 @@ export function LocationMap() {
                 <Phone className="size-4" strokeWidth={1.6} />
               </span>
               <span>
-                <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/50">Телефон</span>
+                <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Телефон</span>
                 <span className="font-medium">{siteConfig.contact.phoneFormatted}</span>
               </span>
             </a>

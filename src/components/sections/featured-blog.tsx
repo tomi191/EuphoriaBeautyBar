@@ -113,7 +113,7 @@ export async function FeaturedBlog() {
                     )}
                   </div>
                   <div className="flex flex-1 flex-col justify-center pr-5 py-4">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">
                       {post.category} · {post.readingMinutes} мин
                     </p>
                     <h3 className="mt-1.5 line-clamp-2 font-display text-lg leading-tight font-medium text-balance group-hover:text-primary md:text-xl">

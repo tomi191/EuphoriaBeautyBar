@@ -18,6 +18,11 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
   const [busy, setBusy] = React.useState<ActionKey | null>(null);
 
   async function run(key: ActionKey) {
+    // Offline-aware: разграничи „няма мрежа" от реална грешка преди да опитаме.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      toast.error("Няма връзка — действието не е запазено. Опитай, когато си онлайн.");
+      return;
+    }
     setBusy(key);
     try {
       if (key === "arrived") await markMyArrived(id);
@@ -30,7 +35,11 @@ export function BookingStatusActions({ id, status }: { id: string; status: strin
       );
       router.refresh();
     } catch {
-      toast.error("Грешка. Опитай пак.");
+      toast.error(
+        typeof navigator !== "undefined" && !navigator.onLine
+          ? "Връзката прекъсна — действието не е запазено."
+          : "Грешка. Опитай пак.",
+      );
       setBusy(null);
     }
   }

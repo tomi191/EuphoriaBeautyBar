@@ -64,7 +64,7 @@ export function FaqContactSection() {
         {/* CONTACT — дясната колона (sticky) */}
         <Reveal className="lg:col-span-5" delay={0.15}>
           <div className="sticky top-24 rounded-md border border-foreground/10 bg-background p-7 md:p-8">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/50">Бърза връзка</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">Бърза връзка</p>
             <h3 className="mt-2 font-display text-3xl">Предпочиташ да попиташ лично?</h3>
 
             <div className="mt-6 space-y-4 text-sm">
@@ -73,7 +73,7 @@ export function FaqContactSection() {
                   <Phone className="size-4" strokeWidth={1.6} />
                 </span>
                 <span>
-                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/50">Телефон</span>
+                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Телефон</span>
                   <span className="font-medium">{siteConfig.contact.phoneFormatted}</span>
                 </span>
               </a>
@@ -83,7 +83,7 @@ export function FaqContactSection() {
                   <Mail className="size-4" strokeWidth={1.6} />
                 </span>
                 <span>
-                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/50">Имейл</span>
+                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Имейл</span>
                   <span className="font-medium">{siteConfig.contact.email}</span>
                 </span>
               </a>
@@ -93,7 +93,7 @@ export function FaqContactSection() {
                   <MapPin className="size-4" strokeWidth={1.6} />
                 </span>
                 <span>
-                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/50">Адрес</span>
+                  <span className="block font-mono text-[10px] uppercase tracking-wider text-foreground/70">Адрес</span>
                   <span className="font-medium">{siteConfig.address.full}</span>
                 </span>
               </div>
