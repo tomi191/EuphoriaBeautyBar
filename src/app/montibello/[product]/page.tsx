@@ -12,7 +12,6 @@ import {
   montibelloProducts,
   montibelloCategories,
   getMontibelloProduct,
-  hasDetailPage,
   accentColor,
 } from "@/lib/data/montibello";
 
@@ -20,15 +19,15 @@ interface Params {
   params: Promise<{ product: string }>;
 }
 
-// Детайл страници имат само продуктите с реално описание (HOP линията).
+// Всеки продукт от каталога има собствена страница.
 export async function generateStaticParams() {
-  return montibelloProducts.filter(hasDetailPage).map((p) => ({ product: p.slug }));
+  return montibelloProducts.map((p) => ({ product: p.slug }));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { product: slug } = await params;
   const product = getMontibelloProduct(slug);
-  if (!product || !hasDetailPage(product)) return { robots: { index: false } };
+  if (!product) return { robots: { index: false } };
   return {
     title: `${product.name} — Montibello`,
     description: product.shortDescription,
@@ -44,10 +43,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function MontibelloProductPage({ params }: Params) {
   const { product: slug } = await params;
   const product = getMontibelloProduct(slug);
-  if (!product || !hasDetailPage(product)) notFound();
+  if (!product) notFound();
 
-  const others = montibelloProducts.filter((p) => p.slug !== product.slug && hasDetailPage(p)).slice(0, 3);
   const category = montibelloCategories.find((c) => c.slug === product.categorySlug);
+  const paragraphs = product.description.split("\n\n").filter(Boolean);
+
+  // „Други от линията" — до 3 продукта от същата линия; ако линията няма
+  // други, връщаме fallback към същата категория.
+  const sameLine = montibelloProducts.filter(
+    (p) => p.slug !== product.slug && p.line === product.line,
+  );
+  const sameCategory = montibelloProducts.filter(
+    (p) => p.slug !== product.slug && p.categorySlug === product.categorySlug,
+  );
+  const others = (sameLine.length >= 1 ? sameLine : sameCategory).slice(0, 3);
 
   // Product schema БЕЗ Offer/price — не се продава онлайн, само се представя.
   const productSchema = {
@@ -56,10 +65,10 @@ export default async function MontibelloProductPage({ params }: Params) {
     name: product.name,
     description: product.description,
     brand: { "@type": "Brand", name: "Montibello" },
-    category: category?.title,
-    ...(product.productImage && { image: `${siteConfig.url}${product.productImage}` }),
+    ...(category?.title && { category: category.title }),
+    ...(product.officialImage && { image: `${siteConfig.url}${product.officialImage}` }),
   };
-  const breadcrumb = {
+  const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
@@ -71,7 +80,7 @@ export default async function MontibelloProductPage({ params }: Params) {
 
   return (
     <>
-      <JsonLd data={[productSchema, breadcrumb]} />
+      <JsonLd data={[productSchema, breadcrumbSchema]} />
 
       <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -85,9 +94,16 @@ export default async function MontibelloProductPage({ params }: Params) {
 
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <Reveal>
-              <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {product.line} · {product.productType}
-              </p>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                  {product.line} · {product.productType}
+                </p>
+                {product.professional && (
+                  <span className="rounded-md bg-secondary/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Салонна употреба
+                  </span>
+                )}
+              </div>
               <BlurText
                 as="h1"
                 text={product.name}
@@ -96,13 +112,15 @@ export default async function MontibelloProductPage({ params }: Params) {
               <p className="mt-6 max-w-xl font-serif text-xl italic text-muted-foreground">
                 {product.shortDescription}
               </p>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/85">
-                {product.description}
+              <div className="mt-6 max-w-xl space-y-4 text-base leading-relaxed text-foreground/85">
+                {paragraphs.map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
+              </div>
+              <p className="mt-6 inline-flex rounded-md bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground">
+                Само на място в салона.
               </p>
-              <p className="mt-4 inline-flex rounded-md bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground">
-                Предлага се само на място в салона.
-              </p>
-              <div className="mt-8 flex gap-3">
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
                   <Link href="/zapazi-chas">
                     <Calendar className="size-4" /> Запиши консултация
@@ -121,9 +139,9 @@ export default async function MontibelloProductPage({ params }: Params) {
                 className="relative aspect-square overflow-hidden rounded-md border border-border"
                 style={{ background: `radial-gradient(circle at 50% 30%, color-mix(in oklch, ${accentColor(product.accent)} 22%, transparent), transparent 75%)` }}
               >
-                {product.productImage && (
+                {product.officialImage ? (
                   <Image
-                    src={product.productImage}
+                    src={product.officialImage}
                     alt={product.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 50vw"
@@ -131,6 +149,12 @@ export default async function MontibelloProductPage({ params }: Params) {
                     priority
                     fetchPriority="high"
                   />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <span className="font-display text-2xl font-medium text-foreground/70">
+                      {product.line}
+                    </span>
+                  </div>
                 )}
               </div>
             </Reveal>
@@ -138,25 +162,38 @@ export default async function MontibelloProductPage({ params }: Params) {
         </div>
       </section>
 
-      {product.benefits && product.benefits.length > 0 && (
-        <section className="border-y border-border bg-secondary/30 py-20 lg:py-28">
+      {(product.forHairType || (product.keyIngredients && product.keyIngredients.length > 0)) && (
+        <section className="border-y border-border bg-secondary/30 py-16 lg:py-20">
           <div className="mx-auto max-w-4xl px-4 lg:px-8">
-            <Reveal>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">За какво помага</p>
-              <h2 className="mt-2 font-display text-4xl font-medium md:text-5xl">
-                Ползи и <span className="gradient-text">резултат</span>.
-              </h2>
-            </Reveal>
-            <ul className="mt-10 grid gap-3 md:grid-cols-2">
-              {product.benefits.map((b, i) => (
-                <Reveal key={b} delay={i * 0.06}>
-                  <li className="flex items-start gap-3 rounded-md border border-border bg-card p-5">
-                    <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-foreground" strokeWidth={1.6} />
-                    <span className="text-base">{b}</span>
-                  </li>
+            <div className="grid gap-6 md:grid-cols-2">
+              {product.forHairType && (
+                <Reveal>
+                  <div className="h-full rounded-md border border-border bg-card p-6">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                      За коя коса
+                    </p>
+                    <p className="mt-3 text-lg leading-snug text-foreground">{product.forHairType}</p>
+                  </div>
                 </Reveal>
-              ))}
-            </ul>
+              )}
+              {product.keyIngredients && product.keyIngredients.length > 0 && (
+                <Reveal delay={0.1}>
+                  <div className="h-full rounded-md border border-border bg-card p-6">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                      Ключови съставки
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {product.keyIngredients.map((ing) => (
+                        <li key={ing} className="flex items-start gap-2.5 text-base text-foreground">
+                          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-foreground/70" strokeWidth={1.6} />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Reveal>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -181,8 +218,12 @@ export default async function MontibelloProductPage({ params }: Params) {
                     className="relative size-20 shrink-0 overflow-hidden rounded-md"
                     style={{ background: `radial-gradient(circle at 50% 35%, color-mix(in oklch, ${accentColor(p.accent)} 20%, transparent), transparent 75%)` }}
                   >
-                    {p.productImage && (
-                      <Image src={p.productImage} alt={p.name} fill sizes="80px" className="object-contain p-2" />
+                    {p.officialImage ? (
+                      <Image src={p.officialImage} alt={p.name} fill sizes="80px" className="object-contain p-2" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <span className="font-mono text-[10px] uppercase text-foreground/60">{p.line}</span>
+                      </div>
                     )}
                   </div>
                   <div className="min-w-0">
