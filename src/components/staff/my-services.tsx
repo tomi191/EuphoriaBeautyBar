@@ -323,6 +323,8 @@ function AddSheet({
 }) {
   const [name, setName] = React.useState("");
   const [groupTitle, setGroupTitle] = React.useState(groups[0] ?? "");
+  // „pick" = избор от съществуващи групи (чипове); „new" = свободен текст за нова.
+  const [groupMode, setGroupMode] = React.useState<"pick" | "new">(groups.length > 0 ? "pick" : "new");
   const [categorySlug, setCategorySlug] = React.useState(categories[0]?.slug ?? "");
   const [price, setPrice] = React.useState<number | "">("");
   const [priceFrom, setPriceFrom] = React.useState(false);
@@ -376,12 +378,57 @@ function AddSheet({
           </div>
           <div className="space-y-1.5">
             <Label>Група (подкатегория)</Label>
-            <Input list="staff-groups" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="избери или напиши нова" className="h-11 text-base" />
-            <datalist id="staff-groups">
-              {groups.map((g) => (
-                <option key={g} value={g} />
-              ))}
-            </datalist>
+            {groupMode === "pick" ? (
+              <div className="flex flex-wrap gap-1.5">
+                {groups.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGroupTitle(g)}
+                    className={
+                      "rounded-full border px-3 py-1.5 text-sm transition-colors " +
+                      (groupTitle === g
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:border-foreground/50")
+                    }
+                  >
+                    {g}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGroupMode("new");
+                    setGroupTitle("");
+                  }}
+                  className="rounded-full border border-dashed border-foreground/40 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  + Нова група
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <Input
+                  value={groupTitle}
+                  onChange={(e) => setGroupTitle(e.target.value)}
+                  placeholder="име на нова група"
+                  className="h-11 text-base"
+                  autoFocus
+                />
+                {groups.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGroupMode("pick");
+                      setGroupTitle(groups[0] ?? "");
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ← избери от съществуващите
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           {isNewGroup && categories.length > 1 && (
             <div className="space-y-1.5">
