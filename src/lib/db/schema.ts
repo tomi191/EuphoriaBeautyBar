@@ -123,6 +123,8 @@ export const serviceItems = pgTable("service_items", {
   durationMin: integer("duration_min").notNull().default(60),
   bufferMin: integer("buffer_min").notNull().default(15),
   bookableOnline: boolean("bookable_online").notNull().default(true),
+  activeMin: integer("active_min").notNull().default(0),
+  processingMin: integer("processing_min").notNull().default(0),
 });
 
 export const testimonials = pgTable("testimonials", {
@@ -279,6 +281,9 @@ export const bookings = pgTable("bookings", {
   startAt: ts("start_at").notNull(),
   endAt: ts("end_at").notNull(),
   status: text("status").notNull().default("pending"),
+  activeMin: integer("active_min").notNull().default(0),
+  processingMin: integer("processing_min").notNull().default(0),
+  allowParallel: boolean("allow_parallel").notNull().default(false),
   source: text("source").notNull().default("online"), // online | phone | walkin
   // Снимка на цената (€) към момента на записване - за оборот статистиката. NULL при стари часове.
   priceEur: real("price_eur"),
