@@ -7,7 +7,8 @@ import "../globals.css";
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Админ · Euphoria", template: "%s · Админ · Euphoria" },
+  // Root layout-ът добавя „· Euphoria" чрез своя template — тук НЕ го дублирай.
+  title: { default: "Админ", template: "%s · Админ" },
   robots: { index: false, follow: false },
 };
 
