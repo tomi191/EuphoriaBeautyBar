@@ -133,6 +133,11 @@ export async function rescheduleMyBooking(id: string, newStartISO: string) {
   if (await hasTimeOffConflict(resource.id, newStart, newEnd)) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
   }
+  // Паралелен час: при местене пак трябва да се събира в свободен престой-прозорец
+  // (constraint-ът не го пази, защото allow_parallel го изключва).
+  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, newStart, newEnd, id))) {
+    return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
+  }
 
   try {
     await db
@@ -181,6 +186,9 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
   const end = new Date(start.getTime() + d.durationMin * 60000);
   if (await hasTimeOffConflict(resource.id, start, end)) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период." };
+  }
+  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, start, end, id))) {
+    return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
   const priceEur = d.serviceItemId ? (await ownOffering(resource.id, d.serviceItemId)).priceEur : booking.priceEur;

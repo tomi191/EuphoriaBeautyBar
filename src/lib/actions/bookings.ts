@@ -166,6 +166,10 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
   if (await hasTimeOffConflict(booking.resourceId, start, end)) {
     return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
   }
+  // Паралелен час: при местене пак трябва да се събира в свободен престой-прозорец.
+  if (booking.allowParallel && !(await fitsParallelWindow(booking.resourceId, start, end, id))) {
+    return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
+  }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
   const item = d.serviceItemId
     ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, d.serviceItemId as string) })
