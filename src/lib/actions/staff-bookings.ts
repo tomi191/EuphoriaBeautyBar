@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
+import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 
@@ -28,6 +29,8 @@ async function ownOffering(resourceId: string, serviceItemId: string) {
     durationMin: rs?.durationMin ?? item?.durationMin ?? 30,
     bufferMin: rs?.bufferMin ?? item?.bufferMin ?? 10,
     priceEur: rs?.price ?? item?.price ?? null,
+    activeMin: item?.activeMin ?? 0,
+    processingMin: item?.processingMin ?? 0,
   };
 }
 
@@ -46,18 +49,24 @@ const bookingSchema = z.object({
   clientName: z.string().min(2),
   clientPhone: z.string().min(5),
   notes: z.string().nullable().optional(),
+  allowParallel: z.boolean().optional(),
 });
 
 /** Изпълнителят записва ръчно час (телефонен клиент) за себе си. */
 export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   const { session, resource } = await requireStaff();
   const d = bookingSchema.parse(input);
-  const { durationMin, bufferMin, priceEur } = await ownOffering(resource.id, d.serviceItemId);
+  const { durationMin, bufferMin, priceEur, activeMin, processingMin } = await ownOffering(resource.id, d.serviceItemId);
   const start = new Date(d.startAt);
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
 
   if (await hasTimeOffConflict(resource.id, start, end)) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
+  }
+
+  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
+  if (d.allowParallel && !(await fitsParallelWindow(resource.id, start, end))) {
+    return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
   }
 
   // upsert клиент по телефон (схемата изисква phone min(5) → не може да е null)
@@ -74,6 +83,9 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
       startAt: start,
       endAt: end,
       status: "confirmed",
+      activeMin,
+      processingMin,
+      allowParallel: d.allowParallel === true,
       source: "phone",
       priceEur,
       notes: d.notes ?? null,

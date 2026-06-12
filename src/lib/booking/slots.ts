@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday } from "./time";
+import { parallelWindows } from "./parallel";
 
 const GRANULARITY_MIN = 15;
 const DEFAULT_MIN_NOTICE_MIN = 60; // минимум предизвестие за онлайн запис
@@ -77,7 +78,7 @@ export async function hasTimeOffConflict(resourceId: string, start: Date, end: D
   return !!off;
 }
 
-export type SlotStatus = "free" | "busy" | "past";
+export type SlotStatus = "free" | "busy" | "past" | "parallel";
 export interface DaySlot {
   start: string; // ISO UTC
   status: SlotStatus;
@@ -95,6 +96,7 @@ export async function getDaySlots(opts: {
   dateStr: string;
   now?: Date;
   minNoticeMin?: number;
+  allowParallel?: boolean;
 }): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
@@ -133,6 +135,10 @@ export async function getDaySlots(opts: {
     ...busyOff.map((t) => [t.startAt.getTime(), t.endAt.getTime()] as [number, number]),
   ];
 
+  // При паралелни записи: свободните „престои" в чужди часове (напр. боя), в
+  // които се събира кратък втори час. Изчисляват се веднъж за деня.
+  const wins = opts.allowParallel ? await parallelWindows(opts.resourceId, dayStart, dayEnd) : [];
+
   const minStart = now.getTime() + minNotice * 60000;
   const stepMs = GRANULARITY_MIN * 60000;
   const slots: DaySlot[] = [];
@@ -141,8 +147,10 @@ export async function getDaySlots(opts: {
     const end = t + blockMs;
     const overlaps = busy.some(([bs, be]) => t < be && end > bs);
     let status: SlotStatus;
-    if (overlaps) status = "busy";
-    else if (t < minStart) status = "past";
+    if (overlaps) {
+      // Зает слот, който се събира изцяло в свободен престой → паралелен.
+      status = opts.allowParallel && wins.some((w) => t >= w.start && end <= w.end) ? "parallel" : "busy";
+    } else if (t < minStart) status = "past";
     else status = "free";
     slots.push({ start: new Date(t).toISOString(), status });
   }

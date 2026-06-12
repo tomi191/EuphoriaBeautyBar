@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
+import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
 import { sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
@@ -46,6 +47,7 @@ const bookingSchema = z.object({
   clientEmail: z.string().email().nullable().optional(),
   notes: z.string().nullable().optional(),
   source: z.enum(["online", "phone", "walkin"]).default("phone"),
+  allowParallel: z.boolean().optional(),
 });
 
 export type BookingInput = z.infer<typeof bookingSchema>;
@@ -62,6 +64,11 @@ export async function createBooking(input: BookingInput) {
 
   if (await hasTimeOffConflict(data.resourceId, start, end)) {
     return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
+  }
+
+  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
+  if (data.allowParallel && !(await fitsParallelWindow(data.resourceId, start, end))) {
+    return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
   }
 
   // upsert клиент (по имейл, иначе по телефон)
@@ -98,6 +105,9 @@ export async function createBooking(input: BookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
+      activeMin: item?.activeMin ?? 0,
+      processingMin: item?.processingMin ?? 0,
+      allowParallel: data.allowParallel === true,
       source: data.source,
       priceEur: item?.price ?? null,
       notes: data.notes ?? null,

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
+import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
@@ -58,6 +59,7 @@ const publicSchema = z.object({
   clientPhone: z.string().min(5),
   clientEmail: z.string().email(),
   consentLate: z.literal(true),
+  allowParallel: z.boolean().optional(),
 });
 
 export type PublicBookingInput = z.infer<typeof publicSchema>;
@@ -71,6 +73,16 @@ export async function createPublicBooking(input: PublicBookingInput) {
   if (await hasTimeOffConflict(data.resourceId, start, end)) {
     return { ok: false as const, error: "Този час вече не е свободен. Избери друг." };
   }
+
+  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
+  if (data.allowParallel && !(await fitsParallelWindow(data.resourceId, start, end))) {
+    return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
+  }
+
+  // Снимка на активното/престой времето от каталожната услуга (0/0 при няколко услуги).
+  const snapItem = data.serviceItemId
+    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
+    : undefined;
 
   // upsert клиент по имейл; генерира verify token за неверифицирани (онбординг)
   let clientId: string;
@@ -109,6 +121,9 @@ export async function createPublicBooking(input: PublicBookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
+      activeMin: snapItem?.activeMin ?? 0,
+      processingMin: snapItem?.processingMin ?? 0,
+      allowParallel: data.allowParallel === true,
       source: "online",
       priceEur: data.priceEur ?? null,
       consentLate: true,
