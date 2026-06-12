@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { parallelWindows } from "@/lib/booking/parallel";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
@@ -114,8 +115,14 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const openAt = wh && !wh.closed && wh.openTime ? sofiaWallToUtc(selectedKey, wh.openTime) : null;
   const closeAt = wh && !wh.closed && wh.closeTime ? sofiaWallToUtc(selectedKey, wh.closeTime) : null;
 
-  // Timeline = часове + „свободно" прозорци (>= 20 мин) между тях.
-  type TimelineItem = { kind: "booking"; b: (typeof bookings)[number] } | { kind: "gap"; start: Date; end: Date };
+  // Свободни „престои" в чужди часове (напр. боя), в които се събира паралелен час.
+  const wins = await parallelWindows(resource.id, dayStart, dayEnd);
+
+  // Timeline = часове + „свободно" прозорци (>= 20 мин) между тях + паралелни престои.
+  type TimelineItem =
+    | { kind: "booking"; b: (typeof bookings)[number] }
+    | { kind: "gap"; start: Date; end: Date }
+    | { kind: "parallel"; start: Date; end: Date };
   const GAP_MIN = 20 * 60000;
   const items: TimelineItem[] = [];
   let cursor = openAt;
@@ -130,9 +137,18 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
     items.push({ kind: "gap", start: cursor, end: closeAt });
   }
 
+  // Паралелните прозорци се вмъкват на хронологичното си място (вътре в чужди часове).
+  for (const w of wins) {
+    const win: TimelineItem = { kind: "parallel", start: new Date(w.start), end: new Date(w.end) };
+    const at = items.findIndex((it) => (it.kind === "booking" ? it.b.startAt : it.start).getTime() > w.start);
+    if (at === -1) items.push(win);
+    else items.splice(at, 0, win);
+  }
+
   // „Сега" линията се вмъква на хронологичното ѝ място (само за днешния ден).
   const isToday = selectedKey === todayKey;
   const itemStart = (it: TimelineItem) => (it.kind === "booking" ? it.b.startAt : it.start);
+  const winFmt = (w: { start: number; end: number }) => `${timeFmt.format(new Date(w.start))}–${timeFmt.format(new Date(w.end))}`;
   const nowIndex = isToday ? items.findIndex((it) => itemStart(it).getTime() > now.getTime()) : -1;
   const nowPos = isToday ? (nowIndex === -1 ? items.length : nowIndex) : -1;
 
@@ -245,6 +261,31 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                 );
               }
 
+              if (item.kind === "parallel") {
+                const winMins = Math.round((item.end.getTime() - item.start.getTime()) / 60000);
+                const startKey = dateKeyFmt.format(item.start);
+                return (
+                  <React.Fragment key={`par-${item.start.toISOString()}`}>
+                    {nowLine}
+                    <div className="relative mb-3">
+                      <span className="absolute -left-[52px] top-0 w-11 text-right text-xs tabular-nums text-primary/80">
+                        {timeFmt.format(item.start)}
+                      </span>
+                      <span className="absolute -left-[9px] top-1.5 size-2 rounded-full border-2 border-background bg-primary/70" />
+                      <Link
+                        href={`/staff/new?date=${startKey}`}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-primary/60 bg-primary/5 px-3.5 py-2 text-xs text-primary transition-colors hover:bg-primary/10"
+                      >
+                        <span>
+                          Свободно (престой) · паралелен час · {timeFmt.format(item.start)} – {timeFmt.format(item.end)} ({durationLabel(winMins)})
+                        </span>
+                        <Plus className="size-3.5 shrink-0" strokeWidth={2.4} />
+                      </Link>
+                    </div>
+                  </React.Fragment>
+                );
+              }
+
               const b = item.b;
               const client = b.clientId ? clientById.get(b.clientId) : undefined;
               const st = STATUS[b.status] ?? STATUS.pending;
@@ -260,7 +301,14 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                   <div className={"rounded-2xl border p-3.5 " + st.block}>
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-semibold leading-tight">{b.serviceName}</p>
-                      <span className={"shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " + st.cls}>{st.label}</span>
+                      <span className="flex shrink-0 items-center gap-1">
+                        {b.allowParallel && (
+                          <span className="rounded-full border border-dashed border-primary/60 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            паралелен
+                          </span>
+                        )}
+                        <span className={"rounded-full px-2 py-0.5 text-[10px] font-medium " + st.cls}>{st.label}</span>
+                      </span>
                     </div>
                     {client && (
                       <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
@@ -309,6 +357,8 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                               dateStr: sofiaDateStr(b.startAt),
                               timeStr: sofiaTimeLabel(b.startAt),
                               durationMin: mins,
+                              activeMin: b.activeMin,
+                              processingMin: b.processingMin,
                               notes: b.notes ?? "",
                             }}
                             trigger={

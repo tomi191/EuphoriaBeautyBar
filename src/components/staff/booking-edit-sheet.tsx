@@ -45,6 +45,8 @@ export interface EditBookingData {
   dateStr: string; // YYYY-MM-DD Sofia
   timeStr: string; // HH:MM Sofia
   durationMin: number;
+  activeMin: number;
+  processingMin: number;
   notes: string;
 }
 
@@ -75,6 +77,8 @@ export function BookingEditSheet({
   const [date, setDate] = React.useState(booking.dateStr);
   const [time, setTime] = React.useState(booking.timeStr);
   const [duration, setDuration] = React.useState(String(booking.durationMin));
+  const [activeMin, setActiveMin] = React.useState(String(booking.activeMin));
+  const [processingMin, setProcessingMin] = React.useState(String(booking.processingMin));
   const [notes, setNotes] = React.useState(booking.notes);
 
   const [canPick, setCanPick] = React.useState(false);
@@ -90,6 +94,8 @@ export function BookingEditSheet({
     setDate(booking.dateStr);
     setTime(booking.timeStr);
     setDuration(String(booking.durationMin));
+    setActiveMin(String(booking.activeMin));
+    setProcessingMin(String(booking.processingMin));
     setNotes(booking.notes);
   }, [open, booking]);
 
@@ -129,6 +135,8 @@ export function BookingEditSheet({
         dateStr: date,
         timeStr: time,
         durationMin: Number(duration),
+        activeMin: Number(activeMin),
+        processingMin: Number(processingMin),
         notes: notes.trim() || null,
       });
       if (res.ok) {
@@ -239,6 +247,39 @@ export function BookingEditSheet({
               />
             </div>
           </div>
+
+          {/* Активни минути / престой — за паралелни часове (дълга/къса коса) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="bes-active">Активни минути</Label>
+              <Input
+                id="bes-active"
+                type="number"
+                min={0}
+                max={600}
+                step={5}
+                value={activeMin}
+                onChange={(e) => setActiveMin(e.target.value)}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bes-processing">Минути престой</Label>
+              <Input
+                id="bes-processing"
+                type="number"
+                min={0}
+                max={600}
+                step={5}
+                value={processingMin}
+                onChange={(e) => setProcessingMin(e.target.value)}
+                className="h-11"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Престоят отваря паралелен час; настрой според клиента (дълга/къса коса). 0 = няма престой.
+          </p>
 
           {/* Бележки */}
           <div className="space-y-1.5">

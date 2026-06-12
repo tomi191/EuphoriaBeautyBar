@@ -19,6 +19,8 @@ const serviceItemSchema = z.object({
   description: z.string().nullable().optional(),
   durationMin: z.number().int().positive().default(30),
   bufferMin: z.number().int().min(0).default(10),
+  activeMin: z.coerce.number().int().min(0).default(0),
+  processingMin: z.coerce.number().int().min(0).default(0),
   bookableOnline: z.boolean().default(true),
 });
 

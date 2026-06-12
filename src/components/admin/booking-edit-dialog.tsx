@@ -35,6 +35,8 @@ export interface AdminEditBookingData {
   dateStr: string; // YYYY-MM-DD Sofia
   timeStr: string; // HH:MM Sofia
   durationMin: number;
+  activeMin: number;
+  processingMin: number;
   notes: string;
 }
 
@@ -61,6 +63,8 @@ export function BookingEditDialog({
   const [date, setDate] = React.useState(booking.dateStr);
   const [time, setTime] = React.useState(booking.timeStr);
   const [duration, setDuration] = React.useState(String(booking.durationMin));
+  const [activeMin, setActiveMin] = React.useState(String(booking.activeMin));
+  const [processingMin, setProcessingMin] = React.useState(String(booking.processingMin));
   const [notes, setNotes] = React.useState(booking.notes);
 
   // При отваряне ресет към текущите данни на часа.
@@ -73,6 +77,8 @@ export function BookingEditDialog({
     setDate(booking.dateStr);
     setTime(booking.timeStr);
     setDuration(String(booking.durationMin));
+    setActiveMin(String(booking.activeMin));
+    setProcessingMin(String(booking.processingMin));
     setNotes(booking.notes);
   }, [open, booking]);
 
@@ -98,6 +104,8 @@ export function BookingEditDialog({
         dateStr: date,
         timeStr: time,
         durationMin: Number(duration),
+        activeMin: Number(activeMin),
+        processingMin: Number(processingMin),
         notes: notes.trim() || null,
       });
       if (res.ok) {
@@ -167,6 +175,36 @@ export function BookingEditDialog({
                 />
               </div>
             </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="bed-active">Активни минути</Label>
+                <Input
+                  id="bed-active"
+                  type="number"
+                  min={0}
+                  max={600}
+                  step={5}
+                  value={activeMin}
+                  onChange={(e) => setActiveMin(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bed-processing">Минути престой</Label>
+                <Input
+                  id="bed-processing"
+                  type="number"
+                  min={0}
+                  max={600}
+                  step={5}
+                  value={processingMin}
+                  onChange={(e) => setProcessingMin(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              Престоят отваря паралелен час по време на чакане; 0 = няма престой.
+            </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

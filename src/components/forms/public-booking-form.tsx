@@ -197,6 +197,12 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
   }, [hasSelection, activeKind, selectedServices, performers]);
   const performer = performers.find((p) => p.id === performerId);
 
+  // Дали избраният слот е паралелен (в престоя на чужд час) — определя allowParallel при записа.
+  const slotIsParallel = React.useMemo(
+    () => slots.some((s) => s.start === slot && s.status === "parallel"),
+    [slots, slot],
+  );
+
   // Общо време = сума на собствените продължителности на избрания изпълнител (или каталожни преди избор).
   const totalDuration = selectedServices.reduce((sum, s) => sum + resolveOffering(s, performer).durationMin, 0);
   const totalBuffer = selectedServices.reduce((sum, s) => sum + resolveOffering(s, performer).bufferMin, 0);
@@ -221,7 +227,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
     let cancelled = false;
     setLoadingSlots(true);
     setSlot("");
-    fetchPublicSlots(performerId, date, totalDuration, totalBuffer)
+    fetchPublicSlots(performerId, date, totalDuration, totalBuffer, true)
       .then((res) => {
         if (cancelled) return;
         setSlots(res.slots);
@@ -263,6 +269,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
         clientPhone: phone,
         clientEmail: email,
         consentLate: true,
+        allowParallel: slotIsParallel,
       });
       if (res.ok) {
         setDone({ when: `${date}, ${slotLabel(slot)} ч.`, service: serviceNamesLabel, who: performer?.name ?? "" });
@@ -502,6 +509,11 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
                 <span className="flex items-center gap-1">
                   <span className="size-2.5 rounded-full bg-secondary" /> заето
                 </span>
+                {slots.some((s) => s.status === "parallel") && (
+                  <span className="flex items-center gap-1">
+                    <span className="size-2.5 rounded-full border border-dashed border-primary/60 bg-primary/10" /> паралел
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -522,7 +534,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
             <p className="text-sm text-muted-foreground">Няма свободни часове за тази дата. Пробвай друг ден или се обади.</p>
           ) : (
             <>
-              {slots.every((s) => s.status !== "free") && (
+              {slots.every((s) => s.status !== "free" && s.status !== "parallel") && (
                 <p className="mb-2 rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
                   Всички часове за деня са заети или минали. Пробвай друг ден.
                 </p>
@@ -542,6 +554,27 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
                         }
                       >
                         {slotLabel(s.start)}
+                      </button>
+                    );
+                  }
+                  if (s.status === "parallel") {
+                    return (
+                      <button
+                        key={s.start}
+                        type="button"
+                        onClick={() => setSlot(s.start)}
+                        title="Паралелен час — по време на престой на друг клиент"
+                        className={
+                          "flex flex-col items-center rounded-md border border-dashed py-1.5 text-sm tabular-nums transition-colors " +
+                          (selected
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-primary/60 bg-primary/5 hover:border-primary")
+                        }
+                      >
+                        <span>{slotLabel(s.start)}</span>
+                        <span className={"text-[9px] leading-none " + (selected ? "text-background/70" : "text-primary/80")}>
+                          · паралел
+                        </span>
                       </button>
                     );
                   }

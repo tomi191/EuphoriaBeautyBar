@@ -27,9 +27,10 @@ export async function fetchPublicSlots(
   dateStr: string,
   durationMin: number,
   bufferMin: number,
+  allowParallel = false,
 ): Promise<DayScheduleResult> {
   if (!resourceId || !durationMin || durationMin <= 0) return { open: null, close: null, slots: [] };
-  const res = await getDaySlots({ resourceId, durationMin, bufferMin, dateStr, minNoticeMin: 60 });
+  const res = await getDaySlots({ resourceId, durationMin, bufferMin, dateStr, minNoticeMin: 60, allowParallel });
   if (!res) return { open: null, close: null, slots: [] };
   return res;
 }

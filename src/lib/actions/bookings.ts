@@ -146,6 +146,8 @@ const editSchema = z.object({
   dateStr: z.string(), // YYYY-MM-DD Sofia wall
   timeStr: z.string(), // HH:MM Sofia wall
   durationMin: z.coerce.number().int().min(5).max(600),
+  activeMin: z.coerce.number().int().min(0).max(600).optional(),
+  processingMin: z.coerce.number().int().min(0).max(600).optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -179,6 +181,8 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
         startAt: start,
         endAt: end,
         priceEur,
+        activeMin: d.activeMin ?? booking.activeMin,
+        processingMin: d.processingMin ?? booking.processingMin,
         notes: d.notes ?? null,
         updatedAt: new Date(),
       })

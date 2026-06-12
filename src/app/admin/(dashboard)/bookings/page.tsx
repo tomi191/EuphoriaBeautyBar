@@ -197,6 +197,8 @@ export default async function AdminBookingsPage({
                         dateStr: sofiaDateStr(b.startAt),
                         timeStr: sofiaTimeLabel(b.startAt),
                         durationMin: Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000),
+                        activeMin: b.activeMin,
+                        processingMin: b.processingMin,
                         notes: b.notes ?? "",
                       }}
                     />

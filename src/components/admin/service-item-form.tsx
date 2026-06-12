@@ -34,6 +34,8 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
   const [description, setDescription] = React.useState(initial?.description ?? "");
   const [durationMin, setDurationMin] = React.useState<number>(initial?.durationMin ?? 30);
   const [bufferMin, setBufferMin] = React.useState<number>(initial?.bufferMin ?? 10);
+  const [activeMin, setActiveMin] = React.useState<number>(initial?.activeMin ?? 0);
+  const [processingMin, setProcessingMin] = React.useState<number>(initial?.processingMin ?? 0);
   const [bookableOnline, setBookableOnline] = React.useState<boolean>(initial?.bookableOnline ?? true);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,6 +53,8 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
       description: description || null,
       durationMin,
       bufferMin,
+      activeMin,
+      processingMin,
       bookableOnline,
     };
     try {
@@ -129,14 +133,27 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
             <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">За онлайн записване</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Времетраене (мин)</Label>
-                <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} required />
+                <Label htmlFor="si-duration">Времетраене (мин)</Label>
+                <Input id="si-duration" type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} required />
               </div>
               <div className="space-y-2">
-                <Label>Буфер / почистване (мин)</Label>
-                <Input type="number" min={0} step={5} value={bufferMin} onChange={(e) => setBufferMin(Number(e.target.value))} required />
+                <Label htmlFor="si-buffer">Буфер / почистване (мин)</Label>
+                <Input id="si-buffer" type="number" min={0} step={5} value={bufferMin} onChange={(e) => setBufferMin(Number(e.target.value))} required />
               </div>
             </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="si-active">Активни минути</Label>
+                <Input id="si-active" type="number" min={0} step={5} value={activeMin} onChange={(e) => setActiveMin(Number(e.target.value))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="si-processing">Минути престой</Label>
+                <Input id="si-processing" type="number" min={0} step={5} value={processingMin} onChange={(e) => setProcessingMin(Number(e.target.value))} />
+              </div>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+              За паралелни часове по време на престой; 0 = няма престой; активни = колко мин майсторът работи преди престоя.
+            </p>
             <div className="mt-3 flex items-center justify-between rounded-md border border-border p-3">
               <Label htmlFor="bookable" className="cursor-pointer text-sm">Може да се записва онлайн</Label>
               <Switch id="bookable" checked={bookableOnline} onCheckedChange={setBookableOnline} />
