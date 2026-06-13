@@ -31,7 +31,15 @@ export async function subscribeStaffPush(sub: { endpoint: string; p256dh: string
 
 /** Премахва абонамента (изключване на известия). */
 export async function unsubscribeStaffPush(endpoint: string) {
-  await requireStaff();
+  const { resource } = await requireStaff();
+  const existing = await db.query.pushSubscriptions.findFirst({
+    where: (s, { eq }) => eq(s.endpoint, endpoint),
+  });
+  // Ownership: само собственикът (или legacy запис без resourceId) може да отпише този
+  // endpoint — иначе друг изпълнител би могъл да заглуши известията на колега.
+  if (existing && existing.resourceId && existing.resourceId !== resource.id) {
+    return { ok: false as const };
+  }
   await db.delete(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.endpoint, endpoint));
   return { ok: true as const };
 }

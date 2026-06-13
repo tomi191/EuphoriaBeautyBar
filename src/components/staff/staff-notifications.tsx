@@ -3,21 +3,39 @@
 import * as React from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { subscribeStaffPush } from "@/lib/actions/push";
+import { subscribeStaffPush, unsubscribeStaffPush } from "@/lib/actions/push";
 import { Button } from "@/components/ui/button";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
+  let raw: string;
+  try {
+    raw = atob(base64);
+  } catch {
+    // Повреден/отрязан VAPID ключ → дай ясна грешка вместо суров SyntaxError от atob.
+    throw new Error("Невалиден VAPID ключ (повреден base64url)");
+  }
   const arr = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
   return arr;
 }
 
+function isIOS(): boolean {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function isStandalone(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-// Bump-ни при смяна на VAPID ключа → форсира еднократно пре-абониране на всички устройства.
-const KEY_VERSION = "2026-06";
+// Версията се ИЗВЕЖДА от самия ключ → при ротация (нов deploy с нов NEXT_PUBLIC_VAPID) тя се
+// сменя автоматично и авто-изцелението пре-абонира всички устройства, без ръчен bump (който
+// лесно се забравя → устройствата тихо остават на стария ключ и известията спират).
+const KEY_VERSION = VAPID_KEY ? "k-" + VAPID_KEY.slice(-12) : "none";
 
 /**
  * Абонира устройството с ТЕКУЩИЯ VAPID ключ — като vrachka: викай subscribe() ДИРЕКТНО.
@@ -39,8 +57,15 @@ async function subscribeWithCurrentKey(reg: ServiceWorkerRegistration): Promise<
     // Само при конфликт на ключове: отпиши стария абонамент и опитай пак (веднъж).
     if (err instanceof DOMException && err.name === "InvalidStateError") {
       const old = await reg.pushManager.getSubscription();
+      const oldEndpoint = old?.endpoint;
       if (old) await old.unsubscribe();
-      sub = await reg.pushManager.subscribe(opts);
+      try {
+        sub = await reg.pushManager.subscribe(opts);
+      } catch (retryErr) {
+        // Браузърът вече няма абонамент; ако DB пази стария → почисти, за да не остане orphan.
+        if (oldEndpoint) await unsubscribeStaffPush(oldEndpoint).catch(() => {});
+        throw retryErr;
+      }
     } else {
       throw err;
     }
@@ -60,11 +85,24 @@ export function StaffNotifications() {
       setState("unsupported");
       return;
     }
+    if (isIOS() && !isStandalone()) {
+      // iOS дава Web Push само на инсталирано PWA (Add to Home Screen). В Safari таб
+      // subscribe() гърми → скрий тоггъла, за да не подведем потребителя да „включи" нещо,
+      // което няма да достави. install-banner-ът вече подканва за инсталация.
+      setState("unsupported");
+      return;
+    }
     // SW вече е регистриран от layout-а (SwRegister) — ползвай ready, не нов register.
     navigator.serviceWorker.ready
       .then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
         if (!sub) {
+          setState("off");
+          return;
+        }
+        // Permission може да е отнето в настройките след абониране → отрази реалното състояние,
+        // иначе UI лъже „включено", а известия не идват.
+        if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
           setState("off");
           return;
         }
@@ -106,13 +144,18 @@ export function StaffNotifications() {
       toast.success("Известията са включени.");
     } catch (err) {
       console.error("[push] enable failed:", err);
-      const msg = (err as Error)?.message ?? "";
-      if (/push service|AbortError/i.test(msg)) {
-        // Браузърът не може да се регистрира към Google push (Brave спира Google push по
-        // подразбиране; adblocker/privacy разширение блокира fcmregistrations.googleapis.com).
+      const e = err as Error;
+      const msg = e?.message ?? "";
+      const name = e?.name ?? "";
+      if (/push service|abort|notallowed|fcm|registration|denied|service/i.test(msg + " " + name)) {
+        // Регистрацията към Google FCM е блокирана — Brave спира Google push по подразбиране,
+        // adblocker/privacy разширение блокира fcmregistrations.googleapis.com. Грешката идва
+        // под различни имена (AbortError, NotAllowedError) → затова матчваме по-широко.
         toast.error(
           "Браузърът блокира Google известията. Ако е Brave — пусни 'Use Google services for push messaging' и рестартирай. Или отвори в Chrome / прозорец без разширения.",
         );
+      } else if (/невалиден vapid/i.test(msg)) {
+        toast.error("Грешка в конфигурацията на известията. Свържи се с поддръжката.");
       } else {
         toast.error("Грешка при включване: " + (msg || "неизвестна"));
       }

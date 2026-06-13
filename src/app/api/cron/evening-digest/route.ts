@@ -37,15 +37,24 @@ export async function GET(req: Request) {
     byResource.set(b.resourceId, list);
   }
 
-  let notified = 0;
-  for (const r of resources) {
-    const starts = byResource.get(r.id);
-    if (!starts || starts.length === 0) continue;
-    const firstAt = sofiaTimeLabel(starts[0]);
-    const body = starts.length === 1 ? `Утре: 1 час, в ${firstAt}` : `Утре: ${starts.length} часа, първият в ${firstAt}`;
-    await sendPushToResource(r.id, { title: "Утрешен график", body, url: "/staff" });
-    notified++;
-  }
+  // Сглоби целите, после изпрати ПАРАЛЕЛНО. Сериен await в цикъл рискуваше Vercel function
+  // timeout при повече изпълнители → последните оставаха без известие, а endpoint-ът пак
+  // връщаше „успех". Сега броим реалната доставка.
+  const targets = resources
+    .map((r) => {
+      const starts = byResource.get(r.id);
+      if (!starts || starts.length === 0) return null;
+      const firstAt = sofiaTimeLabel(starts[0]);
+      const body = starts.length === 1 ? `Утре: 1 час, в ${firstAt}` : `Утре: ${starts.length} часа, първият в ${firstAt}`;
+      return { id: r.id, body };
+    })
+    .filter((t): t is { id: string; body: string } => t !== null);
 
-  return NextResponse.json({ ok: true, notified });
+  const results = await Promise.allSettled(
+    targets.map((t) => sendPushToResource(t.id, { title: "Утрешен график", body: t.body, url: "/staff" })),
+  );
+  const notified = results.filter((r) => r.status === "fulfilled").length;
+  const failed = results.length - notified;
+
+  return NextResponse.json({ ok: true, notified, failed });
 }

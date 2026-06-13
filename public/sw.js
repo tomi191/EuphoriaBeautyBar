@@ -4,7 +4,6 @@
 //  - навигации /staff → network-first с кеширан fallback (както преди);
 //  - статични asset-и (/_next/static, /icons, /images) → stale-while-revalidate (кешират се
 //    при първо online зареждане → офлайн boot работи след това; content-hashed са, безопасно).
-const SW_VERSION = "v8-badge-skipwait";
 const STAFF_CACHE = "staff-pages-v2";
 const ASSET_CACHE = "staff-assets-v2";
 // НЕ прекешираме иконите — иконите на известията трябва да минават директно през мрежата,
@@ -27,11 +26,13 @@ self.addEventListener("activate", (event) => {
     (async () => {
       // Почисти стари версии на кешовете.
       const keys = await caches.keys();
+      // .catch около cleanup-а: ако едно изтриване гръмне (quota/lock), claim() пак трябва да
+      // се изпълни — иначе новият SW активира, но не поема старите клиенти (split-brain).
       await Promise.all(
         keys
           .filter((k) => (k.startsWith("staff-pages-") || k.startsWith("staff-assets-")) && k !== STAFF_CACHE && k !== ASSET_CACHE)
           .map((k) => caches.delete(k)),
-      );
+      ).catch((e) => console.error("[sw] cache cleanup провал:", e));
       await self.clients.claim();
     })(),
   );
@@ -107,34 +108,21 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   const title = data.title || "Euphoria";
+  // badge ТРЯБВА да е монохромен бял-на-прозрачно (/icons/badge-96.png) — Android го
+  // alpha-маскира за status-bar иконата. Цветен/плътен badge → невалидна маска → някои
+  // Android/Chrome WebAPK билдове изобщо НЕ показват известието (създава се, getNotifications
+  // го връща, но е невидимо). requireInteraction/renotify махнати (Android ги игнорира).
   event.waitUntil(
-    (async function () {
-      var shown = "ok";
-      try {
-        // badge ТРЯБВА да е монохромен бял-на-прозрачно (/icons/badge-96.png) — Android го
-        // alpha-маскира за status-bar иконата. Цветен/плътен badge → невалидна маска →
-        // някои Android/Chrome WebAPK билдове изобщо НЕ показват известието (създава се,
-        // getNotifications го връща, но е невидимо). requireInteraction/renotify махнати
-        // (Android ги игнорира). Оставяме като работещия vrachka: icon + монохромен badge + vibrate + tag.
-        await self.registration.showNotification(title, {
-          body: data.body || "",
-          icon: "/icons/pwa-192.png",
-          badge: "/icons/badge-96.png",
-          vibrate: [200, 100, 200],
-          tag: data.tag || "euphoria-staff",
-          data: { url: data.url || "/staff" },
-        });
-        // Колко известия реално стоят след показването (0 = Android го е глътнал).
-        var list = await self.registration.getNotifications();
-        shown = "ok:" + list.length;
-      } catch (e) {
-        shown = "ERR:" + (e && e.message ? e.message : String(e));
-      }
-      // ВРЕМЕННА диагностика: докладвай резултата от showNotification на сървъра.
-      await fetch(
-        "/api/push-ack?ts=" + Date.now() + "&data=" + (event.data ? "1" : "0") + "&shown=" + encodeURIComponent(shown) + "&v=" + SW_VERSION,
-      ).catch(function () {});
-    })(),
+    self.registration.showNotification(title, {
+      body: data.body || "",
+      icon: "/icons/pwa-192.png",
+      badge: "/icons/badge-96.png",
+      lang: "bg",
+      dir: "ltr",
+      vibrate: [200, 100, 200],
+      tag: data.tag || "euphoria-staff",
+      data: { url: data.url || "/staff" },
+    }),
   );
 });
 
@@ -142,11 +130,19 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/staff";
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes("/staff"));
-      if (existing) return existing.focus();
-      return self.clients.openWindow(url);
-    }),
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        const existing = clients.find((c) => c.url.includes("/staff"));
+        if (existing) return existing.focus();
+        // openWindow може да върне null (някои Android WebAPK билдове отказват отваряне във
+        // фон) — не сривай тихо, фокусирай съществуващ клиент ако има.
+        return self.clients.openWindow(url).then((client) => {
+          if (client) return client.focus();
+          console.warn("[sw] openWindow върна null за", url);
+        });
+      })
+      .catch((e) => console.warn("[sw] notificationclick грешка:", e)),
   );
 });
 

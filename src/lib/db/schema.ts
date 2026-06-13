@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -318,14 +318,21 @@ export const clientNotes = pgTable(
   (t) => [unique().on(t.clientId, t.resourceId)],
 );
 
-export const pushSubscriptions = pgTable("push_subscriptions", {
-  id: text("id").primaryKey(),
-  resourceId: text("resource_id"),
-  endpoint: text("endpoint").notNull().unique(),
-  p256dh: text("p256dh").notNull(),
-  auth: text("auth").notNull(),
-  createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
-});
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    // FK + ON DELETE CASCADE: при триене на изпълнител абонаментите му се чистят сами
+    // (иначе остават осиротели и sendPushToResource ги сканира безсмислено).
+    resourceId: text("resource_id").references(() => resources.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+  },
+  // Index: sendPushToResource филтрира по resource_id при всеки push — без него е table scan.
+  (t) => [index("push_subscriptions_resource_id_idx").on(t.resourceId)],
+);
 
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),

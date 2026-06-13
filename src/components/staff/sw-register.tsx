@@ -29,12 +29,15 @@ export function SwRegister() {
         const promote = () => {
           if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
         };
-        reg.update().catch(() => {});
-        promote();
+        // Закачи updatefound ПРЕДИ update() — иначе бързо инсталиращ се worker излъчва събитието
+        // преди listener-ът да е вързан и promote() го пропуска (нов SW засяда в „waiting").
         reg.addEventListener("updatefound", () => {
           const nw = reg.installing;
           if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed") promote(); });
         });
+        promote(); // ако вече има waiting от предишно посещение
+        // Логвай провал (404 на /sw.js при лош deploy, timeout) — иначе зомби SW върти стар код тихо.
+        reg.update().catch((err) => console.error("[sw] update провал:", err));
       })
       .catch(() => {});
 

@@ -57,3 +57,19 @@ scripts/montibello-raw.json
 scripts/seed-snezhana-schedule.ts
 scripts/fix-import-names.ts
 public/images/записани часове/
+
+# Временни push/VAPID диагностични скриптове — пипат prod данни и VAPID ключове; само локално
+scripts/check-prod-assets.ts
+scripts/check-sub-keys.ts
+scripts/check-vapid.ts
+scripts/del-test-subs.ts
+scripts/fetch-prod-vapid.ts
+scripts/list-push-subs.ts
+scripts/run-parallel-migration.ts
+scripts/send-to-browser.ts
+scripts/test-push.ts
+
+# Deploy/env бележки от firefighting — само локален преглед
+vercel-deploys*.md
+vercel-env.md
+staff-profile.md
