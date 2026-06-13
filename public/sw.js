@@ -6,7 +6,10 @@
 //    при първо online зареждане → офлайн boot работи след това; content-hashed са, безопасно).
 const STAFF_CACHE = "staff-pages-v2";
 const ASSET_CACHE = "staff-assets-v2";
-const PRECACHE = ["/icons/pwa-192.png", "/icons/pwa-512.png"];
+// НЕ прекешираме иконите — иконите на известията трябва да минават директно през мрежата,
+// не през този SW (иначе push handler-ът ги дърпа във фонов контекст и при cache miss връща
+// невалиден отговор → Android не рисува известието).
+const PRECACHE = [];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -34,11 +37,12 @@ self.addEventListener("activate", (event) => {
 });
 
 function isCacheableAsset(url) {
+  // ВАЖНО: /icons/ НЕ се прихваща — иконите на известията се fetch-ват директно от мрежата
+  // (както в работещия vrachka). Прихващането им чрез този handler в push (фонов) контекст
+  // връщаше невалиден/undefined отговор и Android отказваше да покаже известието.
   return (
     url.origin === self.location.origin &&
-    (url.pathname.startsWith("/_next/static/") ||
-      url.pathname.startsWith("/icons/") ||
-      url.pathname.startsWith("/images/"))
+    (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/images/"))
   );
 }
 
@@ -54,12 +58,12 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         const cache = await caches.open(ASSET_CACHE);
         const cached = await cache.match(req);
-        const network = fetch(req)
-          .then((res) => {
-            if (res.ok) cache.put(req, res.clone());
-            return res;
-          })
-          .catch(() => cached);
+        // Без .catch(() => cached): при cache miss + мрежова грешка не връщаме undefined
+        // (което чупеше respondWith), а оставяме мрежовата грешка да се прояви нормално.
+        const network = fetch(req).then((res) => {
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        });
         return cached || network;
       })(),
     );
