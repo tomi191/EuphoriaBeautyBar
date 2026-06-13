@@ -13,6 +13,7 @@ export async function GET(req: Request) {
       ts,
       data: url.searchParams.get("data"),
       shown: url.searchParams.get("shown"),
+      v: url.searchParams.get("v"),
       ua: (req.headers.get("user-agent") || "").slice(0, 120),
       at: new Date().toISOString(),
     };

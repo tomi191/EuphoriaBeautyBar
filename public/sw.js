@@ -4,6 +4,7 @@
 //  - навигации /staff → network-first с кеширан fallback (както преди);
 //  - статични asset-и (/_next/static, /icons, /images) → stale-while-revalidate (кешират се
 //    при първо online зареждане → офлайн boot работи след това; content-hashed са, безопасно).
+const SW_VERSION = "v8-badge-skipwait";
 const STAFF_CACHE = "staff-pages-v2";
 const ASSET_CACHE = "staff-assets-v2";
 // НЕ прекешираме иконите — иконите на известията трябва да минават директно през мрежата,
@@ -131,7 +132,7 @@ self.addEventListener("push", (event) => {
       }
       // ВРЕМЕННА диагностика: докладвай резултата от showNotification на сървъра.
       await fetch(
-        "/api/push-ack?ts=" + Date.now() + "&data=" + (event.data ? "1" : "0") + "&shown=" + encodeURIComponent(shown),
+        "/api/push-ack?ts=" + Date.now() + "&data=" + (event.data ? "1" : "0") + "&shown=" + encodeURIComponent(shown) + "&v=" + SW_VERSION,
       ).catch(function () {});
     })(),
   );
