@@ -110,15 +110,15 @@ self.addEventListener("push", (event) => {
     (async function () {
       var shown = "ok";
       try {
+        // БЕЗ badge: цветният ни 192px badge не може да се alpha-маскира → някои Android/Chrome
+        // билдове изобщо не показват известието (създава се, но е невидимо). Android прави
+        // коректен default badge. requireInteraction/renotify също махнати (Android-капризни) —
+        // оставяме точно колкото работещия vrachka: icon + vibrate + tag.
         await self.registration.showNotification(title, {
           body: data.body || "",
           icon: "/icons/pwa-192.png",
-          badge: "/icons/pwa-192.png",
-          // vibrate + tag: heads-up банер + бръмчене (както работещия vrachka).
           vibrate: [200, 100, 200],
           tag: data.tag || "euphoria-staff",
-          renotify: true,
-          requireInteraction: true,
           data: { url: data.url || "/staff" },
         });
         // Колко известия реално стоят след показването (0 = Android го е глътнал).
