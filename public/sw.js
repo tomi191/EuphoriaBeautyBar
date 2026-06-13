@@ -103,22 +103,31 @@ self.addEventListener("push", (event) => {
   }
   const title = data.title || "Euphoria";
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(title, {
-        body: data.body || "",
-        icon: "/icons/pwa-192.png",
-        badge: "/icons/pwa-192.png",
-        // vibrate + tag: heads-up банер + бръмчене (както работещия vrachka). Без тях Android
-        // може да вкара известието „тихо" само в лентата → изглежда сякаш нищо не идва.
-        vibrate: [200, 100, 200],
-        tag: data.tag || "euphoria-staff",
-        renotify: true,
-        requireInteraction: true,
-        data: { url: data.url || "/staff" },
-      }),
-      // ВРЕМЕННА диагностика: уведоми сървъра, че push-ът е стигнал до устройството.
-      fetch("/api/push-ack?ts=" + Date.now() + "&data=" + (event.data ? "1" : "0")).catch(function () {}),
-    ]),
+    (async function () {
+      var shown = "ok";
+      try {
+        await self.registration.showNotification(title, {
+          body: data.body || "",
+          icon: "/icons/pwa-192.png",
+          badge: "/icons/pwa-192.png",
+          // vibrate + tag: heads-up банер + бръмчене (както работещия vrachka).
+          vibrate: [200, 100, 200],
+          tag: data.tag || "euphoria-staff",
+          renotify: true,
+          requireInteraction: true,
+          data: { url: data.url || "/staff" },
+        });
+        // Колко известия реално стоят след показването (0 = Android го е глътнал).
+        var list = await self.registration.getNotifications();
+        shown = "ok:" + list.length;
+      } catch (e) {
+        shown = "ERR:" + (e && e.message ? e.message : String(e));
+      }
+      // ВРЕМЕННА диагностика: докладвай резултата от showNotification на сървъра.
+      await fetch(
+        "/api/push-ack?ts=" + Date.now() + "&data=" + (event.data ? "1" : "0") + "&shown=" + encodeURIComponent(shown),
+      ).catch(function () {});
+    })(),
   );
 });
 
