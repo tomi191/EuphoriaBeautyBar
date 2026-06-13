@@ -148,3 +148,9 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+
+// Позволи на страницата да форсира активиране на нова версия (иначе нов SW засяда в
+// „waiting" и устройството върти стар код → поправките не достигат). Виж SwRegister.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
