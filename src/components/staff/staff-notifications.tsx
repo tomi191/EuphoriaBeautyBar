@@ -111,7 +111,7 @@ export function StaffNotifications() {
         // Браузърът не може да се регистрира към Google push (Brave спира Google push по
         // подразбиране; adblocker/privacy разширение блокира fcmregistrations.googleapis.com).
         toast.error(
-          "Браузърът блокира Google известията. Brave: пусни „Use Google services for push messaging" и рестартирай. Или отвори в Chrome / прозорец без разширения.",
+          "Браузърът блокира Google известията. Ако е Brave — пусни 'Use Google services for push messaging' и рестартирай. Или отвори в Chrome / прозорец без разширения.",
         );
       } else {
         toast.error("Грешка при включване: " + (msg || "неизвестна"));
