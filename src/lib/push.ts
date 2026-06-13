@@ -26,7 +26,13 @@ export async function sendPushToResource(
   await Promise.allSettled(
     subs.map(async (s) => {
       try {
-        await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, body);
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          body,
+          // Urgency: high → push услугата доставя дори при battery-saver/Doze (Xiaomi/MIUI и
+          // Samsung One UI отлагат „normal" web-push). TTL 1 ден: задръж, ако устройството спи.
+          { urgency: "high", TTL: 86400 },
+        );
       } catch (err) {
         const code = (err as { statusCode?: number }).statusCode;
         // Изтекъл/невалиден абонамент → почисти

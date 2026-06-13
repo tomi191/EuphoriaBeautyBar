@@ -15,6 +15,28 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
+const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+// Bump-ни при смяна на VAPID ключа → форсира еднократно пре-абониране на всички устройства.
+const KEY_VERSION = "2026-06";
+
+/**
+ * Абонира устройството с ТЕКУЩИЯ VAPID ключ. Първо отписва всеки съществуващ абонамент —
+ * иначе, ако той е създаден със стар ключ, pushManager.subscribe хвърля
+ * „A subscription with a different applicationServerKey already exists", а дори да мине,
+ * стар ключ значи че FCM приема (201), но устройството тихо дропва известието.
+ */
+async function subscribeWithCurrentKey(reg: ServiceWorkerRegistration): Promise<void> {
+  if (!VAPID_KEY) throw new Error("NEXT_PUBLIC_VAPID_PUBLIC_KEY липсва");
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) await existing.unsubscribe();
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_KEY) as BufferSource,
+  });
+  const json = sub.toJSON() as { keys?: { p256dh: string; auth: string } };
+  await subscribeStaffPush({ endpoint: sub.endpoint, p256dh: json.keys!.p256dh, auth: json.keys!.auth });
+}
+
 type State = "unknown" | "on" | "off" | "unsupported";
 
 export function StaffNotifications() {
@@ -28,14 +50,33 @@ export function StaffNotifications() {
     }
     // SW вече е регистриран от layout-а (SwRegister) — ползвай ready, не нов register.
     navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setState(sub ? "on" : "off"))
+      .then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          setState("off");
+          return;
+        }
+        // Еднократно авто-изцеление: ако устройството още е на стар VAPID ключ (известията
+        // тихо не идваха), пре-абонирай с текущия — без да караме потребителя да кликва пак.
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted" &&
+          localStorage.getItem("push-key-v") !== KEY_VERSION
+        ) {
+          try {
+            await subscribeWithCurrentKey(reg);
+            localStorage.setItem("push-key-v", KEY_VERSION);
+          } catch {
+            /* ако се провали — остави стария абонамент, не чупи UI-то */
+          }
+        }
+        setState("on");
+      })
       .catch(() => setState("unsupported"));
   }, []);
 
   async function enable() {
-    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!key) {
+    if (!VAPID_KEY) {
       toast.error("Известията не са конфигурирани.");
       return;
     }
@@ -47,16 +88,14 @@ export function StaffNotifications() {
         return;
       }
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
-      });
-      const json = sub.toJSON() as { keys?: { p256dh: string; auth: string } };
-      await subscribeStaffPush({ endpoint: sub.endpoint, p256dh: json.keys!.p256dh, auth: json.keys!.auth });
+      await subscribeWithCurrentKey(reg);
+      localStorage.setItem("push-key-v", KEY_VERSION);
       setState("on");
       toast.success("Известията са включени.");
-    } catch {
-      toast.error("Грешка при включване на известията.");
+    } catch (err) {
+      // Покажи реалната причина (напр. applicationServerKey конфликт) — иначе летим слепи.
+      console.error("[push] enable failed:", err);
+      toast.error("Грешка при включване: " + ((err as Error)?.message ?? "неизвестна"));
     } finally {
       setBusy(false);
     }
