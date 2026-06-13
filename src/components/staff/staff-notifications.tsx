@@ -28,11 +28,29 @@ const KEY_VERSION = "2026-06";
 async function subscribeWithCurrentKey(reg: ServiceWorkerRegistration): Promise<void> {
   if (!VAPID_KEY) throw new Error("NEXT_PUBLIC_VAPID_PUBLIC_KEY липсва");
   const existing = await reg.pushManager.getSubscription();
-  if (existing) await existing.unsubscribe();
-  const sub = await reg.pushManager.subscribe({
+  if (existing) {
+    await existing.unsubscribe();
+    // Дай време на push услугата да освободи старата регистрация — иначе незабавният нов
+    // subscribe хвърля „AbortError: push service error" (race при unsubscribe→subscribe).
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  const opts: PushSubscriptionOptionsInit = {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(VAPID_KEY) as BufferSource,
-  });
+  };
+  // До 3 опита с нарастващо изчакване — регистрацията към FCM е флаки при race/мрежа.
+  let sub: PushSubscription | undefined;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      sub = await reg.pushManager.subscribe(opts);
+      break;
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+    }
+  }
+  if (!sub) throw lastErr;
   const json = sub.toJSON() as { keys?: { p256dh: string; auth: string } };
   await subscribeStaffPush({ endpoint: sub.endpoint, p256dh: json.keys!.p256dh, auth: json.keys!.auth });
 }
