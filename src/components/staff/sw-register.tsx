@@ -9,9 +9,15 @@ import * as React from "react";
  */
 export function SwRegister() {
   React.useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        // Форсирай проверка за нова версия — иначе стар „зомби" SW остава активен и
+        // обработва push-овете със стар код (новите поправки не достигат устройството).
+        reg.update().catch(() => {});
+      })
+      .catch(() => {});
   }, []);
   return null;
 }
