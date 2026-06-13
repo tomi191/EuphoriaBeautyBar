@@ -110,13 +110,15 @@ self.addEventListener("push", (event) => {
     (async function () {
       var shown = "ok";
       try {
-        // БЕЗ badge: цветният ни 192px badge не може да се alpha-маскира → някои Android/Chrome
-        // билдове изобщо не показват известието (създава се, но е невидимо). Android прави
-        // коректен default badge. requireInteraction/renotify също махнати (Android-капризни) —
-        // оставяме точно колкото работещия vrachka: icon + vibrate + tag.
+        // badge ТРЯБВА да е монохромен бял-на-прозрачно (/icons/badge-96.png) — Android го
+        // alpha-маскира за status-bar иконата. Цветен/плътен badge → невалидна маска →
+        // някои Android/Chrome WebAPK билдове изобщо НЕ показват известието (създава се,
+        // getNotifications го връща, но е невидимо). requireInteraction/renotify махнати
+        // (Android ги игнорира). Оставяме като работещия vrachka: icon + монохромен badge + vibrate + tag.
         await self.registration.showNotification(title, {
           body: data.body || "",
           icon: "/icons/pwa-192.png",
+          badge: "/icons/badge-96.png",
           vibrate: [200, 100, 200],
           tag: data.tag || "euphoria-staff",
           data: { url: data.url || "/staff" },
