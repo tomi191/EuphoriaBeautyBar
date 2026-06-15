@@ -11,7 +11,8 @@ import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
 import { sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
-import { sendBookingConfirmation } from "@/lib/email/booking";
+import { sendBookingConfirmation, formatWhen } from "@/lib/email/booking";
+import { sendPushToResource } from "@/lib/push";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -116,6 +117,16 @@ export async function createBooking(input: BookingInput) {
       updatedAt: new Date(),
     });
     revalidate();
+
+    // Известие до изпълнителя, че ресепцията му е добавила час — досега push идваше
+    // САМО при онлайн запис (public-booking), затова ръчно въведените от админ часове
+    // не уведомяваха никого. await-нато (serverless не убива функцията преди push да
+    // тръгне); .catch — доставка не блокира записа.
+    await sendPushToResource(data.resourceId, {
+      title: "Нов запис",
+      body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})`,
+      url: "/staff",
+    }).catch(() => {});
 
     // Потвърждение към клиента, ако е оставил имейл (не блокира записа).
     if (data.clientEmail) {
