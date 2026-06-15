@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   pageExtensions: ["ts", "tsx", "md", "mdx"],
   reactCompiler: true,
+  // OG генераторът чете Manrope.ttf през fs → трасирай го в serverless bundle-а,
+  // иначе dynamic OG routes (напр. blog/[slug]) гърмят на runtime с ENOENT.
+  outputFileTracingIncludes: {
+    "/**": ["./src/lib/og/*.woff"],
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion"],
   },

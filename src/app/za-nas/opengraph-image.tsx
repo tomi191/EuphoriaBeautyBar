@@ -1,13 +1,13 @@
 import { renderOg, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/og/render";
 
-export const alt = "Euphoria Hair & Beauty Bar — салон за красота в кв. Левски, Варна";
+export const alt = "За нас — Euphoria, Варна";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 export default async function Image() {
   return renderOg({
-    eyebrow: "Салон за красота · Варна",
-    title: "Euphoria Hair & Beauty Bar",
+    eyebrow: "За нас",
+    title: "Салонът на Снежана Саблева",
     subtitle: "Коса, нокти и лице на едно място — в кв. Левски, Варна.",
   });
 }
