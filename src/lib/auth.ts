@@ -34,6 +34,10 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 14, // 14 дни
     updateAge: 60 * 60 * 24, // на ден
+    // Кешира сесията в подписана cookie за 5 мин → requireStaff спестява session
+    // DB lookup на ВСЯКА навигация (остава само resource заявката). Logout пак
+    // чисти cookie-то; role промяна се отразява до 5 мин.
+    cookieCache: { enabled: true, maxAge: 5 * 60 },
   },
   user: {
     additionalFields: {
