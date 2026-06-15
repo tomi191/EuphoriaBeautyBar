@@ -48,6 +48,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Канонично име на sitemap-индекса е /sitemap-index.xml. /sitemap.xml пази
+      // обратна съвместимост (стари bookmarks/crawlers) → 308 към canonical.
+      // Redirect-ът ЖИВЕЕ тук (не в route handler): static prerender на route,
+      // връщащ 308, drop-ва Location header-а и сервира празно 200 (vrachka урок).
+      { source: "/sitemap.xml", destination: "/sitemap-index.xml", permanent: true },
+    ];
+  },
 };
 
 export default withMDX(nextConfig);

@@ -2,10 +2,13 @@ import { siteConfig } from "@/lib/site";
 import { SECTIONS, latestLastmod, renderSitemapIndex } from "@/lib/seo/sitemap";
 
 /**
- * Root sitemap index. `force-dynamic` е ЗАДЪЛЖИТЕЛЕН в Next.js 16+:
- * статичният prerender bake-ва `Vary: rsc` в кешираните headers, а Googlebot
- * отхвърля sitemap с Vary и never-retry-ва на същия URL (vrachka, 1 месец заседнал).
- * Plain `Response` (не `NextResponse`) — NextResponse участва в RSC negotiation.
+ * Root sitemap index (canonical URL). `/sitemap.xml` прави 308 → тук
+ * (виж next.config.ts redirects — redirect-ът ЖИВЕЕ там, не в route handler:
+ *  static prerender на route, връщащ 308, drop-ва Location header-а — vrachka урок).
+ *
+ * `force-dynamic` е ЗАДЪЛЖИТЕЛЕН в Next.js 16+: статичният prerender bake-ва
+ * `Vary: rsc` в кешираните headers, а Googlebot отхвърля sitemap с Vary и
+ * never-retry-ва на същия URL. Plain `Response` (не `NextResponse`).
  */
 export const dynamic = "force-dynamic";
 
