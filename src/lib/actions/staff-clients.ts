@@ -82,6 +82,35 @@ export async function saveMyClientNote(clientId: string, note: string) {
   return { ok: true as const };
 }
 
+/**
+ * Изтрива контакт — САМО ако клиентът е изцяло негов (няма часове при друг
+ * специалист). Изтриването на `clients` реда CASCADE-ва личните бележки, а
+ * bookings.clientId става NULL (часовете остават за оборота, но без лични данни
+ * → GDPR-чисто). Споделен клиент → отказ, за да не изчезне и от чуждия списък.
+ */
+export async function deleteMyClient(clientId: string) {
+  const { resource } = await requireStaff();
+
+  // Достъп: изпълнителят трябва да има поне 1 час с този клиент (иначе чужд clientId).
+  const mine = await db.query.bookings.findFirst({
+    where: (b, { and, eq }) => and(eq(b.clientId, clientId), eq(b.resourceId, resource.id)),
+    columns: { id: true },
+  });
+  if (!mine) return { ok: false as const, error: "Нямаш достъп до този клиент." };
+
+  // Споделен ли е? Часове при ДРУГ специалист → не трием.
+  const other = await db.query.bookings.findFirst({
+    where: (b, { and, eq, ne }) => and(eq(b.clientId, clientId), ne(b.resourceId, resource.id)),
+    columns: { id: true },
+  });
+  if (other) {
+    return { ok: false as const, error: "Клиентът има часове и при друг специалист — не може да се изтрие оттук." };
+  }
+
+  await db.delete(schema.clients).where(eq(schema.clients.id, clientId));
+  return { ok: true as const };
+}
+
 export interface MyClientRow {
   id: string;
   name: string;

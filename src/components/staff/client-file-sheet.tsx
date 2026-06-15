@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, MessageCircle, Phone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, MessageCircle, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getMyClientFile, saveMyClientNote, type ClientFileData } from "@/lib/actions/staff-clients";
+import { getMyClientFile, saveMyClientNote, deleteMyClient, type ClientFileData } from "@/lib/actions/staff-clients";
 
 const TZ = "Europe/Sofia";
 const visitDateFmt = new Intl.DateTimeFormat("bg-BG", { timeZone: TZ, day: "numeric", month: "short", year: "numeric" });
@@ -34,6 +35,9 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
   const [loading, setLoading] = React.useState(true);
   const [note, setNote] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const [confirmDel, setConfirmDel] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const router = useRouter();
 
   // Lazy fetch при отваряне на sheet-а.
   React.useEffect(() => {
@@ -67,6 +71,25 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
       toast.error("Грешка при запазване.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await deleteMyClient(clientId);
+      if (res.ok) {
+        toast.success("Контактът е изтрит.");
+        router.refresh(); // списъкът се презарежда → клиентът изчезва
+        onClose();
+      } else {
+        toast.error(res.error ?? "Грешка при изтриване.");
+        setConfirmDel(false);
+      }
+    } catch {
+      toast.error("Грешка при изтриване.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -165,6 +188,37 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
                     );
                   })}
                 </div>
+              )}
+            </div>
+
+            <div className="mt-5 border-t border-border pt-3">
+              {confirmDel ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl bg-destructive/5 px-3 py-2">
+                  <span className="text-xs text-foreground/70">Изтриване на контакта и бележките?</span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="rounded-full bg-destructive px-3 py-1 text-xs font-semibold text-white"
+                    >
+                      {deleting ? <Loader2 className="size-3.5 animate-spin" /> : "Изтрий"}
+                    </button>
+                    {!deleting && (
+                      <button type="button" onClick={() => setConfirmDel(false)} className="px-1 text-xs font-medium text-muted-foreground">
+                        Отказ
+                      </button>
+                    )}
+                  </span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDel(true)}
+                  className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <Trash2 className="size-3.5" /> Изтрий контакта
+                </button>
               )}
             </div>
           </>
