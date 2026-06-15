@@ -56,7 +56,7 @@ export default async function StaffServicesPage() {
     .map((c) => ({ slug: c.slug, title: c.shortTitle }));
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Управление</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Моите услуги</h1>

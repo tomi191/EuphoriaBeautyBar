@@ -49,7 +49,7 @@ export default async function StaffHoursPage() {
   }));
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-5">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Управление</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Моите часове</h1>

@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default async function StaffClientsPage() {
-  await requireStaff();
+  const { resource } = await requireStaff();
   const clients = await getMyClients();
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-4 flex items-center gap-1">
         <Link
           href="/staff"

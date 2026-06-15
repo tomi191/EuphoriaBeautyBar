@@ -31,7 +31,7 @@ export default async function StaffProfilePage() {
   ];
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-4">
         <h1 className="font-display text-xl font-medium">Профил</h1>
         <p className="mt-0.5 text-xs text-muted-foreground">{session.user.email}</p>

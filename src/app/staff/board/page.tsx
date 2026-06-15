@@ -77,7 +77,7 @@ export default async function StaffBoardPage() {
   }
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Премести с влачене</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Дъска</h1>

@@ -3,20 +3,30 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutGrid, Scissors, Clock, User, LogOut, Plus } from "lucide-react";
+import { CalendarDays, LayoutGrid, Scissors, HandHeart, Flower2, Clock, User, LogOut, Plus, type LucideIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-const tabs = [
-  { href: "/staff", label: "График", icon: CalendarDays, exact: true },
-  { href: "/staff/board", label: "Дъска", icon: LayoutGrid, exact: false },
-  { href: "/staff/services", label: "Услуги", icon: Scissors, exact: false },
-  { href: "/staff/hours", label: "Часове", icon: Clock, exact: false },
-  { href: "/staff/profile", label: "Профил", icon: User, exact: false },
-];
+// Икона на таба „Услуги" според специалността на изпълнителя (resource.kind):
+// фризьорът вижда ножици, маникюристът — ръка, козметикът — цвете. Иконите
+// съвпадат с публичния service-card. Fallback Scissors при липсващ/непознат kind.
+const SERVICE_ICON: Record<string, LucideIcon> = {
+  hair: Scissors,
+  nails: HandHeart,
+  cosmetics: Flower2,
+};
 
-export function StaffShell({ children }: { children: React.ReactNode }) {
+export function StaffShell({ children, kind }: { children: React.ReactNode; kind?: string }) {
   const pathname = usePathname();
+
+  // Tabs се строят на render, защото иконата на „Услуги" зависи от kind.
+  const tabs = [
+    { href: "/staff", label: "График", icon: CalendarDays, exact: true },
+    { href: "/staff/board", label: "Дъска", icon: LayoutGrid, exact: false },
+    { href: "/staff/services", label: "Услуги", icon: SERVICE_ICON[kind ?? ""] ?? Scissors, exact: false },
+    { href: "/staff/hours", label: "Часове", icon: Clock, exact: false },
+    { href: "/staff/profile", label: "Профил", icon: User, exact: false },
+  ];
   const [online, setOnline] = React.useState(true);
 
   // SW регистрацията е в layout-а (SwRegister), за всички staff екрани —

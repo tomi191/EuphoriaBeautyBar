@@ -172,7 +172,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   });
 
   return (
-    <StaffShell>
+    <StaffShell kind={resource.kind}>
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground capitalize">{longFmt.format(dayStart)}</p>
