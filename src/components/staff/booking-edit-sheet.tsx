@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { BookingCalendar } from "@/components/booking/booking-calendar";
 import {
   Sheet,
   SheetContent,
@@ -223,11 +224,11 @@ export function BookingEditSheet({
           )}
 
           {/* Дата / час / продължителност */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="bes-date">Дата</Label>
-              <Input id="bes-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11" required />
-            </div>
+          <div className="space-y-1.5">
+            <Label>Дата</Label>
+            <BookingCalendar value={date} onChange={setDate} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="bes-time">Час</Label>
               <Input id="bes-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11" required />

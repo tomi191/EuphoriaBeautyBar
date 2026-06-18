@@ -113,7 +113,7 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
   );
 }
 
-export function PublicBookingForm({ services, performers }: { services: PublicServiceOpt[]; performers: PerformerOpt[] }) {
+export function PublicBookingForm({ services, performers, closedDates }: { services: PublicServiceOpt[]; performers: PerformerOpt[]; closedDates?: string[] }) {
   const [categoryName, setCategoryName] = React.useState("");
   const [groupTitle, setGroupTitle] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -468,7 +468,7 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
 
         <div className="space-y-2">
           <Label>Дата</Label>
-          <BookingCalendar value={date} onChange={setDate} />
+          <BookingCalendar value={date} onChange={setDate} disabledDates={closedDates} />
         </div>
 
         <div className="space-y-2">

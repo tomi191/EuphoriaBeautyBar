@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBooking } from "@/lib/actions/bookings";
 
@@ -152,11 +153,11 @@ export function BookingEditDialog({
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="bed-date">Дата</Label>
-                <Input id="bed-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-              </div>
+            <div className="space-y-2">
+              <Label>Дата</Label>
+              <BookingCalendar value={date} onChange={setDate} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="bed-time">Час</Label>
                 <Input id="bed-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />

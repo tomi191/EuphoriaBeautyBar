@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { getClosedDates } from "@/lib/booking/closures";
 import {
   PublicBookingForm,
   type PublicServiceOpt,
@@ -32,6 +33,7 @@ export default async function BookingPage() {
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
   ]);
 
+  const closed = await getClosedDates();
   const catById = new Map(cats.map((c) => [c.id, c]));
 
   // Портфолио снимки по изпълнител (само тагнатите към него)
@@ -103,7 +105,7 @@ export default async function BookingPage() {
             ? "Избери услуга, изпълнител и свободен час. Ще получиш потвърждение на имейла."
             : "В момента онлайн записването не е налично. Обади се или ни пиши във Viber."}
         </p>
-        {services.length > 0 && <PublicBookingForm services={services} performers={performers} />}
+        {services.length > 0 && <PublicBookingForm services={services} performers={performers} closedDates={closed} />}
       </div>
     </section>
   );

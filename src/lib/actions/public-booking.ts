@@ -6,6 +6,8 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { fitsParallelWindow } from "@/lib/booking/parallel";
+import { sofiaDateStr } from "@/lib/booking/time";
+import { isClosed } from "@/lib/booking/closures";
 import { formatServicePrice } from "@/lib/booking/price";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
@@ -70,6 +72,9 @@ export async function createPublicBooking(input: PublicBookingInput) {
   const start = new Date(data.startAt);
   const end = new Date(start.getTime() + (data.durationMin + data.bufferMin) * 60000);
 
+  if (await isClosed(sofiaDateStr(start))) {
+    return { ok: false as const, error: "Салонът е затворен на тази дата." };
+  }
   // Не приемаме час в период на отпуск/почивка на изпълнителя.
   if (await hasTimeOffConflict(data.resourceId, start, end)) {
     return { ok: false as const, error: "Този час вече не е свободен. Избери друг." };

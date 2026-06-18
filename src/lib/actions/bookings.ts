@@ -9,7 +9,8 @@ import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
-import { sofiaWallToUtc } from "@/lib/booking/time";
+import { sofiaWallToUtc, sofiaDateStr } from "@/lib/booking/time";
+import { isClosed } from "@/lib/booking/closures";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 import { sendBookingConfirmation, formatWhen } from "@/lib/email/booking";
 import { sendPushToResource } from "@/lib/push";
@@ -63,6 +64,9 @@ export async function createBooking(input: BookingInput) {
   const start = new Date(data.startAt);
   const end = new Date(start.getTime() + (data.durationMin + data.bufferMin) * 60000);
 
+  if (await isClosed(sofiaDateStr(start))) {
+    return { ok: false as const, error: "Салонът е затворен на тази дата." };
+  }
   if (await hasTimeOffConflict(data.resourceId, start, end)) {
     return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
   }
@@ -172,6 +176,7 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
   const d = editSchema.parse(input);
   const booking = await db.query.bookings.findFirst({ where: (b, { eq }) => eq(b.id, id) });
   if (!booking) return { ok: false as const, error: "Часът не е намерен." };
+  if (await isClosed(d.dateStr)) return { ok: false as const, error: "Салонът е затворен на тази дата." };
   const start = sofiaWallToUtc(d.dateStr, d.timeStr);
   const end = new Date(start.getTime() + d.durationMin * 60000);
   if (await hasTimeOffConflict(booking.resourceId, start, end)) {

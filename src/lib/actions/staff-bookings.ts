@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
+import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
@@ -60,6 +61,9 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   const start = new Date(d.startAt);
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
 
+  if (await isClosed(sofiaDateStr(start))) {
+    return { ok: false as const, error: "Салонът е затворен на тази дата." };
+  }
   if (await hasTimeOffConflict(resource.id, start, end)) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
   }
@@ -127,6 +131,9 @@ export async function rescheduleMyBooking(id: string, newStartISO: string) {
   if (Number.isNaN(newStart.getTime())) {
     return { ok: false as const, error: "Невалиден час." };
   }
+  if (await isClosed(sofiaDateStr(newStart))) {
+    return { ok: false as const, error: "Салонът е затворен на тази дата." };
+  }
   const durationMs = booking.endAt.getTime() - booking.startAt.getTime();
   const newEnd = new Date(newStart.getTime() + durationMs);
 
@@ -182,6 +189,7 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
     where: (b, { and, eq }) => and(eq(b.id, id), eq(b.resourceId, resource.id)),
   });
   if (!booking) return { ok: false as const, error: "Часът не е намерен или не е твой." };
+  if (await isClosed(d.dateStr)) return { ok: false as const, error: "Салонът е затворен на тази дата." };
   const start = sofiaWallToUtc(d.dateStr, d.timeStr);
   const end = new Date(start.getTime() + d.durationMin * 60000);
   if (await hasTimeOffConflict(resource.id, start, end)) {

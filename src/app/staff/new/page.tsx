@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { StaffBookingForm, type StaffServiceOpt } from "@/components/staff/staff-booking-form";
+import { getClosedDates } from "@/lib/booking/closures";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 
 export default async function StaffNewBookingPage() {
   const { resource } = await requireStaff();
+  const closed = await getClosedDates();
 
   const [items, cats, mine] = await Promise.all([
     db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
@@ -43,7 +45,7 @@ export default async function StaffNewBookingPage() {
         <h1 className="font-display text-lg font-medium">Нов час</h1>
       </header>
       <div className="mx-auto max-w-lg px-4 py-6">
-        <StaffBookingForm services={services} />
+        <StaffBookingForm services={services} closedDates={closed} />
       </div>
     </div>
   );

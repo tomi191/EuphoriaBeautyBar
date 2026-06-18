@@ -38,6 +38,8 @@ export interface BookingCalendarProps {
   monthsBehind?: number;
   /** Позволи избор на минали дни (за преглед на график). По подразбиране false. */
   allowPast?: boolean;
+  /** Дати (YYYY-MM-DD), които да са заключени (напр. салонни празници). */
+  disabledDates?: readonly string[];
   className?: string;
 }
 
@@ -48,6 +50,7 @@ export function BookingCalendar({
   monthsAhead = 12,
   monthsBehind = 0,
   allowPast = false,
+  disabledDates,
   className,
 }: BookingCalendarProps) {
   // „Днес" по Sofia — изчислено веднъж на mount (стабилно при re-render).
@@ -85,6 +88,7 @@ export function BookingCalendar({
     ...Array<null>(lead).fill(null),
     ...Array.from({ length: total }, (_, i) => i + 1),
   ];
+  const closedSet = disabledDates && disabledDates.length ? new Set(disabledDates) : null;
 
   return (
     <div className={"rounded-2xl border border-border bg-background p-3 " + (className ?? "")}>
@@ -121,7 +125,9 @@ export function BookingCalendar({
         {cells.map((d, i) => {
           if (d === null) return <span key={"e" + i} aria-hidden />;
           const k = dayKey(view.y, view.m, d);
-          const disabled = k < floor;
+          const closed = closedSet?.has(k) ?? false;
+          const past = k < floor;
+          const disabled = past || closed;
           const selected = k === value;
           const isToday = k === today;
           const weekend = i % 7 >= 5;
@@ -131,17 +137,20 @@ export function BookingCalendar({
               type="button"
               disabled={disabled}
               onClick={() => onChange(k)}
-              aria-label={k}
+              aria-label={closed ? `${k} (затворено)` : k}
               aria-pressed={selected}
+              title={closed ? "Затворено" : undefined}
               className={
                 "relative grid h-10 place-items-center rounded-xl text-sm tabular-nums transition-colors " +
                 (selected
                   ? "bg-foreground font-bold text-background"
-                  : disabled
-                    ? "text-muted-foreground/30"
-                    : weekend
-                      ? "text-muted-foreground hover:bg-secondary active:scale-95"
-                      : "text-foreground hover:bg-secondary active:scale-95")
+                  : closed
+                    ? "text-muted-foreground/50 line-through"
+                    : past
+                      ? "text-muted-foreground/30"
+                      : weekend
+                        ? "text-muted-foreground hover:bg-secondary active:scale-95"
+                        : "text-foreground hover:bg-secondary active:scale-95")
               }
             >
               {d}

@@ -32,7 +32,7 @@ function uniq(values: string[]): string[] {
   return out;
 }
 
-export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) {
+export function StaffBookingForm({ services, closedDates }: { services: StaffServiceOpt[]; closedDates?: string[] }) {
   const router = useRouter();
   const [serviceId, setServiceId] = React.useState("");
   const [date, setDate] = React.useState(todayStr());
@@ -208,7 +208,7 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
       {/* Дата — пълногодишен календар */}
       <section>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Дата</p>
-        <BookingCalendar value={date} onChange={setDate} />
+        <BookingCalendar value={date} onChange={setDate} disabledDates={closedDates} />
       </section>
 
       {/* Час */}
