@@ -67,8 +67,11 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   // Статус бутоните („Дойде" и т.н.) имат смисъл само за днешни/минали часове.
   const todayEnd = new Date(sofiaWallToUtc(todayKey, "00:00").getTime() + 24 * 3600000);
 
-  // Дневен график + всички предстоящи часове за 30 дни напред (за search-а).
-  const [bookings, upcomingRows] = await Promise.all([
+  // Всичко независимо в ЕДНА паралелна вълна (вместо 3 последователни) → по-малко
+  // roundtrips, по-бързо първо зареждане: дневен график, предстоящи часове за 30
+  // дни (search), каталог услуги, собствени услуги, работно време (собствено + салонно).
+  const wd = sofiaWeekday(selectedKey);
+  const [bookings, upcomingRows, svcItems, svcCats, mySvc, ownWh, salonWh] = await Promise.all([
     db.query.bookings.findMany({
       where: (b, { and, eq, gte, lt, notInArray }) =>
         and(eq(b.resourceId, resource.id), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
@@ -80,19 +83,21 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
       orderBy: (b, { asc }) => [asc(b.startAt)],
       columns: { id: true, startAt: true, serviceName: true, clientId: true, status: true },
     }),
+    db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
+    db.query.serviceCategories.findMany(),
+    db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.resourceId, resource.id) }),
+    db.query.resourceWorkingHours.findFirst({
+      where: (w, { and, eq }) => and(eq(w.resourceId, resource.id), eq(w.weekday, wd)),
+    }),
+    db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }),
   ]);
 
+  // clients зависят от часовете → втора (и последна) вълна.
   const clientIds = [...new Set([...bookings, ...upcomingRows].map((b) => b.clientId).filter(Boolean) as string[])];
   const clients = clientIds.length ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
 
-  // Услуги за edit формата (същата логика като /staff/new): каталог, филтриран
-  // по вида на изпълнителя, и стеснен до собствените услуги ако са куратирани.
-  const [svcItems, svcCats, mySvc] = await Promise.all([
-    db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
-    db.query.serviceCategories.findMany(),
-    db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.resourceId, resource.id) }),
-  ]);
+  // Услуги за edit формата: каталог по вида на изпълнителя, стеснен до собствените, ако са куратирани.
   const svcCatById = new Map(svcCats.map((c) => [c.id, c]));
   const curated = mySvc.length > 0;
   const mineByItem = new Map(mySvc.map((m) => [m.serviceItemId, m]));
@@ -103,15 +108,6 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
     const m = mineByItem.get(i.id);
     return [{ id: i.id, name: i.name, category: cat.shortTitle, durationMin: m?.durationMin ?? i.durationMin, bufferMin: m?.bufferMin ?? i.bufferMin }];
   });
-
-  // Работно време за избрания ден (собствено ?? салонно) — за „свободно" прозорците.
-  const wd = sofiaWeekday(selectedKey);
-  const [ownWh, salonWh] = await Promise.all([
-    db.query.resourceWorkingHours.findFirst({
-      where: (w, { and, eq }) => and(eq(w.resourceId, resource.id), eq(w.weekday, wd)),
-    }),
-    db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }),
-  ]);
   const wh = ownWh ?? salonWh;
   const openAt = wh && !wh.closed && wh.openTime ? sofiaWallToUtc(selectedKey, wh.openTime) : null;
   const closeAt = wh && !wh.closed && wh.closeTime ? sofiaWallToUtc(selectedKey, wh.closeTime) : null;
@@ -166,9 +162,11 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
     };
   });
 
-  // 7 дни напред за date pills
+  // 7 дни ОТ избраната дата (а не от днес) — за да включва избора при „Скок до
+  // дата" и да е маркиран; обяд по Sofia като база, за да не скача през DST.
+  const pillBase = sofiaWallToUtc(selectedKey, "12:00");
   const pills = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now.getTime() + i * 86400000);
+    const d = new Date(pillBase.getTime() + i * 86400000);
     return { key: dateKeyFmt.format(d), day: pillDay.format(d), num: pillNum.format(d) };
   });
 
