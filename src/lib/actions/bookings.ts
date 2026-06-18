@@ -204,6 +204,12 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
       .where(eq(schema.bookings.id, id));
     revalidatePath("/admin/bookings");
     revalidatePath("/staff");
+    // Известие до изпълнителя — ресепцията промени негов час (час/услуга/време).
+    await sendPushToResource(booking.resourceId, {
+      title: "Променен час",
+      body: `${d.serviceName} — ${formatWhen(start)}${d.clientName ? ` (${d.clientName})` : ""}`,
+      url: "/staff",
+    }).catch(() => {});
     return { ok: true as const };
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
@@ -234,9 +240,18 @@ export async function markCompleted(id: string) {
 
 export async function cancelBooking(id: string, reason?: string) {
   await requireAdmin();
+  const booking = await db.query.bookings.findFirst({ where: (b, { eq }) => eq(b.id, id) });
   await db
     .update(schema.bookings)
     .set({ status: "cancelled", cancelledAt: new Date(), cancelReason: reason ?? null, updatedAt: new Date() })
     .where(eq(schema.bookings.id, id));
   revalidate();
+  // Известие до изпълнителя — ресепцията отмени негов час.
+  if (booking) {
+    await sendPushToResource(booking.resourceId, {
+      title: "Отменен час",
+      body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
+      url: "/staff",
+    }).catch(() => {});
+  }
 }
