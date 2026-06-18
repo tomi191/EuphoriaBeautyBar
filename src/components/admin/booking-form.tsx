@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createBooking, fetchSlots } from "@/lib/actions/bookings";
 import type { DaySlot } from "@/lib/booking/slots";
+import { BookingCalendar } from "@/components/booking/booking-calendar";
 
 export interface ResourceOpt {
   id: string;
@@ -145,21 +146,19 @@ export function BookingForm({
           <DialogTitle>Нов час</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Изпълнител</Label>
-              <select className={selectCls} value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
-                {resources.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Дата</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
+          <div className="space-y-2">
+            <Label>Изпълнител</Label>
+            <select className={selectCls} value={resourceId} onChange={(e) => setResourceId(e.target.value)}>
+              {resources.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Дата</Label>
+            <BookingCalendar value={date} onChange={setDate} />
           </div>
 
           <div className="space-y-2">

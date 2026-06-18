@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { createPublicBooking, fetchPublicSlots } from "@/lib/actions/public-booking";
 import type { DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice, priceVaries } from "@/lib/booking/price";
+import { BookingCalendar } from "@/components/booking/booking-calendar";
 
 export interface PublicServiceOpt {
   id: string;
@@ -88,19 +89,6 @@ function slotLabel(iso: string) {
 
 function todayStr() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
-
-/** Бързи бутони за дата: днес + следващите дни. */
-function quickDates(count: number): { value: string; label: string }[] {
-  const fmtDay = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", weekday: "short", day: "numeric", month: "short" });
-  const fmtISO = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" });
-  const out: { value: string; label: string }[] = [];
-  const base = new Date();
-  for (let i = 0; i < count; i++) {
-    const d = new Date(base.getTime() + i * 86400000);
-    out.push({ value: fmtISO.format(d), label: i === 0 ? "Днес" : i === 1 ? "Утре" : fmtDay.format(d) });
-  }
-  return out;
 }
 
 /** Кръгъл аватар на изпълнител — логото-mark на салона е fallback, ако няма снимка. */
@@ -479,23 +467,8 @@ export function PublicBookingForm({ services, performers }: { services: PublicSe
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="bf-date">Дата</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {quickDates(7).map((d) => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => setDate(d.value)}
-                className={
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
-                  (date === d.value ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground/50")
-                }
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-          <Input id="bf-date" type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="h-11" />
+          <Label>Дата</Label>
+          <BookingCalendar value={date} onChange={setDate} />
         </div>
 
         <div className="space-y-2">

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchMySlots, createMyBooking, type DayScheduleResult } from "@/lib/actions/staff-bookings";
+import { BookingCalendar } from "@/components/booking/booking-calendar";
 
 export interface StaffServiceOpt {
   id: string;
@@ -22,18 +23,6 @@ function slotLabel(iso: string) {
 }
 function todayStr() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
-
-/** 7 дни напред като pills (като графика) — native PWA линията, без date dropdown. */
-function weekPills() {
-  const day = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", weekday: "short" });
-  const num = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", day: "numeric" });
-  const iso = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Sofia", year: "numeric", month: "2-digit", day: "2-digit" });
-  const base = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(base.getTime() + i * 86400000);
-    return { key: iso.format(d), day: day.format(d), num: num.format(d) };
-  });
 }
 
 function uniq(values: string[]): string[] {
@@ -63,7 +52,6 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
   const [picking, setPicking] = React.useState(false);
   const q = query.trim().toLowerCase();
   const shown = services.filter((s) => s.category === activeCat && (q === "" || s.name.toLowerCase().includes(q)));
-  const pills = React.useMemo(() => weekPills(), []);
 
   React.useEffect(() => {
     if (!serviceId || !date) {
@@ -217,29 +205,10 @@ export function StaffBookingForm({ services }: { services: StaffServiceOpt[] }) 
         )}
       </section>
 
-      {/* Дата — pills като графика */}
+      {/* Дата — пълногодишен календар */}
       <section>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Дата</p>
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {pills.map((p) => {
-            const active = p.key === date;
-            return (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setDate(p.key)}
-                className={
-                  "flex w-12 shrink-0 flex-col items-center rounded-2xl border py-2 transition-colors " +
-                  (active ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/40")
-                }
-              >
-                <span className={"text-[11px] font-medium " + (active ? "text-background/70" : "text-muted-foreground")}>{p.day}</span>
-                <span className="mt-0.5 text-lg font-bold tabular-nums">{p.num}</span>
-              </button>
-            );
-          })}
-        </div>
-        <Input type="date" value={date} min={todayStr()} onChange={(e) => setDate(e.target.value)} className="mt-2 h-11" />
+        <BookingCalendar value={date} onChange={setDate} />
       </section>
 
       {/* Час */}
