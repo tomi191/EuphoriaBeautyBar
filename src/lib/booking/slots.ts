@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday } from "./time";
 import { parallelWindows } from "./parallel";
+import { isClosed } from "./closures";
 
 const GRANULARITY_MIN = 15;
 const DEFAULT_MIN_NOTICE_MIN = 60; // минимум предизвестие за онлайн запис
@@ -19,6 +20,7 @@ export async function getAvailableSlots(opts: {
   now?: Date;
   minNoticeMin?: number;
 }): Promise<string[]> {
+  if (await isClosed(opts.dateStr)) return []; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
   const blockMs = (opts.durationMin + opts.bufferMin) * 60000;
@@ -98,6 +100,7 @@ export async function getDaySlots(opts: {
   minNoticeMin?: number;
   allowParallel?: boolean;
 }): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
+  if (await isClosed(opts.dateStr)) return null; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
   const blockMs = (opts.durationMin + opts.bufferMin) * 60000;

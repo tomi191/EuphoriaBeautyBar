@@ -1,8 +1,13 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PageHeader } from "@/components/admin/page-header";
 import { siteConfig } from "@/lib/site";
+import { getClosedDates } from "@/lib/booking/closures";
+import { ClosuresManager } from "@/components/admin/closures-manager";
 
-export default function AdminSettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminSettingsPage() {
+  const closed = await getClosedDates();
   return (
     <>
       <PageHeader title="Настройки" subtitle="Глобални параметри на сайта и интеграции." />
@@ -21,6 +26,16 @@ export default function AdminSettingsPage() {
             <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Facebook</dt><dd className="truncate"><a className="text-primary hover:underline" href={siteConfig.social.facebook}>{siteConfig.social.facebook}</a></dd></div>
             <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Instagram</dt><dd className="truncate"><a className="text-primary hover:underline" href={siteConfig.social.instagram}>{siteConfig.social.instagram}</a></dd></div>
           </dl>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-background p-6">
+          <h2 className="font-display text-xl font-medium">Затворени дни</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Национални празници, отпуск или извънредно затваряне — салонът не приема записи на тези дати (за всички изпълнители).
+          </p>
+          <div className="mt-5">
+            <ClosuresManager initial={closed} />
+          </div>
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-6">
