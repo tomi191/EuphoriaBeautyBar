@@ -156,6 +156,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
         start,
         priceLabel,
         verifyUrl,
+        cancelUrl: `${base}/otkazhi-chas/${id}`,
       }),
       sendSalonNotification({
         clientName: data.clientName,

@@ -14,6 +14,7 @@ import { isClosed } from "@/lib/booking/closures";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 import { sendBookingConfirmation, formatWhen } from "@/lib/email/booking";
 import { sendPushToResource } from "@/lib/push";
+import { siteConfig } from "@/lib/site";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -141,6 +142,7 @@ export async function createBooking(input: BookingInput) {
         performerName: resource?.name ?? "екипа на Euphoria",
         start,
         priceLabel: item ? formatServicePrice(item) : undefined,
+        cancelUrl: `${siteConfig.url}/otkazhi-chas/${id}`,
       }).catch(() => {});
     }
     return { ok: true as const, id };

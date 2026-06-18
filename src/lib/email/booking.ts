@@ -91,6 +91,8 @@ export interface BookingEmailData {
   priceLabel?: string;
   /** Ако клиентът още не е потвърдил имейла си — линк за потвърждение (онбординг). */
   verifyUrl?: string;
+  /** Линк за онлайн отмяна на часа (token = booking id). */
+  cancelUrl?: string;
 }
 
 /** Потвърждение към клиента, че часът е запазен. */
@@ -122,7 +124,9 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
           : ""
       }
       <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
-        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> минимум 5 часа преди часа. При закъснение или неявяване се начислява 50% от стойността на услугата.
+        ${data.cancelUrl
+          ? `Ако се налага да отмениш — <a href="${data.cancelUrl}" style="color:#6f9e85;text-decoration:underline">откажи онлайн</a> или се обади на`
+          : "Ако се налага да отмениш, обади се на"} <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> минимум 5 часа преди часа. При закъснение или неявяване се начислява 50% от стойността на услугата.
       </p>
       ${verifyBlock}
     `),
