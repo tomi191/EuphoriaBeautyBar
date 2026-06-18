@@ -5,13 +5,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sofiaDateStr } from "@/lib/booking/time";
 
 /**
- * Споделен inline месечен календар за избор на дата (YYYY-MM-DD, Sofia-локална).
- * Заменя 7-дневните ленти — позволява запис за цялата година напред.
+ * Споделен inline месечен календар за избор/навигация по дата (YYYY-MM-DD,
+ * Sofia-локална). Заменя 7-дневните ленти — позволява запис/преглед за цялата
+ * година напред (и назад, ако allowPast).
  *
- * Datе ключовете се строят с чиста y/m/d аритметика (без Date→ISO конверсия) →
+ * Date ключовете се строят с чиста y/m/d аритметика (без Date→ISO конверсия) →
  * няма timezone off-by-one. „Днес" е по Europe/Sofia; „YYYY-MM-DD" низовете се
- * сравняват лексикографски = хронологично, затова past/selected/today са прости
- * string сравнения.
+ * сравняват лексикографски = хронологично.
  */
 
 const WEEKDAYS = ["пн", "вт", "ср", "чт", "пт", "сб", "нд"]; // седмицата започва от понеделник
@@ -30,35 +30,52 @@ export interface BookingCalendarProps {
   /** Избрана дата YYYY-MM-DD (или ""). */
   value: string;
   onChange: (date: string) => void;
-  /** Най-ранна избираема дата YYYY-MM-DD; по-ранните дни са disabled. По подразбиране днес (Sofia). */
+  /** Изрична най-ранна избираема дата YYYY-MM-DD (override). */
   minDate?: string;
   /** Колко месеца напред е навигируемо. По подразбиране 12. */
   monthsAhead?: number;
+  /** Колко месеца назад е навигируемо. По подразбиране 0 (само напред — за запис). */
+  monthsBehind?: number;
+  /** Позволи избор на минали дни (за преглед на график). По подразбиране false. */
+  allowPast?: boolean;
   className?: string;
 }
 
-export function BookingCalendar({ value, onChange, minDate, monthsAhead = 12, className }: BookingCalendarProps) {
+export function BookingCalendar({
+  value,
+  onChange,
+  minDate,
+  monthsAhead = 12,
+  monthsBehind = 0,
+  allowPast = false,
+  className,
+}: BookingCalendarProps) {
   // „Днес" по Sofia — изчислено веднъж на mount (стабилно при re-render).
   const [today] = React.useState(() => sofiaDateStr(new Date()));
-  const min = minDate ?? today;
+  const [ty, tm1] = today.split("-").map(Number);
+  const todayAbs = ty * 12 + (tm1 - 1); // месеци като абсолютно число
 
-  const [minY, minM1] = min.split("-").map(Number);
-  const minAbs = minY * 12 + (minM1 - 1); // месеци като абсолютно число
-  const maxAbs = minAbs + monthsAhead;
+  const minNavAbs = todayAbs - monthsBehind; // най-ранен навигируем месец
+  const maxNavAbs = todayAbs + monthsAhead; // най-късен навигируем месец
 
-  // Показан месец — от избраната дата (ако е валидна), иначе от min.
+  // Най-ранна ИЗБИРАЕМА дата: изричен minDate, иначе днес (или началото на
+  // навигируемия диапазон, ако се разрешава минало).
+  const floor =
+    minDate ?? (allowPast ? `${Math.floor(minNavAbs / 12)}-${pad((minNavAbs % 12) + 1)}-01` : today);
+
+  // Показан месец — от избраната дата (или днес), clamp-нат в навигируемия диапазон.
   const [view, setView] = React.useState(() => {
-    const src = value && value >= min ? value : min;
-    const [y, m] = src.split("-").map(Number);
-    return { y, m: m - 1 };
+    const [y, m] = (value || today).split("-").map(Number);
+    const abs = Math.min(maxNavAbs, Math.max(minNavAbs, y * 12 + (m - 1)));
+    return { y: Math.floor(abs / 12), m: abs % 12 };
   });
 
   const viewAbs = view.y * 12 + view.m;
-  const canPrev = viewAbs > minAbs;
-  const canNext = viewAbs < maxAbs;
+  const canPrev = viewAbs > minNavAbs;
+  const canNext = viewAbs < maxNavAbs;
 
   function shift(delta: number) {
-    const abs = Math.min(maxAbs, Math.max(minAbs, viewAbs + delta));
+    const abs = Math.min(maxNavAbs, Math.max(minNavAbs, viewAbs + delta));
     setView({ y: Math.floor(abs / 12), m: abs % 12 });
   }
 
@@ -104,7 +121,7 @@ export function BookingCalendar({ value, onChange, minDate, monthsAhead = 12, cl
         {cells.map((d, i) => {
           if (d === null) return <span key={"e" + i} aria-hidden />;
           const k = dayKey(view.y, view.m, d);
-          const disabled = k < min;
+          const disabled = k < floor;
           const selected = k === value;
           const isToday = k === today;
           const weekend = i % 7 >= 5;

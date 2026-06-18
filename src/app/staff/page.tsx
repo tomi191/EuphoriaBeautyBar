@@ -16,6 +16,7 @@ import { BookingEditSheet, type EditServiceOpt } from "@/components/staff/bookin
 import { ClientFileTrigger } from "@/components/staff/client-file-sheet";
 import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
 import { BiometricPrompt } from "@/components/staff/biometric-prompt";
+import { ScheduleDateJump } from "@/components/staff/schedule-date-jump";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
       <BiometricPrompt />
 
       <ScheduleSearch upcoming={upcoming}>
+        <ScheduleDateJump selected={selectedKey} todayKey={todayKey} />
         <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
           {pills.map((p) => {
             const active = p.key === selectedKey;
