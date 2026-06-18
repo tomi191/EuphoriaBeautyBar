@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { updateStaffProfile } from "@/lib/actions/staff";
+import { uploadStaffPhoto } from "@/lib/actions/staff-photo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,8 @@ export function StaffProfileForm({
   const [image, setImage] = React.useState(initialImage ?? "");
   const [bio, setBio] = React.useState(initialBio ?? "");
   const [savingProfile, setSavingProfile] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -38,6 +41,32 @@ export function StaffProfileForm({
       toast.error("Грешка при запазване.");
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // позволи повторен избор на същия файл
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Снимката е над 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await uploadStaffPhoto(fd);
+      if (res.ok) {
+        setImage(res.url);
+        toast.success("Снимката е качена.");
+      } else {
+        toast.error(res.error ?? "Грешка при качване.");
+      }
+    } catch {
+      toast.error("Грешка при качване.");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -80,7 +109,30 @@ export function StaffProfileForm({
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <Label className="text-xs">Снимка</Label>
-            <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="/images/team/име.jpg" className="h-10" />
+            <div className="flex items-center gap-2">
+              <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickPhoto} />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading}
+                onClick={() => fileRef.current?.click()}
+                className="h-9 rounded-full"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Качване
+                  </>
+                ) : (
+                  "Качи снимка"
+                )}
+              </Button>
+              {image.trim() && !uploading && (
+                <button type="button" onClick={() => setImage("")} className="text-xs text-muted-foreground hover:text-destructive">
+                  Махни
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className="space-y-1">

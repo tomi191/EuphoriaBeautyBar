@@ -109,6 +109,10 @@ export async function createMyService(input: z.infer<typeof createSchema>) {
   const dup = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.name, d.name.trim()) });
   if (dup) return { ok: false as const, error: "Услуга с това име вече съществува в каталога." };
 
+  // Валутата следва съществуващите услуги в категорията (без хардкод € → смесена валута).
+  const sibling = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.categoryId, categoryId), columns: { currency: true } });
+  const currency = sibling?.currency ?? "лв";
+
   const itemId = nanoid();
   await db.insert(schema.serviceItems).values({
     id: itemId,
@@ -118,7 +122,7 @@ export async function createMyService(input: z.infer<typeof createSchema>) {
     price: d.price,
     priceMax: null,
     priceFrom: d.priceFrom,
-    currency: "€",
+    currency,
     duration: null,
     description: null,
     sortOrder: 999, // в края на групата; admin може да пренареди
@@ -133,7 +137,7 @@ export async function createMyService(input: z.infer<typeof createSchema>) {
     price: d.price,
     priceMax: null,
     priceFrom: d.priceFrom,
-    currency: "€",
+    currency,
     durationMin: d.durationMin,
     bufferMin: d.bufferMin,
     active: true,
