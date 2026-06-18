@@ -35,14 +35,24 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
   const [offs, setOffs] = React.useState(timeOff);
 
   function patch(weekday: number, p: Partial<DayHours>) {
-    setRows((prev) => prev.map((r) => (r.weekday === weekday ? { ...r, ...p } : r)));
+    // Маркирай деня като custom → запазва се само той (без да заключва салонния
+    // fallback за неотметнатите дни).
+    setRows((prev) => prev.map((r) => (r.weekday === weekday ? { ...r, ...p, custom: true } : r)));
   }
 
   async function saveHours() {
+    // Работен ден трябва да има начало преди край, иначе getDaySlots тихо връща 0 слота.
+    const bad = rows.find((r) => !r.closed && !(r.openTime && r.closeTime && r.openTime < r.closeTime));
+    if (bad) {
+      toast.error(`${DAY_LABEL[bad.weekday]}: краят трябва да е след началото.`);
+      return;
+    }
     setSavingHours(true);
     try {
+      // Само custom (редактираните/собствени) дни → останалите остават на салонното време.
+      const toSave = rows.filter((r) => r.custom);
       await Promise.all(
-        rows.map((r) =>
+        toSave.map((r) =>
           setMyWorkingHours({ weekday: r.weekday, openTime: r.closed ? null : r.openTime, closeTime: r.closed ? null : r.closeTime, closed: r.closed }),
         ),
       );
@@ -106,16 +116,14 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
     }
     setSaving(true);
     try {
-      const startAt = new Date(`${date}T${from}:00`).toISOString();
-      const endAt = new Date(`${date}T${to}:00`).toISOString();
-      const res = await addMyTimeOff({ startAt, endAt, reason: reason || null });
+      // Пращаме сурово Sofia-време; сървърът смята UTC (DST-safe), не браузърът.
+      const res = await addMyTimeOff({ dateStr: date, fromTime: from, toTime: to, reason: reason || null });
       if (res.ok) {
         toast.success("Почивката е добавена.");
         setOpen(false);
         setDate("");
         setReason("");
-        // презареждаме списъка чрез optimistic вмъкване
-        setOffs((prev) => [...prev, { id: Math.random().toString(36), startAt, endAt, reason: reason || null }].sort((a, b) => a.startAt.localeCompare(b.startAt)));
+        setOffs((prev) => [...prev, res.item].sort((a, b) => a.startAt.localeCompare(b.startAt)));
       } else {
         toast.error(res.error ?? "Грешка.");
       }
@@ -128,10 +136,16 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
 
   async function remove(id: string) {
     setDeleting(id);
+    const prev = offs;
+    setOffs((p) => p.filter((o) => o.id !== id));
     try {
-      await deleteMyTimeOff(id);
-      setOffs((prev) => prev.filter((o) => o.id !== id));
+      const res = await deleteMyTimeOff(id);
+      if (!res.ok) {
+        setOffs(prev);
+        toast.error(res.error ?? "Грешка.");
+      }
     } catch {
+      setOffs(prev);
       toast.error("Грешка.");
     } finally {
       setDeleting(null);

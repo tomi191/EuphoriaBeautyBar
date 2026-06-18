@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { ServiceCategory, ServiceItem, Currency } from "@/lib/data/services";
+import { KIND_BY_SLUG } from "@/lib/booking/kind";
 
 /**
  * Презентационни/SEO полета, които НЕ са цени и не се менят от admin —
@@ -52,21 +53,79 @@ function uniq(values: string[]): string[] {
  * очакват (групирано по group_title). Цените, текстовете и продължителностите
  * идват от admin → промяна там се отразява на сайта (с revalidatePath).
  */
+interface PriceParts {
+  price: number;
+  priceMax: number | null;
+  priceFrom: boolean;
+}
+
+/**
+ * Публичната цена за услуга = диапазон/„от" across изпълнителите, които реално я
+ * предлагат. Базовата каталожна цена влиза САМО ако в този kind има „не-curated"
+ * изпълнител (който таксува по каталога) — иначе показваме само реалните оферти.
+ */
+function publicPrice(base: PriceParts, offers: PriceParts[], includeBase: boolean): PriceParts {
+  const lows: number[] = [];
+  const highs: number[] = [];
+  let anyFrom = false;
+  const consider = (p: PriceParts) => {
+    lows.push(p.price);
+    highs.push(p.priceMax && p.priceMax > p.price ? p.priceMax : p.price);
+    anyFrom = anyFrom || p.priceFrom;
+  };
+  if (includeBase) consider(base);
+  for (const o of offers) consider(o);
+  if (lows.length === 0) consider(base); // защита: услуга без оферти → базова цена
+  const low = Math.min(...lows);
+  const high = Math.max(...highs);
+  return { price: low, priceMax: high > low ? high : null, priceFrom: anyFrom };
+}
+
 export async function getServiceCatalog(): Promise<ServiceCategory[]> {
-  const [cats, items] = await Promise.all([
+  const [cats, items, offers, resources] = await Promise.all([
     db.query.serviceCategories.findMany({
       where: (c, { eq }) => eq(c.active, true),
       orderBy: (c, { asc }) => [asc(c.sortOrder)],
     }),
     db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
+    db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
+    db.query.resources.findMany({ where: (r, { eq }) => eq(r.active, true), columns: { id: true, kind: true } }),
   ]);
 
+  // Оферти по услуга + брой оферти на изпълнител (за curation статуса).
+  const offersByItem = new Map<string, PriceParts[]>();
+  const offerCount = new Map<string, number>();
+  for (const o of offers) {
+    const arr = offersByItem.get(o.serviceItemId);
+    const parts: PriceParts = { price: o.price, priceMax: o.priceMax, priceFrom: o.priceFrom };
+    if (arr) arr.push(parts);
+    else offersByItem.set(o.serviceItemId, [parts]);
+    offerCount.set(o.resourceId, (offerCount.get(o.resourceId) ?? 0) + 1);
+  }
+  // Kind-ове с поне един „не-curated" изпълнител (0 оферти → таксува по каталога).
+  const kindHasBaseSeller = new Set<string>();
+  for (const r of resources) if ((offerCount.get(r.id) ?? 0) === 0) kindHasBaseSeller.add(r.kind);
+
   return cats.map((c) => {
+    const kind = KIND_BY_SLUG[c.slug];
+    const includeBase = kind ? kindHasBaseSeller.has(kind) : true;
     const catItems = items.filter((i) => i.categoryId === c.id);
+    const itemToOpt = (i: (typeof items)[number]): ServiceItem => {
+      const pp = publicPrice({ price: i.price, priceMax: i.priceMax, priceFrom: i.priceFrom }, offersByItem.get(i.id) ?? [], includeBase);
+      return toItem({
+        name: i.name,
+        price: pp.price,
+        priceMax: pp.priceMax,
+        priceFrom: pp.priceFrom,
+        currency: i.currency,
+        duration: i.duration,
+        description: i.description,
+      });
+    };
     const groupTitles = uniq(catItems.map((i) => i.groupTitle));
     const groups = groupTitles.map((title) => ({
       title,
-      items: catItems.filter((i) => i.groupTitle === title).map(toItem),
+      items: catItems.filter((i) => i.groupTitle === title).map(itemToOpt),
     }));
     const pres = PRESENTATION[c.slug];
     const icon = (VALID_ICONS.includes(c.icon as Icon) ? c.icon : "sparkles") as Icon;
@@ -83,8 +142,8 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       seoTitle: pres?.seoTitle ?? `${c.title} във Варна`,
       popular: pres?.popular ?? catItems.slice(0, 5).map((i) => i.name),
       groups,
-      // „Препоръчани" за визитката на категорията — първите няколко услуги с актуални цени.
-      featured: catItems.slice(0, 3).map(toItem),
+      // „Препоръчани" за визитката на категорията — диапазонни цени across изпълнители.
+      featured: catItems.slice(0, 3).map(itemToOpt),
     } satisfies ServiceCategory;
   });
 }
