@@ -43,11 +43,26 @@ export default async function BlogPage() {
 
   return (
     <>
-      <section className="relative pt-32 pb-12 lg:pt-40 lg:pb-16">
-        <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <Reveal>
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Журнал</p>
-          </Reveal>
+      <section className="relative isolate min-h-[56svh] overflow-hidden bg-cream lg:min-h-[60svh]">
+        {/* Фон — beauty детайл (грим/грижа) */}
+        <Image
+          src="/images/services/makeup.jpg"
+          alt="Грижа за красотата — Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
+
+        <div className="relative z-10 mx-auto flex min-h-[56svh] max-w-7xl flex-col justify-center px-4 pt-28 pb-12 lg:min-h-[60svh] lg:px-8 lg:pt-32">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/60">Журнал</p>
           <BlurText
             as="h1"
             text="Експертно за косата, кожата и грижата за себе си"
