@@ -10,8 +10,41 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getServiceCatalog, getCatalogCategory } from "@/lib/data/service-catalog";
 import { siteConfig } from "@/lib/site";
-import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
+import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
+
+/**
+ * Локални FAQ per услуга-категория — видими на страницата + FAQPage schema.
+ * Заземени в реални факти (кв. Левски, марки, онлайн записване); цени само
+ * където са сигурни от каталога. Силен GEO/AI-Overviews citability сигнал.
+ */
+const SERVICE_FAQ: Record<string, Array<{ question: string; answer: string }>> = {
+  "frizorski-uslugi": [
+    { question: "В кой квартал на Варна правите фризьорски услуги?", answer: "В кв. Левски, на ул. Петър Райчев 18, близо до центъра на Варна. Час запазваш онлайн, по телефон или във Viber." },
+    { question: "С какви бои за коса работите?", answer: "С професионалните марки Montibello и Goldwell. Боята е включена в цената на боядисването." },
+    { question: "Колко време отнема балаяж?", answer: "Между 3 и 5 часа според дължината и текущото състояние на косата — затова правим кратка консултация преди процедурата." },
+    { question: "Правите ли официални прически за сватби и абитуриентски?", answer: "Да — за сватби, балове и абитуриентски. Препоръчваме предварителна проба, за да сме сигурни, че прическата ще издържи целия ден." },
+    { question: "Правите ли мъжко подстригване?", answer: "Да, мъжкото подстригване е сред редовните ни услуги, заедно с дамско подстригване, боядисване и балаяж." },
+  ],
+  "frizorski-terapii": [
+    { question: "Какво е кератинова терапия?", answer: "Метод за изправяне и подхранване на косата — прави я гладка, мека и без наелектризиране. Работим с Kerasilk на Goldwell." },
+    { question: "За каква коса са терапиите?", answer: "За коса след боядисване или избелване — възстановяват, хидратират и връщат блясъка. Терапията избираме според състоянието на косата ти." },
+    { question: "Колко издържа ефектът от терапията?", answer: "Вижда се веднага и се задържа седмици при правилна домашна грижа — например безсулфатен шампоан." },
+    { question: "Къде се намирате?", answer: "В кв. Левски, Варна, на ул. Петър Райчев 18. Запазваш час онлайн на euphoriabeauty.eu/zapazi-chas." },
+  ],
+  "manikyur-i-pedikyur": [
+    { question: "Колко издържа гел лак?", answer: "Обикновено 2–3 седмици според растежа на ноктите и ежедневната грижа. Препоръчваме нова процедура, когато се появи израстване." },
+    { question: "Какво е медицински педикюр?", answer: "Апаратна обработка за проблеми като врастнал нокът, мазоли и напукани пети — различава се от козметичния педикюр. За преценка и цена попитай при записване." },
+    { question: "Правите ли маникюр в кв. Левски?", answer: "Да — салонът е в кв. Левски, Варна, на ул. Петър Райчев 18. Предлагаме класически и гел маникюр, френски и омбре дизайни, и педикюр." },
+    { question: "Мога ли да запазя час за маникюр онлайн?", answer: "Да — на euphoriabeauty.eu/zapazi-chas виждаш свободните часове в реално време и запазваш без обаждане." },
+  ],
+  kozmetika: [
+    { question: "Какво е Hydra Facial?", answer: "Модерно дълбоко почистване, което едновременно хидратира и ексфолира кожата — подходящо за освежаване и хидратация." },
+    { question: "За каква кожа са лицевите процедури?", answer: "Протоколът избираме според типа кожа и целта — почистване, хидратация, anti-age, анти-акне или анти-пигмент. Работим с GIGI, Esthemax и Montibello." },
+    { question: "Правите ли ламиниране на мигли и вежди?", answer: "Да — ламиниране на мигли и на вежди, плюс оформяне и боядисване на вежди." },
+    { question: "В кой квартал на Варна сте?", answer: "В кв. Левски, на ул. Петър Райчев 18, близо до центъра. Запазваш час онлайн, по телефон или във Viber." },
+  ],
+};
 
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
@@ -58,6 +91,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   const lowPrice = Math.min(...prices);
   const highPrice = Math.max(...prices);
   const priceCurrency = category.groups[0]?.items[0]?.currency === "€" ? "EUR" : "BGN";
+
+  const faq = SERVICE_FAQ[category.slug] ?? [];
 
   return (
     <>
@@ -163,6 +198,30 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
         </div>
       </section>
 
+      {/* FAQ — локални Q&A (FAQPage schema за AI Overviews / People Also Ask) */}
+      {faq.length > 0 && (
+        <section className="border-t border-border/40 bg-secondary/30 py-20 lg:py-28">
+          <div className="mx-auto max-w-3xl px-4 lg:px-8">
+            <Reveal>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Често задавани въпроси</p>
+              <h2 className="font-display text-3xl font-medium md:text-4xl">
+                {category.shortTitle} във Варна — <span className="gradient-text">въпроси</span>.
+              </h2>
+            </Reveal>
+            <div className="mt-10 divide-y divide-border/60">
+              {faq.map((item, idx) => (
+                <Reveal key={item.question} delay={idx * 0.04}>
+                  <div className="py-6">
+                    <h3 className="font-display text-lg font-medium md:text-xl">{item.question}</h3>
+                    <p className="mt-2 leading-relaxed text-foreground/75">{item.answer}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* CROSS-LINKS — другите 3 категории (както live сайта) */}
       <section id="drugi" className="scroll-mt-24 border-t border-border/40 bg-cream py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-4 lg:px-10">
@@ -253,6 +312,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             category: category.shortTitle,
             offers: { lowPrice, highPrice, priceCurrency },
           }),
+          ...(faq.length > 0 ? [faqSchema(faq)] : []),
         ]}
       />
     </>
