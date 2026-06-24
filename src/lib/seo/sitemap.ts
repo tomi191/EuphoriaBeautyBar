@@ -15,7 +15,6 @@
  */
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
-import { montibelloProducts } from "@/lib/data/montibello";
 
 export type Changefreq = "weekly" | "monthly" | "yearly";
 
@@ -37,6 +36,7 @@ export interface SitemapSection {
 const STATIC_PATHS = [
   "",
   "/uslugi",
+  "/uslugi/balayazh-varna",
   "/salon-varna-levski",
   "/zapazi-chas",
   "/galeriya",
@@ -69,15 +69,8 @@ export const SECTIONS: SitemapSection[] = [
       }));
     },
   },
-  {
-    id: "montibello",
-    build: async () =>
-      montibelloProducts.map((p) => ({
-        path: `/montibello/${p.slug}`,
-        changefreq: "monthly" as const,
-        priority: 0.6,
-      })),
-  },
+  // Montibello продуктовите страници са noindex (thin near-duplicate каталог) →
+  // нарочно НЕ са в sitemap. Само /montibello хъбът (в "main") е indexable.
   {
     id: "blog",
     build: async () => {
