@@ -11,6 +11,15 @@
 # testing
 /coverage
 
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Ahrefs SEO одит screenshots (локален преглед, не source-of-truth)
+/ahrefs-*.png
+
 # next.js
 /.next/
 /out/

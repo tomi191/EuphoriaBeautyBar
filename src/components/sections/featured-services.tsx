@@ -37,7 +37,7 @@ export async function FeaturedServices() {
               </h2>
             </div>
             <p className="font-serif text-lg italic text-foreground/75 md:col-span-5">
-              Коса, терапии, нокти и лице. Виж цените във всяка категория.
+              Фризьорство, маникюр и козметика в кв. Левски, Варна — коса, нокти и лице на едно място. Виж цените във всяка категория.
             </p>
           </div>
         </Reveal>

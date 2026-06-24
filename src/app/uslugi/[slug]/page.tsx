@@ -10,14 +10,64 @@ import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getServiceCatalog, getCatalogCategory } from "@/lib/data/service-catalog";
 import { siteConfig } from "@/lib/site";
-import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
+import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 
-const heroIllustrations: Record<string, { primary: string; secondary?: string }> = {
-  "frizorski-uslugi": { primary: "/illustrations/hairdryer.svg", secondary: "/illustrations/comb.svg" },
-  "frizorski-terapii": { primary: "/illustrations/droplet.svg", secondary: "/illustrations/leaf.svg" },
-  "manikyur-i-pedikyur": { primary: "/illustrations/nail-polish.svg", secondary: "/illustrations/flowers.svg" },
-  kozmetika: { primary: "/illustrations/mirror.svg", secondary: "/illustrations/lipstick.svg" },
+/**
+ * Локални FAQ per услуга-категория — видими на страницата + FAQPage schema.
+ * Заземени в реални факти (кв. Левски, марки, онлайн записване); цени само
+ * където са сигурни от каталога. Силен GEO/AI-Overviews citability сигнал.
+ */
+const SERVICE_FAQ: Record<string, Array<{ question: string; answer: string }>> = {
+  "frizorski-uslugi": [
+    { question: "В кой квартал на Варна правите фризьорски услуги?", answer: "В кв. Левски, на ул. Петър Райчев 18, близо до центъра на Варна. Час запазваш онлайн, по телефон или във Viber." },
+    { question: "С какви бои за коса работите?", answer: "С професионалните марки Montibello и Goldwell. Боята е включена в цената на боядисването." },
+    { question: "Колко време отнема балаяж?", answer: "Между 3 и 5 часа според дължината и текущото състояние на косата — затова правим кратка консултация преди процедурата." },
+    { question: "Правите ли официални прически за сватби и абитуриентски?", answer: "Да — за сватби, балове и абитуриентски. Препоръчваме предварителна проба, за да сме сигурни, че прическата ще издържи целия ден." },
+    { question: "Правите ли мъжко подстригване?", answer: "Да, мъжкото подстригване е сред редовните ни услуги, заедно с дамско подстригване, боядисване и балаяж." },
+  ],
+  "frizorski-terapii": [
+    { question: "Какво е кератинова терапия?", answer: "Метод за изправяне и подхранване на косата — прави я гладка, мека и без наелектризиране. Работим с Kerasilk на Goldwell." },
+    { question: "За каква коса са терапиите?", answer: "За коса след боядисване или избелване — възстановяват, хидратират и връщат блясъка. Терапията избираме според състоянието на косата ти." },
+    { question: "Колко издържа ефектът от терапията?", answer: "Вижда се веднага и се задържа седмици при правилна домашна грижа — например безсулфатен шампоан." },
+    { question: "Къде се намирате?", answer: "В кв. Левски, Варна, на ул. Петър Райчев 18. Запазваш час онлайн на euphoriabeauty.eu/zapazi-chas." },
+  ],
+  "manikyur-i-pedikyur": [
+    { question: "Колко издържа гел лак?", answer: "Обикновено 2–3 седмици според растежа на ноктите и ежедневната грижа. Препоръчваме нова процедура, когато се появи израстване." },
+    { question: "Какво е медицински педикюр?", answer: "Апаратна обработка за проблеми като врастнал нокът, мазоли и напукани пети — различава се от козметичния педикюр. За преценка и цена попитай при записване." },
+    { question: "Правите ли маникюр в кв. Левски?", answer: "Да — салонът е в кв. Левски, Варна, на ул. Петър Райчев 18. Предлагаме класически и гел маникюр, френски и омбре дизайни, и педикюр." },
+    { question: "Мога ли да запазя час за маникюр онлайн?", answer: "Да — на euphoriabeauty.eu/zapazi-chas виждаш свободните часове в реално време и запазваш без обаждане." },
+  ],
+  kozmetika: [
+    { question: "Какво е Hydra Facial?", answer: "Модерно дълбоко почистване, което едновременно хидратира и ексфолира кожата — подходящо за освежаване и хидратация." },
+    { question: "За каква кожа са лицевите процедури?", answer: "Протоколът избираме според типа кожа и целта — почистване, хидратация, anti-age, анти-акне или анти-пигмент. Работим с GIGI, Esthemax и Montibello." },
+    { question: "Правите ли ламиниране на мигли и вежди?", answer: "Да — ламиниране на мигли и на вежди, плюс оформяне и боядисване на вежди." },
+    { question: "В кой квартал на Варна сте?", answer: "В кв. Левски, на ул. Петър Райчев 18, близо до центъра. Запазваш час онлайн, по телефон или във Viber." },
+  ],
+};
+
+/**
+ * Уникален локален текст per категория (200–250 думи) — под hero, над ценоразписа.
+ * Адресира тънкото съдържание (беше 1 цитат). Заземено в реални марки/процес/кв. Левски,
+ * без суперлативи. Дава дълбочина за ранкиране + passage за AI Overviews.
+ */
+const SERVICE_INTRO: Record<string, string[]> = {
+  "frizorski-uslugi": [
+    "Във фризьорската зала на Euphoria, в кв. Левски, работи Снежана Саблева — зад стола от 2000 г. Боядисване, балаяж, кичури и официални прически правим с Montibello и Goldwell, защото държим цветът да издържи повече от едно миене.",
+    "Преди боя или изсветляване сядаме за кратка консултация: гледаме типа коса, какво е правено досега и колко поддръжка искаш да отделяш. За сватби, балове и абитуриентски препоръчваме предварителна проба, за да сме сигурни, че прическата ще издържи целия ден. Салонът е на ул. Петър Райчев 18, близо до центъра на Варна — час запазваш онлайн в реално време, по телефон или във Viber.",
+  ],
+  "frizorski-terapii": [
+    "Терапиите за коса избираме според състоянието ѝ — суха, изтощена или увредена след боядисване и изсветляване. Работим с кератин Kerasilk на Goldwell за изправяне и гладкост, ампули Nashi Argan за дълбоко подхранване, ламеларна вода за блясък и минерални ампули за здравина.",
+    "Терапия добавяме често след балаяж или боядисване, за да върнем влагата, която изсветляването отнема. Ефектът се вижда веднага, а с правилна домашна грижа — безсулфатен шампоан и маска веднъж седмично — се задържа седмици. Косата я поема Снежана, с над 25 години опит. Салонът е в кв. Левски, Варна; час запазваш онлайн.",
+  ],
+  "manikyur-i-pedikyur": [
+    "Маникюрът и педикюрът в Euphoria се правят в стерилни условия — инструментите обработваме между всеки клиент. Предлагаме класически и гел маникюр, френски и омбре дизайни, кератинова терапия за чупливи нокти, класически и медицински педикюр.",
+    "Гел лакът обикновено издържа 2–3 седмици; препоръчваме нова процедура при израстване, не по-късно, за да остане ноктът здрав. Медицинският педикюр е за конкретни проблеми — врастнал нокът, мазоли, напукани пети — и се различава от козметичния. Салонът е на ул. Петър Райчев 18, кв. Левски, Варна. Маникюр в квартала запазваш онлайн в реално време, без обаждане.",
+  ],
+  kozmetika: [
+    "Лицевите терапии подбираме според типа кожа и целта — почистване, хидратация, anti-age, анти-акне или анти-пигмент. Работим с GIGI и Esthemax за почистване и проблемна кожа, Montibello за лифтинг и оксижен терапии, GENOSYS за карбокситерапия и микронидлинг.",
+    "Освен лице правим ламиниране на мигли и вежди, оформяне и боядисване на вежди, и кола маска. Преди процедура преценяваме състоянието на кожата, за да изберем правилния протокол. Кабинетът е в салона на ул. Петър Райчев 18, кв. Левски, Варна — час запазваш онлайн, по телефон или във Viber.",
+  ],
 };
 
 interface ServiceDetailParams {
@@ -34,12 +84,13 @@ export async function generateMetadata({ params }: ServiceDetailParams): Promise
   const category = await getCatalogCategory(slug);
   if (!category) return { robots: { index: false } };
   return {
-    title: category.title,
-    description: category.description,
+    // metaTitle носи „Варна, кв. Левски" (template добавя " · Euphoria"); fallback към seoTitle.
+    title: category.metaTitle ?? category.seoTitle,
+    description: category.metaDescription ?? category.description,
     alternates: { canonical: `/uslugi/${category.slug}` },
     openGraph: {
       title: category.seoTitle,
-      description: category.description,
+      description: category.metaDescription ?? category.description,
       images: [category.heroImage],
     },
   };
@@ -65,33 +116,32 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   const highPrice = Math.max(...prices);
   const priceCurrency = category.groups[0]?.items[0]?.currency === "€" ? "EUR" : "BGN";
 
+  const faq = SERVICE_FAQ[category.slug] ?? [];
+  const intro = SERVICE_INTRO[category.slug] ?? [];
+
   return (
     <>
-      {/* HERO */}
-      <section id="info" className="relative overflow-hidden bg-cream pt-32 pb-16 lg:pt-40 lg:pb-24">
-        {heroIllustrations[category.slug]?.primary && (
-          <Image
-            src={heroIllustrations[category.slug].primary}
-            alt=""
-            aria-hidden
-            width={300}
-            height={300}
-            className="pointer-events-none absolute right-[5%] top-24 hidden h-44 w-auto opacity-50 mix-blend-multiply lg:block"
-          />
-        )}
-        {heroIllustrations[category.slug]?.secondary && (
-          <Image
-            src={heroIllustrations[category.slug].secondary!}
-            alt=""
-            aria-hidden
-            width={280}
-            height={280}
-            className="pointer-events-none absolute right-[22%] bottom-12 hidden h-32 w-auto rotate-[-12deg] opacity-40 mix-blend-multiply lg:block"
-          />
-        )}
+      {/* HERO — реалната снимка на услугата във фон + топъл воал (като началната страница) */}
+      <section id="info" className="relative isolate min-h-[70svh] overflow-hidden bg-cream lg:min-h-[76svh]">
+        {/* Фон — реалната снимка на услугата */}
+        <Image
+          src={category.heroImage}
+          alt={`${category.title} в Euphoria, кв. Левски, Варна`}
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
 
-        <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
-          <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="relative z-10 mx-auto flex min-h-[70svh] max-w-7xl flex-col px-4 pt-28 pb-12 lg:min-h-[76svh] lg:px-10 lg:pt-32">
+          <nav aria-label="Трохи" className="flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <Link href="/" className="hover:text-foreground">Начало</Link>
             <ChevronRight className="size-3" />
             <Link href="/uslugi" className="hover:text-foreground">Услуги</Link>
@@ -99,10 +149,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             <span className="text-foreground">{category.title}</span>
           </nav>
 
-          <div className="grid items-end gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-8">
+          <div className="flex flex-1 items-center">
+            <div className="max-w-2xl">
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">
-                {category.shortTitle} · Варна
+                {category.shortTitle} · кв. Левски, Варна
               </p>
               <BlurText
                 as="h1"
@@ -110,36 +160,43 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl"
                 stagger={0.025}
               />
-              <p className="mt-6 max-w-2xl font-serif text-xl italic text-muted-foreground">
+              <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
                 {category.tagline}
               </p>
-            </div>
-            <Reveal className="lg:col-span-4" delay={0.2}>
-              <div className="flex flex-col gap-3">
-                <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-primary">
                   <Link href="/zapazi-chas">
                     <Calendar className="size-4" /> Запиши час
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-md border-border px-8">
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-foreground/30 bg-background/60 px-8 backdrop-blur">
                   <a href={`tel:${siteConfig.contact.phone}`}>
                     <Phone className="size-4" /> {siteConfig.contact.phoneFormatted}
                   </a>
                 </Button>
               </div>
-            </Reveal>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* OPISANIE / longDescription */}
-      <section className="border-y border-border/40 bg-secondary/40 py-16 lg:py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center lg:px-8">
+      {/* OPISANIE / longDescription + уникален локален текст */}
+      <section className="border-y border-border/40 bg-secondary/40 py-16 lg:py-24">
+        <div className="mx-auto max-w-3xl px-4 lg:px-8">
           <Reveal>
-            <p className="font-serif text-xl leading-relaxed italic text-foreground/85 md:text-2xl">
+            <p className="text-center font-serif text-xl leading-relaxed italic text-foreground/85 md:text-2xl">
               &ldquo;{category.longDescription}&rdquo;
             </p>
           </Reveal>
+          {intro.length > 0 && (
+            <Reveal delay={0.1}>
+              <div className="mt-10 space-y-4 border-t border-border/50 pt-10 text-foreground/80 md:text-lg">
+                {intro.map((p, idx) => (
+                  <p key={idx} className="leading-relaxed">{p}</p>
+                ))}
+              </div>
+            </Reveal>
+          )}
         </div>
       </section>
 
@@ -174,6 +231,30 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
           </div>
         </div>
       </section>
+
+      {/* FAQ — локални Q&A (FAQPage schema за AI Overviews / People Also Ask) */}
+      {faq.length > 0 && (
+        <section className="border-t border-border/40 bg-secondary/30 py-20 lg:py-28">
+          <div className="mx-auto max-w-3xl px-4 lg:px-8">
+            <Reveal>
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Често задавани въпроси</p>
+              <h2 className="font-display text-3xl font-medium md:text-4xl">
+                {category.shortTitle} във Варна — <span className="gradient-text">въпроси</span>.
+              </h2>
+            </Reveal>
+            <div className="mt-10 divide-y divide-border/60">
+              {faq.map((item, idx) => (
+                <Reveal key={item.question} delay={idx * 0.04}>
+                  <div className="py-6">
+                    <h3 className="font-display text-lg font-medium md:text-xl">{item.question}</h3>
+                    <p className="mt-2 leading-relaxed text-foreground/75">{item.answer}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CROSS-LINKS — другите 3 категории (както live сайта) */}
       <section id="drugi" className="scroll-mt-24 border-t border-border/40 bg-cream py-20 lg:py-28">
@@ -265,6 +346,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             category: category.shortTitle,
             offers: { lowPrice, highPrice, priceCurrency },
           }),
+          ...(faq.length > 0 ? [faqSchema(faq)] : []),
         ]}
       />
     </>
