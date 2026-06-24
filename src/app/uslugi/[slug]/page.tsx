@@ -13,13 +13,6 @@ import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 
-const heroIllustrations: Record<string, { primary: string; secondary?: string }> = {
-  "frizorski-uslugi": { primary: "/illustrations/hairdryer.svg", secondary: "/illustrations/comb.svg" },
-  "frizorski-terapii": { primary: "/illustrations/droplet.svg", secondary: "/illustrations/leaf.svg" },
-  "manikyur-i-pedikyur": { primary: "/illustrations/nail-polish.svg", secondary: "/illustrations/flowers.svg" },
-  kozmetika: { primary: "/illustrations/mirror.svg", secondary: "/illustrations/lipstick.svg" },
-};
-
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
 }
@@ -68,31 +61,27 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
 
   return (
     <>
-      {/* HERO */}
-      <section id="info" className="relative overflow-hidden bg-cream pt-32 pb-16 lg:pt-40 lg:pb-24">
-        {heroIllustrations[category.slug]?.primary && (
-          <Image
-            src={heroIllustrations[category.slug].primary}
-            alt=""
-            aria-hidden
-            width={300}
-            height={300}
-            className="pointer-events-none absolute right-[5%] top-24 hidden h-44 w-auto opacity-50 mix-blend-multiply lg:block"
-          />
-        )}
-        {heroIllustrations[category.slug]?.secondary && (
-          <Image
-            src={heroIllustrations[category.slug].secondary!}
-            alt=""
-            aria-hidden
-            width={280}
-            height={280}
-            className="pointer-events-none absolute right-[22%] bottom-12 hidden h-32 w-auto rotate-[-12deg] opacity-40 mix-blend-multiply lg:block"
-          />
-        )}
+      {/* HERO — реалната снимка на услугата във фон + топъл воал (като началната страница) */}
+      <section id="info" className="relative isolate min-h-[70svh] overflow-hidden bg-cream lg:min-h-[76svh]">
+        {/* Фон — реалната снимка на услугата */}
+        <Image
+          src={category.heroImage}
+          alt={`${category.title} в Euphoria, кв. Левски, Варна`}
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
 
-        <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
-          <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="relative z-10 mx-auto flex min-h-[70svh] max-w-7xl flex-col px-4 pt-28 pb-12 lg:min-h-[76svh] lg:px-10 lg:pt-32">
+          <nav aria-label="Трохи" className="flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <Link href="/" className="hover:text-foreground">Начало</Link>
             <ChevronRight className="size-3" />
             <Link href="/uslugi" className="hover:text-foreground">Услуги</Link>
@@ -100,10 +89,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             <span className="text-foreground">{category.title}</span>
           </nav>
 
-          <div className="grid items-end gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-8">
+          <div className="flex flex-1 items-center">
+            <div className="max-w-2xl">
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">
-                {category.shortTitle} · Варна
+                {category.shortTitle} · кв. Левски, Варна
               </p>
               <BlurText
                 as="h1"
@@ -111,24 +100,22 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl"
                 stagger={0.025}
               />
-              <p className="mt-6 max-w-2xl font-serif text-xl italic text-muted-foreground">
+              <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
                 {category.tagline}
               </p>
-            </div>
-            <Reveal className="lg:col-span-4" delay={0.2}>
-              <div className="flex flex-col gap-3">
-                <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-primary">
                   <Link href="/zapazi-chas">
                     <Calendar className="size-4" /> Запиши час
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-md border-border px-8">
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-foreground/30 bg-background/60 px-8 backdrop-blur">
                   <a href={`tel:${siteConfig.contact.phone}`}>
                     <Phone className="size-4" /> {siteConfig.contact.phoneFormatted}
                   </a>
                 </Button>
               </div>
-            </Reveal>
+            </div>
           </div>
         </div>
       </section>

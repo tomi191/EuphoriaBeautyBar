@@ -94,115 +94,75 @@ export default async function SalonVarnaLevskiPage() {
 
   return (
     <>
-      {/* ───── HERO ───── */}
-      <section className="relative overflow-hidden bg-cream pt-32 pb-20 lg:pt-40 lg:pb-28">
+      {/* ───── HERO — реалната снимка на салона във фон + топъл воал (като началната) ───── */}
+      <section className="relative isolate min-h-[84svh] overflow-hidden bg-cream">
+        {/* Фон — реалната снимка на салона */}
         <Image
-          src="/illustrations/mirror.svg"
-          alt=""
-          aria-hidden
-          width={260}
-          height={320}
-          className="pointer-events-none absolute right-[4%] top-28 hidden h-48 w-auto opacity-45 mix-blend-multiply lg:block"
+          src="/images/interior/hero-front.jpg"
+          alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
         />
-        <Image
-          src="/illustrations/flowers.svg"
-          alt=""
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
           aria-hidden
-          width={300}
-          height={320}
-          className="pointer-events-none absolute right-[20%] bottom-10 hidden h-36 w-auto rotate-[-8deg] opacity-40 mix-blend-multiply lg:block"
-        />
-        <Image
-          src="/illustrations/leaf.svg"
-          alt=""
-          aria-hidden
-          width={220}
-          height={280}
-          className="pointer-events-none absolute left-[3%] bottom-16 hidden h-36 w-auto opacity-30 mix-blend-multiply lg:block"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
         />
 
-        <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
-          <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+        <div className="relative z-10 mx-auto flex min-h-[84svh] max-w-7xl flex-col px-4 pt-28 pb-12 lg:px-10 lg:pt-32">
+          <nav aria-label="Трохи" className="flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <Link href="/" className="hover:text-foreground">Начало</Link>
             <ChevronRight className="size-3" />
             <span className="text-foreground">Салон кв. Левски, Варна</span>
           </nav>
 
-          <Reveal>
+          <div className="flex flex-1 flex-col justify-center py-10">
             <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">
               Beauty bar · кв. Левски, Варна
             </p>
-          </Reveal>
-          <BlurText
-            as="h1"
-            text="Салон за красота в кв. Левски, Варна"
-            className="max-w-4xl font-display text-5xl leading-[1.03] font-medium text-balance md:text-6xl lg:text-7xl"
-            stagger={0.02}
-          />
-          <Reveal delay={0.35}>
-            <p className="mt-8 max-w-2xl font-serif text-xl italic text-muted-foreground">
+            <BlurText
+              as="h1"
+              text="Салон за красота в кв. Левски, Варна"
+              className="max-w-3xl font-display text-5xl leading-[1.03] font-medium text-balance md:text-6xl lg:text-7xl"
+              stagger={0.02}
+            />
+            <p className="mt-7 max-w-2xl font-serif text-xl italic text-foreground/80">
               Коса, нокти и лице на едно място — на ул. Петър Райчев 18. Снежана е зад стола от 2000 г. Час
               запазваш онлайн, по телефон или във Viber.
             </p>
-          </Reveal>
-          <Reveal delay={0.45}>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-foreground/90">
                 <Link href="/zapazi-chas">
                   <Calendar className="size-4" /> Запази час онлайн
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-border px-8">
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-foreground/30 bg-background/60 px-8 backdrop-blur">
                 <a href={`tel:${siteConfig.contact.phone}`}>
                   <Phone className="size-4" /> {siteConfig.contact.phoneFormatted}
                 </a>
               </Button>
             </div>
-          </Reveal>
 
-          {/* Stats — реални числа */}
-          <Reveal delay={0.55}>
-            <div className="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-foreground/10 pt-8">
+            {/* Stats — реални числа */}
+            <div className="mt-14 grid max-w-xl grid-cols-3 gap-6 border-t border-foreground/15 pt-8">
               <div>
                 <p className="font-display text-3xl font-medium text-primary md:text-4xl">25+</p>
-                <p className="mt-1 text-sm text-muted-foreground">Години зад стола</p>
+                <p className="mt-1 text-sm text-foreground/70">Години зад стола</p>
               </div>
               <div>
                 <p className="font-display text-3xl font-medium text-primary md:text-4xl">{siteConfig.founded}</p>
-                <p className="mt-1 text-sm text-muted-foreground">Открит салон</p>
+                <p className="mt-1 text-sm text-foreground/70">Открит салон</p>
               </div>
               <div>
                 <p className="font-display text-3xl font-medium text-primary md:text-4xl">3</p>
-                <p className="mt-1 text-sm text-muted-foreground">Направления, един адрес</p>
+                <p className="mt-1 text-sm text-foreground/70">Направления, един адрес</p>
               </div>
             </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ───── СНИМКА НА САЛОНА (offset салвия фон + floating badge) ───── */}
-      <section className="py-16 lg:py-20">
-        <div className="mx-auto max-w-7xl px-4 lg:px-10">
-          <Reveal>
-            <div className="relative">
-              <div aria-hidden className="absolute inset-x-6 -bottom-5 top-10 -z-10 rounded-md bg-mint" />
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md bg-secondary md:aspect-[21/9]">
-                <Image
-                  src="/images/interior/salon-1.jpg"
-                  alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 80vw"
-                  quality={80}
-                  className="object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-3 left-6 rounded-md border border-border bg-background px-5 py-3 soft-shadow">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/60">Euphoria</p>
-                <p className="mt-1 font-display text-xl">ул. Петър Райчев 18, кв. Левски</p>
-                <p className="text-xs text-muted-foreground">Отворен от 2023</p>
-              </div>
-            </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
