@@ -6,7 +6,7 @@ import { KIND_BY_SLUG } from "@/lib/booking/kind";
  * Презентационни/SEO полета, които НЕ са цени и не се менят от admin —
  * пазят се статично по slug. Всичко друго (текстове, групи, цени) идва от БД.
  */
-const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDescription: string; popular: string[] }> = {
+const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDescription: string; popular: string[]; heroImage?: string }> = {
   "frizorski-uslugi": {
     seoTitle: "Фризьорски услуги във Варна — стил и качество от професионалисти",
     metaTitle: "Фризьорски салон във Варна, кв. Левски",
@@ -20,6 +20,9 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
     metaDescription:
       "Възстановяващи терапии за коса във Варна, кв. Левски — кератин Kerasilk, Nashi Argan, ламеларна вода и минерали. Запази час онлайн в Euphoria.",
     popular: ["Kerasilk кератин", "Nashi Argan", "Ламеларна вода", "Минерални ампули"],
+    // Override на DB снимката (старата беше AI-генерирана спа стая, грешна тема).
+    // Фотореалистична снимка на здрава третирана коса (KIE gpt-image-2), тема: терапия за коса.
+    heroImage: "/images/services/frizorski-terapii-hero.png",
   },
   "manikyur-i-pedikyur": {
     seoTitle: "Маникюр и педикюр във Варна — грижа за ръцете и краката ти",
@@ -150,7 +153,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       description: c.description,
       longDescription: c.longDescription,
       icon,
-      heroImage: c.heroImage,
+      heroImage: pres?.heroImage ?? c.heroImage,
       seoTitle: pres?.seoTitle ?? `${c.title} във Варна`,
       metaTitle: pres?.metaTitle ?? `${c.title} във Варна`,
       metaDescription: pres?.metaDescription ?? c.description,
