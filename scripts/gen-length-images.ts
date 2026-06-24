@@ -1,26 +1,34 @@
 /**
- * Генерира 3 реалистични снимки за избор на дължина на косата (къса/средна/дълга)
- * през KIE.ai (gpt-image-2-text-to-image). Изглед в гръб (без лице), салвия фон.
- * Сваля в public/images/lengths/hair-<key>.png.
+ * Генерира реалистични снимки за избор по УСЛУГА × ДЪЛЖИНА през KIE.ai
+ * (gpt-image-2-text-to-image). Изглед в гръб (без лице), салвия фон.
+ * Сваля в public/images/lengths/<kind>-<len>.png. Прескача вече съществуващи.
  *
  * Пускане: npx tsx --env-file=.env.local scripts/gen-length-images.ts
  */
 import { writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const KIE_CREATE_URL = "https://api.kie.ai/api/v1/jobs/createTask";
 const KIE_POLL_URL = "https://api.kie.ai/api/v1/jobs/recordInfo";
 
-const LENGTHS = [
-  { key: "short", hair: "a short chin-length bob haircut" },
-  { key: "medium", hair: "medium shoulder-length hair" },
-  { key: "long", hair: "long hair falling well below the shoulders, almost to the mid-back" },
+// Услуга → как изглежда косата. „color" вече е генериран (color-*.png) и се прескача.
+const KINDS = [
+  { key: "color", hair: "solid all-over hair color, natural rich glossy brown, perfectly even tone" },
+  { key: "balayage", hair: "a balayage: dark brown roots gradually melting into soft sun-kissed caramel-blonde ends, hand-painted dimensional highlights" },
+  { key: "haircut", hair: "a fresh precise haircut with clean healthy ends, natural brown hair, neatly styled" },
 ];
 
-function buildPrompt(hair: string): string {
+const LENGTHS = [
+  { key: "short", desc: "a short chin-length bob" },
+  { key: "medium", desc: "medium shoulder-length hair" },
+  { key: "long", desc: "long hair falling well below the shoulders, towards the mid-back" },
+];
+
+function buildPrompt(hairKind: string, lengthDesc: string): string {
   return [
-    `Real photograph, viewed from directly behind: the back of a woman's head and shoulders showing ${hair}.`,
-    "Healthy, glossy, natural light-brown hair, neatly styled and brushed.",
+    `Real photograph, viewed from directly behind: the back of a woman's head and shoulders showing ${lengthDesc} with ${hairKind}.`,
+    "Healthy, glossy hair, neatly brushed and styled.",
     "Soft sage-green and creamy off-white studio background, gentle natural daylight, calm premium beauty-salon aesthetic.",
     "Shot strictly from behind — NO face visible, only the back of the head, the hair and the shoulders.",
     "Photorealistic professional photograph, full-frame DSLR, 85mm lens, f/2.2, shallow depth of field, realistic hair texture and natural shine.",
@@ -67,21 +75,25 @@ async function main() {
   const outDir = join(process.cwd(), "public", "images", "lengths");
   await mkdir(outDir, { recursive: true });
 
-  for (const len of LENGTHS) {
-    console.log(`\n🎨 Генерирам „${len.key}"…`);
-    const prompt = buildPrompt(len.hair);
-    const taskId = await kieCreate(apiKey, prompt);
-    console.log(`  taskId=${taskId} — изчаквам резултат…`);
-    const urls = await kiePoll(apiKey, taskId);
-    if (!urls?.length) throw new Error("KIE не върна resultUrls");
-    const dl = await fetch(urls[0]);
-    if (!dl.ok) throw new Error(`download ${dl.status}`);
-    const buf = Buffer.from(await dl.arrayBuffer());
-    const path = join(outDir, `hair-${len.key}.png`);
-    await writeFile(path, buf);
-    console.log(`  ✓ ${path}`);
+  for (const kind of KINDS) {
+    for (const len of LENGTHS) {
+      const path = join(outDir, `${kind.key}-${len.key}.png`);
+      if (existsSync(path)) {
+        console.log(`  ↪ прескачам (има) ${kind.key}-${len.key}`);
+        continue;
+      }
+      console.log(`\n🎨 Генерирам „${kind.key}-${len.key}"…`);
+      const taskId = await kieCreate(apiKey, buildPrompt(kind.hair, len.desc));
+      console.log(`  taskId=${taskId} — изчаквам резултат…`);
+      const urls = await kiePoll(apiKey, taskId);
+      if (!urls?.length) throw new Error("KIE не върна resultUrls");
+      const dl = await fetch(urls[0]);
+      if (!dl.ok) throw new Error(`download ${dl.status}`);
+      await writeFile(path, Buffer.from(await dl.arrayBuffer()));
+      console.log(`  ✓ ${path}`);
+    }
   }
-  console.log("\n✅ Готово — 3 снимки в public/images/lengths/");
+  console.log("\n✅ Готово.");
   process.exit(0);
 }
 
