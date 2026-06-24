@@ -82,6 +82,11 @@ export function SiteFooter() {
                   Кариери
                 </Link>
               </li>
+              <li>
+                <Link href="/salon-varna-levski" className="text-muted-foreground transition-colors hover:text-primary">
+                  Салон кв. Левски, Варна
+                </Link>
+              </li>
             </ul>
           </div>
 

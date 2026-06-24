@@ -37,6 +37,7 @@ export interface SitemapSection {
 const STATIC_PATHS = [
   "",
   "/uslugi",
+  "/salon-varna-levski",
   "/zapazi-chas",
   "/galeriya",
   "/montibello",
