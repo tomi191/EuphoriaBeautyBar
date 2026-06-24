@@ -31,6 +31,7 @@ export default async function StaffNewBookingPage() {
   const services: StaffServiceOpt[] = items.flatMap((i) => {
     const cat = catById.get(i.categoryId);
     if (!cat || KIND_BY_SLUG[cat.slug] !== resource.kind) return [];
+    if (!i.bookableOnline) return []; // изключени стари единични (заместени от вариантите по дължина)
     if (curated && !mineByItem.has(i.id)) return [];
     const m = mineByItem.get(i.id);
     return [{ id: i.id, name: i.name, category: cat.shortTitle, durationMin: m?.durationMin ?? i.durationMin }];

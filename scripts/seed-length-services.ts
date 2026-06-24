@@ -7,7 +7,7 @@
  * Пускане: npx tsx --env-file=.env.local scripts/seed-length-services.ts
  */
 import { nanoid } from "nanoid";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db, schema } from "../src/lib/db";
 
 type Variant = { len: "къса" | "средна" | "дълга"; active: number; processing: number; finish: number; price: number };
@@ -45,40 +45,62 @@ async function main() {
     const cat = cats.find((c) => c.slug === svc.categorySlug);
     if (!cat) { console.warn(`⚠ категория ${svc.categorySlug} липсва — пропускам ${svc.baseName}`); continue; }
 
-    // Изключи старите единични варианти от онлайн (не трий — ръчен преглед).
-    for (const old of items.filter((i) => svc.match.test(i.name) && i.categoryId === cat.id)) {
+    // Старите единични варианти (без „(… коса)" в името) — за наследяване на изпълнители.
+    const oldItems = items.filter((i) => svc.match.test(i.name) && !/коса\)/i.test(i.name) && i.categoryId === cat.id);
+    const oldIds = oldItems.map((i) => i.id);
+
+    // Кои изпълнители предлагат старите единични → наследяват вариантите.
+    const oldRS = oldIds.length
+      ? await db.query.resourceServices.findMany({ where: (r) => inArray(r.serviceItemId, oldIds) })
+      : [];
+    const performers = [...new Set(oldRS.map((r) => r.resourceId))];
+    console.log(`\n${svc.baseName}: ${oldItems.length} стари, изпълнители: ${performers.length || "(няма оферти)"}`);
+
+    // Изключи старите единични от онлайн (non-destructive — само флаг; staff/публично
+    // ги филтрират по bookableOnline). Старите оферти остават, но не се показват.
+    for (const old of oldItems) {
       await db.update(schema.serviceItems).set({ bookableOnline: false }).where(eq(schema.serviceItems.id, old.id));
-      console.log(`  ↪ старо „${old.name}" → bookableOnline=false`);
     }
 
     let order = 0;
     for (const v of svc.variants) {
       const name = `${svc.baseName} (${v.len} коса)`;
+      const durationMin = v.active + v.processing + v.finish;
       const existing = items.find((i) => i.name === name && i.categoryId === cat.id);
       const values = {
-        categoryId: cat.id,
-        groupTitle: svc.groupTitle,
-        name,
-        price: v.price,
-        priceFrom: true,
-        currency: "лв",
-        durationMin: v.active + v.processing + v.finish,
-        bufferMin: 15,
-        activeMin: v.active,
-        processingMin: v.processing,
-        bookableOnline: true,
-        sortOrder: order++,
+        categoryId: cat.id, groupTitle: svc.groupTitle, name,
+        price: v.price, priceFrom: true, currency: "лв",
+        durationMin, bufferMin: 15, activeMin: v.active, processingMin: v.processing,
+        bookableOnline: true, sortOrder: order++,
       };
+      let itemId: string;
       if (existing) {
-        await db.update(schema.serviceItems).set(values).where(eq(schema.serviceItems.id, existing.id));
-        console.log(`  ✓ ъпдейт „${name}" (${values.durationMin}мин, престой ${v.processing})`);
+        itemId = existing.id;
+        await db.update(schema.serviceItems).set(values).where(eq(schema.serviceItems.id, itemId));
+        console.log(`  ✓ ъпдейт „${name}" (${durationMin}мин, престой ${v.processing})`);
       } else {
-        await db.insert(schema.serviceItems).values({ id: nanoid(), ...values });
-        console.log(`  + нова „${name}" (${values.durationMin}мин, престой ${v.processing})`);
+        itemId = nanoid();
+        await db.insert(schema.serviceItems).values({ id: itemId, ...values });
+        console.log(`  + нова „${name}" (${durationMin}мин, престой ${v.processing})`);
+      }
+
+      // Дай оферта на всеки наследен изпълнител (за да се вижда в staff + публично).
+      for (const perf of performers) {
+        const has = await db.query.resourceServices.findFirst({
+          where: (r, { and, eq: e }) => and(e(r.resourceId, perf), e(r.serviceItemId, itemId)),
+        });
+        if (!has) {
+          await db.insert(schema.resourceServices).values({
+            id: nanoid(), resourceId: perf, serviceItemId: itemId,
+            price: v.price, priceFrom: true, currency: "лв",
+            durationMin, bufferMin: 15, active: true,
+          });
+          console.log(`     + оферта за ${perf}`);
+        }
       }
     }
   }
-  console.log("\n✅ Готово. Прегледай цените в админ панела и изтрий старите единични услуги ръчно.");
+  console.log("\n✅ Готово. Прегледай цените в админ панела.");
   process.exit(0);
 }
 
