@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchMySlots, createMyBooking, type DayScheduleResult } from "@/lib/actions/staff-bookings";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
-import { lengthIconFor } from "@/lib/booking/length-icon";
+import { serviceImageFor } from "@/lib/booking/length-icon";
 
 export interface StaffServiceOpt {
   id: string;
@@ -194,9 +194,9 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
                     >
                       {selected && <Check className="size-3" strokeWidth={3} />}
                     </span>
-                    {lengthIconFor(s.name) && (
+                    {serviceImageFor(s.name) && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={lengthIconFor(s.name)!} alt="" aria-hidden className="size-10 shrink-0 rounded-lg object-cover" />
+                      <img src={serviceImageFor(s.name)!} alt={s.name} className="size-10 shrink-0 rounded-lg object-cover" />
                     )}
                     <span className="min-w-0 flex-1 text-sm font-semibold leading-tight">{s.name}</span>
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{s.durationMin} мин</span>

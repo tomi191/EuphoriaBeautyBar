@@ -10,7 +10,7 @@ import { createPublicBooking, fetchPublicSlots } from "@/lib/actions/public-book
 import type { DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice, priceVaries } from "@/lib/booking/price";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
-import { lengthIconFor } from "@/lib/booking/length-icon";
+import { serviceImageFor } from "@/lib/booking/length-icon";
 
 export interface PublicServiceOpt {
   id: string;
@@ -362,9 +362,9 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       >
                         {selected && <Check className="size-3.5" strokeWidth={2.5} />}
                       </span>
-                      {lengthIconFor(s.name) && (
+                      {serviceImageFor(s.name, s.groupTitle) && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={lengthIconFor(s.name)!} alt="" aria-hidden className="size-10 shrink-0 rounded-lg object-cover" />
+                        <img src={serviceImageFor(s.name, s.groupTitle)!} alt={s.name} className="size-10 shrink-0 rounded-lg object-cover" />
                       )}
                       <span className="font-medium leading-tight">{s.name}</span>
                     </span>
