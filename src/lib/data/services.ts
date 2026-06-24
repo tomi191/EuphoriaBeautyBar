@@ -28,6 +28,10 @@ export interface ServiceCategory {
   popular: string[];
   /** SEO H1 — "X във Варна — ..." style */
   seoTitle: string;
+  /** Кратък <title> с гео ("X във Варна, кв. Левски") — template добавя " · Euphoria". Fallback към seoTitle. */
+  metaTitle?: string;
+  /** Meta description с Варна + кв. Левски + онлайн записване. Fallback към description. */
+  metaDescription?: string;
   groups: ServiceGroup[];
   featured: ServiceItem[];
 }

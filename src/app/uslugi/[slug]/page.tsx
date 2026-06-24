@@ -34,12 +34,13 @@ export async function generateMetadata({ params }: ServiceDetailParams): Promise
   const category = await getCatalogCategory(slug);
   if (!category) return { robots: { index: false } };
   return {
-    title: category.title,
-    description: category.description,
+    // metaTitle носи „Варна, кв. Левски" (template добавя " · Euphoria"); fallback към seoTitle.
+    title: category.metaTitle ?? category.seoTitle,
+    description: category.metaDescription ?? category.description,
     alternates: { canonical: `/uslugi/${category.slug}` },
     openGraph: {
       title: category.seoTitle,
-      description: category.description,
+      description: category.metaDescription ?? category.description,
       images: [category.heroImage],
     },
   };

@@ -12,6 +12,8 @@ import { FaqContactSection } from "@/components/sections/faq-contact-section";
 import { LocationMap } from "@/components/sections/location-map";
 import { InstagramSection } from "@/components/sections/instagram-section";
 import { LineDivider } from "@/components/brand/line-divider";
+import { JsonLd } from "@/components/seo/json-ld";
+import { faqPageSchema, localBusinessSchema } from "@/lib/schema";
 import { db } from "@/lib/db";
 
 // Canonical за началната (root layout вече не слага глобален).
@@ -49,6 +51,8 @@ export default async function Home() {
       <div id="contact">
         <CtaBooking />
       </div>
+      {/* LocalBusiness с AggregateRating (звезди в SERP) + FAQPage (видимите Q&A 1:1) */}
+      <JsonLd data={[localBusinessSchema(rating ?? undefined), faqPageSchema]} />
     </>
   );
 }

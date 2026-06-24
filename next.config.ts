@@ -60,6 +60,24 @@ const nextConfig: NextConfig = {
       // Redirect-ът ЖИВЕЕ тук (не в route handler): static prerender на route,
       // връщащ 308, drop-ва Location header-а и сервира празно 200 (vrachka урок).
       { source: "/sitemap.xml", destination: "/sitemap-index.xml", permanent: true },
+
+      // ─── WordPress → Next.js миграция: 301 на изоставените стари URL ───
+      // 55× 404 + 141× 3xx в Ahrefs краула удрят в стари WP адреси, които още
+      // носят backlinks (2.2K линка / 45 домейна). 301 → връща link equity-то към
+      // релевантни живи страници вместо да го хвърля в 404. Стари blog таксономии
+      // (category/tag/author/feed) нямат еквивалент → пращат към /blog хъба.
+      { source: "/category/:path*", destination: "/blog", permanent: true },
+      { source: "/tag/:path*", destination: "/blog", permanent: true },
+      { source: "/author/:path*", destination: "/blog", permanent: true },
+      // Стари WP blog permalinks по рубрика (нямат 1:1 нов slug) → /blog хъб.
+      // :path* хваща и /<rubrika>/<slug> и /<rubrika>/<slug>/feed (WP RSS).
+      { source: "/hair-care/:path*", destination: "/blog", permanent: true },
+      { source: "/health-and-wellness/:path*", destination: "/blog", permanent: true },
+      { source: "/makeup-and-cosmetics/:path*", destination: "/blog", permanent: true },
+      // Стари Montibello продуктови URL (/montibello-hop-ultra-*) → каталог хъба.
+      { source: "/montibello-hop-:slug(.*)", destination: "/montibello", permanent: true },
+      // Стар URL на услуга (преди /uslugi/ префикса) → новата категория.
+      { source: "/frizorski-terapii", destination: "/uslugi/frizorski-terapii", permanent: true },
     ];
   },
 };
