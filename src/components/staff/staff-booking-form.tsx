@@ -45,6 +45,8 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
   const [submitting, setSubmitting] = React.useState(false);
 
   const svc = services.find((s) => s.id === serviceId);
+  // Дали избраният слот е паралелен (в престоя на чужд час) — определя allowParallel при запис.
+  const slotIsParallel = data.slots.some((s) => s.start === slot && s.status === "parallel");
   const categories = React.useMemo(() => uniq(services.map((s) => s.category)), [services]);
   const [activeCat, setActiveCat] = React.useState(categories[0] ?? "");
   const [query, setQuery] = React.useState("");
@@ -83,6 +85,7 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
         clientName: name,
         clientPhone: phone,
         notes: notes.trim() || null,
+        allowParallel: slotIsParallel,
       });
       if (res.ok) {
         toast.success("Часът е записан.");
@@ -227,11 +230,22 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
         ) : (
           <div className="grid grid-cols-4 gap-1.5">
             {data.slots.map((s) => {
-              if (s.status === "free") {
+              const isFree = s.status === "free";
+              const isParallel = s.status === "parallel";
+              if (isFree || isParallel) {
+                const selected = slot === s.start;
                 return (
                   <button key={s.start} type="button" onClick={() => setSlot(s.start)}
-                    className={"rounded-xl border py-2.5 text-sm font-medium tabular-nums transition-all active:scale-[0.98] " + (slot === s.start ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/50")}>
+                    className={
+                      "rounded-xl border py-2.5 text-sm font-medium tabular-nums transition-all active:scale-[0.98] " +
+                      (selected
+                        ? "border-foreground bg-foreground text-background"
+                        : isParallel
+                          ? "border-mint bg-mint/15 text-foreground hover:border-mint/80"
+                          : "border-border bg-background hover:border-foreground/50")
+                    }>
                     {slotLabel(s.start)}
+                    {isParallel && <span className="ml-1 text-[10px] font-normal text-primary">в престой</span>}
                   </button>
                 );
               }

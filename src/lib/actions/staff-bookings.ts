@@ -38,8 +38,18 @@ async function ownOffering(resourceId: string, serviceItemId: string) {
 /** Дневен график за собствения изпълнител (без мин. предизвестие — ръчно записване). */
 export async function fetchMySlots(serviceItemId: string, dateStr: string): Promise<DayScheduleResult> {
   const { resource } = await requireStaff();
-  const { durationMin, bufferMin } = await ownOffering(resource.id, serviceItemId);
-  const res = await getDaySlots({ resourceId: resource.id, durationMin, bufferMin, dateStr, minNoticeMin: 0 });
+  const { durationMin, bufferMin, activeMin } = await ownOffering(resource.id, serviceItemId);
+  // Паралелни записи (gap booking) са активни в staff формата: услуга с престой
+  // отваря записваеми слотове в чужди престои (active-based).
+  const res = await getDaySlots({
+    resourceId: resource.id,
+    durationMin,
+    bufferMin,
+    activeMin,
+    dateStr,
+    minNoticeMin: 0,
+    allowParallel: true,
+  });
   return res ?? { open: null, close: null, slots: [] };
 }
 
@@ -68,8 +78,10 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
   }
 
-  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
-  if (d.allowParallel && !(await fitsParallelWindow(resource.id, start, end))) {
+  // Паралелен час: само АКТИВНОТО време (нанасяне) трябва да се събира в чужд
+  // престой-прозорец; престоят на новия час може да прелее извън него.
+  const activeEnd = new Date(start.getTime() + (activeMin > 0 ? activeMin : durationMin) * 60000);
+  if (d.allowParallel && !(await fitsParallelWindow(resource.id, start, activeEnd))) {
     return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
   }
 
@@ -141,8 +153,9 @@ export async function rescheduleMyBooking(id: string, newStartISO: string) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период. Избери друг час." };
   }
   // Паралелен час: при местене пак трябва да се събира в свободен престой-прозорец
-  // (constraint-ът не го пази, защото allow_parallel го изключва).
-  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, newStart, newEnd, id))) {
+  // (constraint-ът не го пази, защото allow_parallel го изключва). По активното време.
+  const activeEnd = new Date(newStart.getTime() + (booking.activeMin > 0 ? booking.activeMin * 60000 : durationMs));
+  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, newStart, activeEnd, id))) {
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
 
@@ -195,7 +208,9 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
   if (await hasTimeOffConflict(resource.id, start, end)) {
     return { ok: false as const, error: "Имаш отпуск/почивка в този период." };
   }
-  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, start, end, id))) {
+  const activeMinE = d.activeMin ?? booking.activeMin;
+  const activeEnd = new Date(start.getTime() + (activeMinE > 0 ? activeMinE : d.durationMin) * 60000);
+  if (booking.allowParallel && !(await fitsParallelWindow(resource.id, start, activeEnd, id))) {
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
