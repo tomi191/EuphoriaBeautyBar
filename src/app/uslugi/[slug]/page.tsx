@@ -46,6 +46,30 @@ const SERVICE_FAQ: Record<string, Array<{ question: string; answer: string }>> =
   ],
 };
 
+/**
+ * Уникален локален текст per категория (200–250 думи) — под hero, над ценоразписа.
+ * Адресира тънкото съдържание (беше 1 цитат). Заземено в реални марки/процес/кв. Левски,
+ * без суперлативи. Дава дълбочина за ранкиране + passage за AI Overviews.
+ */
+const SERVICE_INTRO: Record<string, string[]> = {
+  "frizorski-uslugi": [
+    "Във фризьорската зала на Euphoria, в кв. Левски, работи Снежана Саблева — зад стола от 2000 г. Боядисване, балаяж, кичури и официални прически правим с Montibello и Goldwell, защото държим цветът да издържи повече от едно миене.",
+    "Преди боя или изсветляване сядаме за кратка консултация: гледаме типа коса, какво е правено досега и колко поддръжка искаш да отделяш. За сватби, балове и абитуриентски препоръчваме предварителна проба, за да сме сигурни, че прическата ще издържи целия ден. Салонът е на ул. Петър Райчев 18, близо до центъра на Варна — час запазваш онлайн в реално време, по телефон или във Viber.",
+  ],
+  "frizorski-terapii": [
+    "Терапиите за коса избираме според състоянието ѝ — суха, изтощена или увредена след боядисване и изсветляване. Работим с кератин Kerasilk на Goldwell за изправяне и гладкост, ампули Nashi Argan за дълбоко подхранване, ламеларна вода за блясък и минерални ампули за здравина.",
+    "Терапия добавяме често след балаяж или боядисване, за да върнем влагата, която изсветляването отнема. Ефектът се вижда веднага, а с правилна домашна грижа — безсулфатен шампоан и маска веднъж седмично — се задържа седмици. Косата я поема Снежана, с над 25 години опит. Салонът е в кв. Левски, Варна; час запазваш онлайн.",
+  ],
+  "manikyur-i-pedikyur": [
+    "Маникюрът и педикюрът в Euphoria се правят в стерилни условия — инструментите обработваме между всеки клиент. Предлагаме класически и гел маникюр, френски и омбре дизайни, кератинова терапия за чупливи нокти, класически и медицински педикюр.",
+    "Гел лакът обикновено издържа 2–3 седмици; препоръчваме нова процедура при израстване, не по-късно, за да остане ноктът здрав. Медицинският педикюр е за конкретни проблеми — врастнал нокът, мазоли, напукани пети — и се различава от козметичния. Салонът е на ул. Петър Райчев 18, кв. Левски, Варна. Маникюр в квартала запазваш онлайн в реално време, без обаждане.",
+  ],
+  kozmetika: [
+    "Лицевите терапии подбираме според типа кожа и целта — почистване, хидратация, anti-age, анти-акне или анти-пигмент. Работим с GIGI и Esthemax за почистване и проблемна кожа, Montibello за лифтинг и оксижен терапии, GENOSYS за карбокситерапия и микронидлинг.",
+    "Освен лице правим ламиниране на мигли и вежди, оформяне и боядисване на вежди, и кола маска. Преди процедура преценяваме състоянието на кожата, за да изберем правилния протокол. Кабинетът е в салона на ул. Петър Райчев 18, кв. Левски, Варна — час запазваш онлайн, по телефон или във Viber.",
+  ],
+};
+
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
 }
@@ -93,6 +117,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   const priceCurrency = category.groups[0]?.items[0]?.currency === "€" ? "EUR" : "BGN";
 
   const faq = SERVICE_FAQ[category.slug] ?? [];
+  const intro = SERVICE_INTRO[category.slug] ?? [];
 
   return (
     <>
@@ -155,14 +180,23 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
         </div>
       </section>
 
-      {/* OPISANIE / longDescription */}
-      <section className="border-y border-border/40 bg-secondary/40 py-16 lg:py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center lg:px-8">
+      {/* OPISANIE / longDescription + уникален локален текст */}
+      <section className="border-y border-border/40 bg-secondary/40 py-16 lg:py-24">
+        <div className="mx-auto max-w-3xl px-4 lg:px-8">
           <Reveal>
-            <p className="font-serif text-xl leading-relaxed italic text-foreground/85 md:text-2xl">
+            <p className="text-center font-serif text-xl leading-relaxed italic text-foreground/85 md:text-2xl">
               &ldquo;{category.longDescription}&rdquo;
             </p>
           </Reveal>
+          {intro.length > 0 && (
+            <Reveal delay={0.1}>
+              <div className="mt-10 space-y-4 border-t border-border/50 pt-10 text-foreground/80 md:text-lg">
+                {intro.map((p, idx) => (
+                  <p key={idx} className="leading-relaxed">{p}</p>
+                ))}
+              </div>
+            </Reveal>
+          )}
         </div>
       </section>
 
