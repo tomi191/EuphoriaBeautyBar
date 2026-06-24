@@ -101,7 +101,7 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
     >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="size-full object-cover" />
+        <img src={image} alt="Профилна снимка на специалист от Euphoria Hair & Beauty Bar" className="size-full object-cover" />
       ) : (
         <div className="grid size-full place-items-center p-1.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
