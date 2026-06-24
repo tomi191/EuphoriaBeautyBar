@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Calendar, ChevronRight, Clock, MapPin, MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, Calendar, ChevronRight, Clock, MapPin, MessageCircle, Phone, Scissors, Sparkles, HandHeart } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
+import { TiltedCard } from "@/components/reactbits/tilted-card";
+import { LineDivider } from "@/components/brand/line-divider";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { localBusinessSchema, breadcrumbSchema, faqSchema } from "@/lib/schema";
+import { team } from "@/lib/data/team";
 import { db } from "@/lib/db";
 import { siteConfig } from "@/lib/site";
 
@@ -55,15 +59,23 @@ const localFaq = [
   },
 ];
 
-const DIRECTION_BLURB: Record<string, string> = {
-  "frizorski-uslugi":
-    "Подстригване, боядисване, балаяж и официални прически. Работим с Montibello и Goldwell.",
-  "frizorski-terapii":
-    "Възстановяване и хидратация за коса след боядисване — кератин Kerasilk, Nashi Argan, минерали.",
-  "manikyur-i-pedikyur":
-    "Класически и гел маникюр, френски и омбре дизайни, педикюр и кератинова терапия за нокти.",
-  kozmetika:
-    "Лицеви терапии според типа кожа, ламиниране на мигли и вежди — с GIGI, Esthemax и Montibello.",
+const DIRECTION_META: Record<string, { icon: typeof Scissors; blurb: string }> = {
+  "frizorski-uslugi": {
+    icon: Scissors,
+    blurb: "Подстригване, боядисване, балаяж и официални прически. Работим с Montibello и Goldwell.",
+  },
+  "frizorski-terapii": {
+    icon: Sparkles,
+    blurb: "Възстановяване и хидратация за коса след боядисване — кератин Kerasilk, Nashi Argan, минерали.",
+  },
+  "manikyur-i-pedikyur": {
+    icon: HandHeart,
+    blurb: "Класически и гел маникюр, френски и омбре дизайни, педикюр и кератинова терапия за нокти.",
+  },
+  kozmetika: {
+    icon: Sparkles,
+    blurb: "Лицеви терапии според типа кожа, ламиниране на мигли и вежди — с GIGI, Esthemax и Montibello.",
+  },
 };
 
 export default async function SalonVarnaLevskiPage() {
@@ -78,11 +90,37 @@ export default async function SalonVarnaLevskiPage() {
           count: googleReviews.length,
         }
       : undefined;
+  const founder = team[0];
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-cream pt-32 pb-16 lg:pt-40 lg:pb-24">
+      {/* ───── HERO ───── */}
+      <section className="relative overflow-hidden bg-cream pt-32 pb-20 lg:pt-40 lg:pb-28">
+        <Image
+          src="/illustrations/mirror.svg"
+          alt=""
+          aria-hidden
+          width={260}
+          height={320}
+          className="pointer-events-none absolute right-[4%] top-28 hidden h-48 w-auto opacity-45 mix-blend-multiply lg:block"
+        />
+        <Image
+          src="/illustrations/flowers.svg"
+          alt=""
+          aria-hidden
+          width={300}
+          height={320}
+          className="pointer-events-none absolute right-[20%] bottom-10 hidden h-36 w-auto rotate-[-8deg] opacity-40 mix-blend-multiply lg:block"
+        />
+        <Image
+          src="/illustrations/leaf.svg"
+          alt=""
+          aria-hidden
+          width={220}
+          height={280}
+          className="pointer-events-none absolute left-[3%] bottom-16 hidden h-36 w-auto opacity-30 mix-blend-multiply lg:block"
+        />
+
         <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
           <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <Link href="/" className="hover:text-foreground">Начало</Link>
@@ -90,115 +128,217 @@ export default async function SalonVarnaLevskiPage() {
             <span className="text-foreground">Салон кв. Левски, Варна</span>
           </nav>
 
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">
-            Beauty bar · кв. Левски, Варна
-          </p>
+          <Reveal>
+            <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">
+              Beauty bar · кв. Левски, Варна
+            </p>
+          </Reveal>
           <BlurText
             as="h1"
             text="Салон за красота в кв. Левски, Варна"
-            className="max-w-4xl font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl"
+            className="max-w-4xl font-display text-5xl leading-[1.03] font-medium text-balance md:text-6xl lg:text-7xl"
             stagger={0.02}
           />
-          <Reveal delay={0.3}>
-            <p className="mt-6 max-w-2xl font-serif text-xl italic text-muted-foreground">
+          <Reveal delay={0.35}>
+            <p className="mt-8 max-w-2xl font-serif text-xl italic text-muted-foreground">
               Коса, нокти и лице на едно място — на ул. Петър Райчев 18. Снежана е зад стола от 2000 г. Час
               запазваш онлайн, по телефон или във Viber.
             </p>
           </Reveal>
-          <Reveal delay={0.4}>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+          <Reveal delay={0.45}>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-foreground/90">
                 <Link href="/zapazi-chas">
                   <Calendar className="size-4" /> Запази час онлайн
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-md border-border px-8">
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-border px-8">
                 <a href={`tel:${siteConfig.contact.phone}`}>
                   <Phone className="size-4" /> {siteConfig.contact.phoneFormatted}
                 </a>
               </Button>
             </div>
           </Reveal>
-        </div>
-      </section>
 
-      {/* ТРИ НАПРАВЛЕНИЯ */}
-      <section className="py-20 lg:py-28">
-        <div className="mx-auto max-w-7xl px-4 lg:px-10">
-          <Reveal>
-            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Услугите ни</p>
-            <h2 className="max-w-2xl font-display text-3xl font-medium md:text-4xl">
-              Три направления, един салон в Левски.
-            </h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-4 md:grid-cols-2">
-            {categories.map((c, idx) => (
-              <Reveal key={c.slug} delay={idx * 0.06}>
-                <Link
-                  href={`/uslugi/${c.slug}`}
-                  className="group flex h-full gap-5 overflow-hidden rounded-md border border-foreground/10 bg-background p-5 transition-colors hover:border-foreground/30"
-                >
-                  <div className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-md">
-                    <Image
-                      src={c.heroImage}
-                      alt={c.title}
-                      fill
-                      sizes="120px"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">{c.shortTitle}</p>
-                    <h3 className="mt-1 font-display text-xl">{c.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-foreground/75">
-                      {DIRECTION_BLURB[c.slug] ?? c.description}
-                    </p>
-                    <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-                      Виж услугите и цените{" "}
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ЗАЩО EUPHORIA */}
-      <section className="border-y border-border/40 bg-secondary/30 py-20 lg:py-28">
-        <div className="mx-auto max-w-4xl px-4 lg:px-8">
-          <Reveal>
-            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Защо при нас</p>
-            <h2 className="font-display text-3xl font-medium md:text-4xl">
-              Коса, нокти и лице, без да обикаляш три салона.
-            </h2>
-            <div className="mt-6 space-y-4 text-foreground/80 md:text-lg">
-              <p>
-                Снежана Саблева работи с коса от 2000 г. — над 25 години зад стола. Салонът е отворен през 2023 в
-                кв. Левски и събира трите направления на едно място, в стерилни условия.
-              </p>
-              <p>
-                Работим само с професионални марки: Montibello, Goldwell Kerasilk и Nashi Argan за косата, GIGI и
-                Esthemax за лицето. Час запазваш онлайн в реално време — нещо, което повечето салони в района още нямат.
-              </p>
+          {/* Stats — реални числа */}
+          <Reveal delay={0.55}>
+            <div className="mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-foreground/10 pt-8">
+              <div>
+                <p className="font-display text-3xl font-medium text-primary md:text-4xl">25+</p>
+                <p className="mt-1 text-sm text-muted-foreground">Години зад стола</p>
+              </div>
+              <div>
+                <p className="font-display text-3xl font-medium text-primary md:text-4xl">{siteConfig.founded}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Открит салон</p>
+              </div>
+              <div>
+                <p className="font-display text-3xl font-medium text-primary md:text-4xl">3</p>
+                <p className="mt-1 text-sm text-muted-foreground">Направления, един адрес</p>
+              </div>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ЛОКАЦИЯ + КОНТАКТИ */}
+      {/* ───── СНИМКА НА САЛОНА (offset салвия фон + floating badge) ───── */}
+      <section className="py-16 lg:py-20">
+        <div className="mx-auto max-w-7xl px-4 lg:px-10">
+          <Reveal>
+            <div className="relative">
+              <div aria-hidden className="absolute inset-x-6 -bottom-5 top-10 -z-10 rounded-md bg-mint" />
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md bg-secondary md:aspect-[21/9]">
+                <Image
+                  src="/images/interior/salon-1.jpg"
+                  alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 80vw"
+                  quality={80}
+                  className="object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-3 left-6 rounded-md border border-border bg-background px-5 py-3 soft-shadow">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/60">Euphoria</p>
+                <p className="mt-1 font-display text-xl">ул. Петър Райчев 18, кв. Левски</p>
+                <p className="text-xs text-muted-foreground">Отворен от 2023</p>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <LineDivider />
+
+      {/* ───── ТРИ НАПРАВЛЕНИЯ ───── */}
+      <section className="py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-4 lg:px-10">
+          <Reveal>
+            <div className="grid items-end gap-6 md:grid-cols-2">
+              <div>
+                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Услугите ни</p>
+                <h2 className="font-display text-4xl leading-[1.05] font-medium md:text-5xl">
+                  Три направления, <span className="gradient-text">един салон</span> в Левски.
+                </h2>
+              </div>
+              <p className="max-w-md font-serif text-lg italic text-muted-foreground">
+                Коса, нокти и лице на едно място — без да обикаляш три различни салона из Варна.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {categories.map((c, idx) => {
+              const meta = DIRECTION_META[c.slug];
+              const Icon = meta?.icon ?? Sparkles;
+              return (
+                <Reveal key={c.slug} delay={idx * 0.07}>
+                  <Link
+                    href={`/uslugi/${c.slug}`}
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:border-primary/40 hover:shadow-soft"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <Image
+                        src={c.heroImage}
+                        alt={`${c.title} в Euphoria, кв. Левски, Варна`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute left-4 top-4 grid size-11 place-items-center rounded-xl bg-background/90 text-primary backdrop-blur">
+                        <Icon className="size-5" strokeWidth={1.6} />
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col p-6">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/60">{c.shortTitle}</p>
+                      <h3 className="mt-2 font-display text-2xl">{c.title}</h3>
+                      <p className="mt-3 flex-1 text-sm leading-relaxed text-foreground/75">
+                        {meta?.blurb ?? c.description}
+                      </p>
+                      <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+                        Виж услугите и цените{" "}
+                        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </span>
+                    </div>
+                  </Link>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── СНЕЖАНА — E-E-A-T (Коса напред, по арт-дирекцията) ───── */}
+      <section className="relative overflow-hidden border-y border-border/40 bg-secondary/40 py-24 lg:py-32">
+        <Image
+          src="/illustrations/scissors.svg"
+          alt=""
+          aria-hidden
+          width={280}
+          height={280}
+          className="pointer-events-none absolute right-8 top-12 hidden h-36 w-auto rotate-[12deg] opacity-30 mix-blend-multiply lg:block"
+        />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 lg:grid-cols-12 lg:px-8">
+          <Reveal className="lg:col-span-5">
+            <TiltedCard rotateAmplitude={5}>
+              <div className="relative aspect-[4/5] w-full max-w-md">
+                <div aria-hidden className="absolute inset-0 translate-x-5 translate-y-5 rounded-3xl bg-mint" />
+                <div className="relative h-full w-full overflow-hidden rounded-3xl border border-border/60">
+                  <Image
+                    src={founder.imageSalon ?? founder.image}
+                    alt={`${founder.name} в салон Euphoria, кв. Левски, Варна`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className="object-cover object-top"
+                  />
+                </div>
+              </div>
+            </TiltedCard>
+          </Reveal>
+          <Reveal className="lg:col-span-7" delay={0.1}>
+            <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">Кой ще се грижи за теб</p>
+            <h2 className="font-display text-4xl leading-[1.05] font-medium md:text-5xl">
+              Зад стола — <span className="gradient-text">Снежана</span>, от 2000 г.
+            </h2>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-foreground/85">
+              {founder.bio}
+            </p>
+            <div className="mt-7">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Специализации</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {founder.specialties.map((s) => (
+                  <Badge key={s} variant="secondary" className="rounded-full text-xs font-normal">
+                    {s}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <p className="mt-7 max-w-xl text-foreground/75">
+              Маникюрът, педикюрът и козметичните процедури се правят от специалисти, които работят в салона —
+              в същите стерилни условия и със същата грижа.
+            </p>
+            <Button asChild size="lg" className="mt-8 h-12 rounded-full bg-foreground px-8 text-background hover:bg-foreground/90">
+              <Link href="/za-nas">
+                Запознай се с екипа <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </Reveal>
+        </div>
+      </section>
+
+      <LineDivider />
+
+      {/* ───── ЛОКАЦИЯ + КОНТАКТИ ───── */}
       <section className="py-20 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 lg:grid-cols-12 lg:px-8">
           <Reveal className="lg:col-span-5">
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Намери ни</p>
-            <h2 className="font-display text-3xl font-medium md:text-4xl">Как да стигнеш до нас.</h2>
-            <p className="mt-4 text-muted-foreground">
+            <h2 className="font-display text-4xl leading-[1.05] font-medium md:text-5xl">
+              Как да <span className="gradient-text">стигнеш</span> до нас.
+            </h2>
+            <p className="mt-5 text-muted-foreground">
               Салонът е в кв. Левски, близо до центъра на Варна. В района има улично паркиране.
             </p>
 
-            <div className="mt-8 space-y-6">
+            <div className="mt-9 space-y-6">
               <InfoItem icon={MapPin} title="Адрес">
                 <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-primary hover:underline">
                   {siteConfig.address.full}
@@ -222,7 +362,7 @@ export default async function SalonVarnaLevskiPage() {
               </InfoItem>
             </div>
 
-            <Button asChild size="lg" className="mt-8 h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+            <Button asChild size="lg" className="mt-9 h-12 rounded-full bg-foreground px-8 text-background hover:bg-foreground/90">
               <Link href="/zapazi-chas">
                 <Calendar className="size-4" /> Запази час онлайн
               </Link>
@@ -230,27 +370,40 @@ export default async function SalonVarnaLevskiPage() {
           </Reveal>
 
           <Reveal className="lg:col-span-7" delay={0.15}>
-            <div className="aspect-[4/3] w-full overflow-hidden rounded-md border border-border/60 bg-secondary shadow-soft lg:aspect-auto lg:h-full">
-              <iframe
-                title="Euphoria Hair & Beauty Bar — кв. Левски, Варна"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(siteConfig.address.full)}&output=embed`}
-                className="h-full min-h-[320px] w-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+            <div className="relative h-full">
+              <div aria-hidden className="absolute -inset-3 -z-10 rounded-3xl bg-mint/50" />
+              <div className="h-full min-h-[360px] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary shadow-soft">
+                <iframe
+                  title="Карта — Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(siteConfig.address.full)}&output=embed`}
+                  className="h-full min-h-[360px] w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="border-t border-border/40 bg-cream py-20 lg:py-28">
-        <div className="mx-auto max-w-3xl px-4 lg:px-8">
+      {/* ───── FAQ ───── */}
+      <section className="relative overflow-hidden border-t border-border/40 bg-cream py-24 lg:py-32">
+        <Image
+          src="/illustrations/arch.svg"
+          alt=""
+          aria-hidden
+          width={320}
+          height={200}
+          className="pointer-events-none absolute -top-4 left-1/2 hidden h-44 w-auto -translate-x-1/2 opacity-30 mix-blend-multiply md:block"
+        />
+        <div className="relative mx-auto max-w-3xl px-4 lg:px-8">
           <Reveal>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Често задавани въпроси</p>
-            <h2 className="font-display text-4xl font-medium md:text-5xl">Преди да дойдеш.</h2>
+            <h2 className="font-display text-4xl font-medium md:text-5xl">
+              Преди да <span className="gradient-text">дойдеш</span>.
+            </h2>
           </Reveal>
-          <div className="mt-10 divide-y divide-border/60">
+          <div className="mt-12 divide-y divide-border/60">
             {localFaq.map((item, idx) => (
               <Reveal key={item.question} delay={idx * 0.04}>
                 <div className="py-6">
@@ -260,6 +413,32 @@ export default async function SalonVarnaLevskiPage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ───── CTA ───── */}
+      <section className="bg-foreground py-20 text-background lg:py-28">
+        <div className="mx-auto max-w-3xl px-4 text-center lg:px-8">
+          <Reveal>
+            <h2 className="font-display text-4xl font-medium md:text-5xl">
+              Готова за час в <em className="font-serif italic text-mint">кв. Левски</em>?
+            </h2>
+            <p className="mt-4 text-background/70">
+              Виж свободните часове в реално време и запази онлайн за по-малко от минута — без обаждане.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Button asChild size="lg" className="h-12 rounded-full bg-mint px-8 text-foreground hover:bg-mint/80">
+                <Link href="/zapazi-chas">
+                  <Calendar className="size-4" /> Запази час онлайн
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-background/30 bg-transparent px-8 text-background hover:bg-background/10">
+                <a href={`tel:${siteConfig.contact.phone}`}>
+                  <Phone className="size-4" /> {siteConfig.contact.phoneFormatted}
+                </a>
+              </Button>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -291,7 +470,7 @@ function InfoItem({
   const Wrapper: React.ElementType = href ? "a" : "div";
   return (
     <div className="flex items-start gap-4">
-      <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-secondary text-primary">
+      <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-mint text-foreground">
         <Icon className="size-5" strokeWidth={1.6} />
       </div>
       <div>
