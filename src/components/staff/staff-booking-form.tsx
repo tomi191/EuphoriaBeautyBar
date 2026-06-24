@@ -262,6 +262,12 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
             })}
           </div>
         )}
+        {slotIsParallel || data.slots.some((s) => s.status === "parallel") ? (
+          <p className="mt-2.5 flex items-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            <span className="inline-block size-3 shrink-0 rounded border border-mint bg-mint/15" />
+            <span><span className="text-primary">„в престой"</span> = свободен час в паузата на боядисване — можеш да го запишеш паралелно, докато косата стои с боята.</span>
+          </p>
+        ) : null}
       </section>
 
       {/* Клиент */}
