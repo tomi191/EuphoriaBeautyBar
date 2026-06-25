@@ -108,7 +108,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     openGraph: {
       title: content.metaTitle,
       description: content.metaDescription,
-      images: [`/images/services/${service}.png`],
+      images: [`/images/services/unique/${service}.webp`],
     },
   };
 }
@@ -120,7 +120,7 @@ export default async function ServiceDetailPage({ params }: Params) {
   if (!content || !detail) notFound();
 
   const { category, item, siblings } = detail;
-  const img = `/images/services/${service}.png`;
+  const img = `/images/services/unique/${service}.webp`;
   const url = `${siteConfig.url}/uslugi/${slug}/${service}`;
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
   const priceLabel = `${item.priceFrom ? "от " : ""}${item.price} ${item.currency}`;
