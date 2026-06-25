@@ -87,7 +87,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       where: (c, { eq }) => eq(c.active, true),
       orderBy: (c, { asc }) => [asc(c.sortOrder)],
     }),
-    db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
+    db.query.serviceItems.findMany({ where: (s, { eq }) => eq(s.bookableOnline, true), orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
     db.query.resources.findMany({ where: (r, { eq }) => eq(r.active, true), columns: { id: true, kind: true } }),
   ]);
