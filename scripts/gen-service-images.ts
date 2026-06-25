@@ -28,6 +28,7 @@ const ARCHETYPES: { key: string; scene: string }[] = [
   { key: "facial", scene: "Real photograph of a woman lying relaxed during a professional facial skincare treatment, glowing clean fresh skin, eyes gently closed, soft serene spa setting with a small sprig of fresh sage nearby. Realistic skin texture." },
   { key: "lashesbrows", scene: "Real photograph, extreme macro close-up of a woman's eye area showing beautifully laminated, long, lifted lashes and perfectly shaped, groomed eyebrows. Crisp realistic detail." },
   { key: "waxing", scene: "Real photograph of smooth, flawless, freshly waxed skin on a woman's lower leg, soft serene clean spa setting, realistic glowing skin." },
+  { key: "meditsinski-pedikyur", scene: "Real photograph, close-up of a professional medical pedicure on clean, healthy, well-cared-for feet resting on a soft white towel in a calm clinical spa setting; sterile professional pedicure instruments softly out of focus on a clean tray. Hygienic, precise, premium, realistic skin and natural nails." },
 ];
 
 async function kieCreate(apiKey: string, prompt: string): Promise<string> {
