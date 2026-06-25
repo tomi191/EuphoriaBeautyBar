@@ -43,7 +43,7 @@ export const serviceCategories: ServiceCategory[] = [
     longDescription:
       "Работим с продукти на Montibello и Goldwell и владеем съвременните техники за балаяж, омбре и кичури. Правим и официални прически за сватби, балове и абитуриентски.",
     icon: "scissors",
-    heroImage: "/images/services/hair.jpg",
+    heroImage: "/images/services/unique/balayazh-sredna-kosa.webp",
     seoTitle: "Фризьорски услуги във Варна — стил и качество от професионалисти",
     popular: ["Балаяж", "Кичури на фолио", "Подстригване", "Официална прическа", "Корекция на цвят"],
     groups: [
@@ -89,7 +89,7 @@ export const serviceCategories: ServiceCategory[] = [
     longDescription:
       "Работим с професионални продукти за дълбоко подхранване: кератин, минерали и ламеларна вода. Терапията избираме според състоянието на косата ти.",
     icon: "sparkles",
-    heroImage: "/images/services/therapies.webp",
+    heroImage: "/images/services/unique/keratinova-terapiya-kerasilk-goldwell.webp",
     seoTitle: "Фризьорски терапии във Варна — възстановяване, хидратация и блясък",
     popular: ["Kerasilk кератин", "Nashi Argan", "Ламеларна вода", "Минерални ампули"],
     groups: [
@@ -138,7 +138,7 @@ export const serviceCategories: ServiceCategory[] = [
     longDescription:
       "Маникюр и педикюр в стерилни условия, с форма, която издържа седмици. От естествени френски дизайни до по-сложна декорация, според това какво искаш.",
     icon: "hand-heart",
-    heroImage: "/images/services/nails.jpg",
+    heroImage: "/images/services/unique/manikyur-s-gel-lak.webp",
     seoTitle: "Маникюр и педикюр във Варна — грижа за ръцете и краката ти",
     popular: ["Гел маникюр", "Френски / омбре", "Класически педикюр", "Кератинова терапия", "Медицински педикюр"],
     groups: [
@@ -183,7 +183,7 @@ export const serviceCategories: ServiceCategory[] = [
     longDescription:
       "Козметичният кабинет работи с GIGI, Esthemax, Montibello и SAN MARINE. Протоколът се избира според типа кожа, възрастта и желания резултат — от почистване и хидратация до anti-age процедури.",
     icon: "flower",
-    heroImage: "/images/services/cosmetics.jpg",
+    heroImage: "/images/services/unique/hydra-facial-pochistvane.webp",
     seoTitle: "Козметични услуги във Варна — грижа за кожата и лицето ти",
     popular: ["Hydra Facial", "Микронидлинг", "BIOREPEELCL3 пилинг", "GOYUKI японски лифтинг", "Ламиниране мигли"],
     groups: [
