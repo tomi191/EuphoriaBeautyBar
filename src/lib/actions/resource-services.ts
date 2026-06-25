@@ -16,14 +16,22 @@ function revalidate() {
   revalidatePath("/");
 }
 
-/** Включва/изключва услуга от каталога за текущия изпълнител (със стойности по подразбиране от каталога). */
+/**
+ * Включва/изключва услуга за текущия изпълнител. При ИЗКЛЮЧВАНЕ НЕ трием реда, а
+ * слагаме active=false — така въведената цена се ПАЗИ и при повторно включване се
+ * връща последната цена на изпълнителя, не каталожната. Нов ред (първо включване)
+ * стартира със стойности по подразбиране от каталога.
+ */
 export async function toggleMyService(serviceItemId: string) {
   const { resource } = await requireStaff();
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
   if (existing) {
-    await db.delete(schema.resourceServices).where(eq(schema.resourceServices.id, existing.id));
+    await db
+      .update(schema.resourceServices)
+      .set({ active: !existing.active, updatedAt: new Date() })
+      .where(eq(schema.resourceServices.id, existing.id));
   } else {
     const item = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
     if (!item) return { ok: false as const };

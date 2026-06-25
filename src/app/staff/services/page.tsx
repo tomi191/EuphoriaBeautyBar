@@ -37,7 +37,9 @@ export default async function StaffServicesPage() {
         name: i.name,
         category: cat.shortTitle,
         groupTitle: i.groupTitle,
-        offered: !!m,
+        // „Предлагам" следва active — изключена услуга е active=false, но цената на
+        // изпълнителя (m.price) се ПАЗИ и се връща при повторно включване.
+        offered: m?.active ?? false,
         price: m?.price ?? i.price,
         priceMax: (m?.priceMax ?? i.priceMax) ?? null,
         priceFrom: m?.priceFrom ?? i.priceFrom,

@@ -13,27 +13,27 @@ import { db, schema } from "../src/lib/db";
 type Variant = { len: "къса" | "средна" | "дълга"; active: number; processing: number; finish: number; price: number };
 type ColorService = { match: RegExp; baseName: string; groupTitle: string; categorySlug: string; variants: Variant[] };
 
-// durationMin = active + processing + finish. Цените са стартови (лв) — собственикът ги сменя.
+// durationMin = active + processing + finish. Цените са стартови (€) — собственикът ги сменя.
 const SERVICES: ColorService[] = [
   { match: /^боядисване$/i, baseName: "Боядисване", groupTitle: "Боядисване", categorySlug: "frizorski-uslugi", variants: [
-    { len: "къса", active: 15, processing: 40, finish: 15, price: 45 },
-    { len: "средна", active: 25, processing: 40, finish: 20, price: 55 },
-    { len: "дълга", active: 40, processing: 40, finish: 25, price: 70 },
+    { len: "къса", active: 15, processing: 40, finish: 15, price: 23 },
+    { len: "средна", active: 25, processing: 40, finish: 20, price: 28 },
+    { len: "дълга", active: 40, processing: 40, finish: 25, price: 36 },
   ]},
   { match: /^балаяж$/i, baseName: "Балаяж", groupTitle: "Изсветляване", categorySlug: "frizorski-uslugi", variants: [
-    { len: "къса", active: 50, processing: 40, finish: 30, price: 120 },
-    { len: "средна", active: 70, processing: 45, finish: 35, price: 150 },
-    { len: "дълга", active: 90, processing: 45, finish: 45, price: 190 },
+    { len: "къса", active: 50, processing: 40, finish: 30, price: 61 },
+    { len: "средна", active: 70, processing: 45, finish: 35, price: 77 },
+    { len: "дълга", active: 90, processing: 45, finish: 45, price: 97 },
   ]},
   { match: /кичури/i, baseName: "Кичури на фолио", groupTitle: "Изсветляване", categorySlug: "frizorski-uslugi", variants: [
-    { len: "къса", active: 30, processing: 40, finish: 15, price: 70 },
-    { len: "средна", active: 45, processing: 40, finish: 20, price: 90 },
-    { len: "дълга", active: 60, processing: 40, finish: 25, price: 120 },
+    { len: "къса", active: 30, processing: 40, finish: 15, price: 36 },
+    { len: "средна", active: 45, processing: 40, finish: 20, price: 46 },
+    { len: "дълга", active: 60, processing: 40, finish: 25, price: 61 },
   ]},
   { match: /корекция/i, baseName: "Корекция на цветовете", groupTitle: "Боядисване", categorySlug: "frizorski-uslugi", variants: [
-    { len: "къса", active: 40, processing: 45, finish: 20, price: 90 },
-    { len: "средна", active: 55, processing: 45, finish: 25, price: 120 },
-    { len: "дълга", active: 75, processing: 45, finish: 30, price: 150 },
+    { len: "къса", active: 40, processing: 45, finish: 20, price: 46 },
+    { len: "средна", active: 55, processing: 45, finish: 25, price: 61 },
+    { len: "дълга", active: 75, processing: 45, finish: 30, price: 77 },
   ]},
 ];
 
@@ -69,7 +69,7 @@ async function main() {
       const existing = items.find((i) => i.name === name && i.categoryId === cat.id);
       const values = {
         categoryId: cat.id, groupTitle: svc.groupTitle, name,
-        price: v.price, priceFrom: true, currency: "лв",
+        price: v.price, priceFrom: true, currency: "€",
         durationMin, bufferMin: 15, activeMin: v.active, processingMin: v.processing,
         bookableOnline: true, sortOrder: order++,
       };
@@ -92,7 +92,7 @@ async function main() {
         if (!has) {
           await db.insert(schema.resourceServices).values({
             id: nanoid(), resourceId: perf, serviceItemId: itemId,
-            price: v.price, priceFrom: true, currency: "лв",
+            price: v.price, priceFrom: true, currency: "€",
             durationMin, bufferMin: 15, active: true,
           });
           console.log(`     + оферта за ${perf}`);
