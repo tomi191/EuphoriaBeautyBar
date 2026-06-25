@@ -71,6 +71,21 @@ async function main() {
       console.log(`  + нова „${svc.name}" — ${svc.price}€`);
     }
   }
+
+  // Self-heal: деактивирай orphan оферти към скрити услуги (за да не „предлага"
+  // изпълнител услуга, която не се вижда онлайн).
+  const freshItems = await db.query.serviceItems.findMany();
+  const hiddenIds = new Set(freshItems.filter((i) => !i.bookableOnline).map((i) => i.id));
+  const activeOffers = await db.query.resourceServices.findMany({ where: (o, { eq }) => eq(o.active, true) });
+  let deactivated = 0;
+  for (const o of activeOffers) {
+    if (hiddenIds.has(o.serviceItemId)) {
+      await db.update(schema.resourceServices).set({ active: false }).where(eq(schema.resourceServices.id, o.id));
+      deactivated++;
+    }
+  }
+  if (deactivated) console.log(`  ↪ деактивирани ${deactivated} orphan оферти (към скрити услуги)`);
+
   console.log("\n✅ Маникюр/педикюр приведени към ценоразписа.");
   process.exit(0);
 }

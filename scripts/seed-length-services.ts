@@ -100,6 +100,21 @@ async function main() {
       }
     }
   }
+
+  // Self-heal: деактивирай orphan оферти (resource_services сочещи към услуги, които
+  // току-що скрихме), за да не „предлага" изпълнител скрита услуга → не се вижда онлайн.
+  const freshItems = await db.query.serviceItems.findMany();
+  const hiddenIds = new Set(freshItems.filter((i) => !i.bookableOnline).map((i) => i.id));
+  const activeOffers = await db.query.resourceServices.findMany({ where: (o, { eq }) => eq(o.active, true) });
+  let deactivated = 0;
+  for (const o of activeOffers) {
+    if (hiddenIds.has(o.serviceItemId)) {
+      await db.update(schema.resourceServices).set({ active: false }).where(eq(schema.resourceServices.id, o.id));
+      deactivated++;
+    }
+  }
+  if (deactivated) console.log(`  ↪ деактивирани ${deactivated} orphan оферти (към скрити услуги)`);
+
   console.log("\n✅ Готово. Прегледай цените в админ панела.");
   process.exit(0);
 }
