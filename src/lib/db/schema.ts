@@ -212,6 +212,7 @@ export const resources = pgTable("resources", {
   color: text("color"),
   image: text("image"),
   bio: text("bio"),
+  phone: text("phone"), // личен телефон за връзка — показва се при изключен онлайн запис
   active: boolean("active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
@@ -233,10 +234,11 @@ export const resourceServices = pgTable("resource_services", {
   price: real("price").notNull(),
   priceMax: real("price_max"),
   priceFrom: boolean("price_from").notNull().default(false),
-  currency: text("currency").notNull().default("лв"),
+  currency: text("currency").notNull().default("€"),
   durationMin: integer("duration_min").notNull().default(30),
   bufferMin: integer("buffer_min").notNull().default(10),
-  active: boolean("active").notNull().default(true),
+  active: boolean("active").notNull().default(true), // „Предлагам" — в публичния ценоразпис
+  onlineBookable: boolean("online_bookable").notNull().default(true), // приема онлайн часове (иначе → телефон)
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
 });

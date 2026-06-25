@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatServicePrice } from "@/lib/booking/price";
-import { toggleMyService, updateMyService, createMyService, deleteMyService } from "@/lib/actions/resource-services";
+import { toggleMyService, updateMyService, createMyService, deleteMyService, toggleMyServiceOnline } from "@/lib/actions/resource-services";
 
 export interface MyServiceOpt {
   id: string;
@@ -17,6 +17,8 @@ export interface MyServiceOpt {
   category: string;
   groupTitle: string;
   offered: boolean;
+  /** Приема ли онлайн часове (иначе клиентът вижда телефон). */
+  onlineBookable: boolean;
   price: number;
   priceMax: number | null;
   priceFrom: boolean;
@@ -39,7 +41,7 @@ function uniq(values: string[]): string[] {
   return out;
 }
 
-export function MyServices({ services, categories }: { services: MyServiceOpt[]; categories: MyCategoryOpt[] }) {
+export function MyServices({ services, categories, phone }: { services: MyServiceOpt[]; categories: MyCategoryOpt[]; phone: string | null }) {
   const router = useRouter();
   const [list, setList] = React.useState(services);
   React.useEffect(() => setList(services), [services]);
@@ -64,6 +66,28 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
       await toggleMyService(s.id);
     } catch {
       setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: s.offered } : x)));
+      toast.error("Грешка.");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function onToggleOnline(s: MyServiceOpt) {
+    // Спиране на онлайн запис изисква телефон за връзка (за да не остане клиентът без опция).
+    if (s.onlineBookable && !phone?.trim()) {
+      toast.error("Първо въведи телефон за връзка в профила си.");
+      return;
+    }
+    setPendingId(s.id);
+    setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, onlineBookable: !x.onlineBookable } : x)));
+    try {
+      const res = await toggleMyServiceOnline(s.id);
+      if (!res.ok) {
+        setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, onlineBookable: s.onlineBookable } : x)));
+        toast.error(res.error ?? "Грешка.");
+      }
+    } catch {
+      setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, onlineBookable: s.onlineBookable } : x)));
       toast.error("Грешка.");
     } finally {
       setPendingId(null);
@@ -134,61 +158,75 @@ export function MyServices({ services, categories }: { services: MyServiceOpt[];
         {shown.map((s) => (
           <div
             key={s.id}
-            className={"flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 " + (s.offered ? "" : "opacity-55")}
+            className={"rounded-xl border border-border bg-background px-3 py-2 " + (s.offered ? "" : "opacity-55")}
           >
-            <button
-              type="button"
-              disabled={!s.offered}
-              onClick={() => setEditing(s)}
-              className="min-w-0 flex-1 text-left transition-transform active:scale-[0.98] disabled:cursor-default"
-            >
-              <p className="text-sm font-semibold leading-tight">{s.name}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {s.offered ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    {s.durationMin} мин · <span className="font-bold text-primary">{formatServicePrice(s)}</span>
-                    <Pencil className="size-3 text-muted-foreground/70" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!s.offered}
+                onClick={() => setEditing(s)}
+                className="min-w-0 flex-1 text-left transition-transform active:scale-[0.98] disabled:cursor-default"
+              >
+                <p className="text-sm font-semibold leading-tight">{s.name}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {s.offered ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      {s.durationMin} мин · <span className="font-bold text-primary">{formatServicePrice(s)}</span>
+                      <Pencil className="size-3 text-muted-foreground/70" />
+                    </span>
+                  ) : (
+                    "не предлагам"
+                  )}
+                </p>
+              </button>
+
+              {s.deletable && (
+                confirmDeleteId === s.id ? (
+                  <span className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onDelete(s)}
+                      disabled={deletingId === s.id}
+                      className="rounded-full bg-destructive px-2.5 py-1 text-[11px] font-semibold text-white"
+                    >
+                      {deletingId === s.id ? <Loader2 className="size-3 animate-spin" /> : "Изтрий"}
+                    </button>
+                    {deletingId !== s.id && (
+                      <button type="button" onClick={() => setConfirmDeleteId(null)} className="text-[11px] font-medium text-muted-foreground">
+                        Не
+                      </button>
+                    )}
                   </span>
                 ) : (
-                  "не предлагам"
-                )}
-              </p>
-            </button>
-
-            {s.deletable && (
-              confirmDeleteId === s.id ? (
-                <span className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => onDelete(s)}
-                    disabled={deletingId === s.id}
-                    className="rounded-full bg-destructive px-2.5 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => setConfirmDeleteId(s.id)}
+                    aria-label={`Изтрий ${s.name} от каталога`}
+                    title="Изтрий от каталога"
+                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
                   >
-                    {deletingId === s.id ? <Loader2 className="size-3 animate-spin" /> : "Изтрий"}
+                    <Trash2 className="size-4" />
                   </button>
-                  {deletingId !== s.id && (
-                    <button type="button" onClick={() => setConfirmDeleteId(null)} className="text-[11px] font-medium text-muted-foreground">
-                      Не
-                    </button>
-                  )}
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmDeleteId(s.id)}
-                  aria-label={`Изтрий ${s.name} от каталога`}
-                  title="Изтрий от каталога"
-                  className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              )
-            )}
+                )
+              )}
 
-            {pendingId === s.id ? (
-              <Loader2 className="size-5 shrink-0 animate-spin text-muted-foreground" />
-            ) : (
-              <Switch checked={s.offered} onCheckedChange={() => onToggle(s)} />
+              <span className="flex shrink-0 flex-col items-center gap-0.5">
+                {pendingId === s.id ? (
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <Switch checked={s.offered} onCheckedChange={() => onToggle(s)} aria-label="Предлагам" />
+                )}
+                <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Предлагам</span>
+              </span>
+            </div>
+
+            {s.offered && (
+              <label className="mt-2 flex cursor-pointer items-center justify-between gap-2 border-t border-border/50 pt-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {s.onlineBookable ? "Онлайн запис включен" : "Онлайн изключен · клиентът вижда телефона ти"}
+                </span>
+                <Switch checked={s.onlineBookable} onCheckedChange={() => onToggleOnline(s)} aria-label="Онлайн запис" />
+              </label>
             )}
           </div>
         ))}

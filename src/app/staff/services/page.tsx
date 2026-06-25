@@ -40,6 +40,7 @@ export default async function StaffServicesPage() {
         // „Предлагам" следва active — изключена услуга е active=false, но цената на
         // изпълнителя (m.price) се ПАЗИ и се връща при повторно включване.
         offered: m?.active ?? false,
+        onlineBookable: m?.onlineBookable ?? true,
         price: m?.price ?? i.price,
         priceMax: (m?.priceMax ?? i.priceMax) ?? null,
         priceFrom: m?.priceFrom ?? i.priceFrom,
@@ -68,7 +69,7 @@ export default async function StaffServicesPage() {
         <strong className="font-semibold">Важно:</strong> щом отметнеш поне една услуга, при онлайн записване клиентите виждат{" "}
         <strong>само отметнатите</strong>. Включи всички, които реално предлагаш — иначе останалите спират да се записват онлайн.
       </div>
-      <MyServices services={services} categories={myCategories} />
+      <MyServices services={services} categories={myCategories} phone={resource.phone} />
     </StaffShell>
   );
 }
