@@ -16,14 +16,22 @@ function revalidate() {
   revalidatePath("/");
 }
 
-/** Включва/изключва услуга от каталога за текущия изпълнител (със стойности по подразбиране от каталога). */
+/**
+ * Включва/изключва услуга за текущия изпълнител. При ИЗКЛЮЧВАНЕ НЕ трием реда, а
+ * слагаме active=false — така въведената цена се ПАЗИ и при повторно включване се
+ * връща последната цена на изпълнителя, не каталожната. Нов ред (първо включване)
+ * стартира със стойности по подразбиране от каталога.
+ */
 export async function toggleMyService(serviceItemId: string) {
   const { resource } = await requireStaff();
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
   if (existing) {
-    await db.delete(schema.resourceServices).where(eq(schema.resourceServices.id, existing.id));
+    await db
+      .update(schema.resourceServices)
+      .set({ active: !existing.active, updatedAt: new Date() })
+      .where(eq(schema.resourceServices.id, existing.id));
   } else {
     const item = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
     if (!item) return { ok: false as const };
@@ -55,14 +63,58 @@ const updateSchema = z.object({
   bufferMin: z.number().int().min(0),
 });
 
-/** Изпълнителят редактира собствената си цена/продължителност за дадена услуга. */
+/**
+ * Изпълнителят редактира собствената си цена/продължителност за дадена услуга.
+ * UPSERT: ако още няма оферта (не е отметнал услугата изрично), задаването на
+ * цена я СЪЗДАВА — иначе UPDATE без съществуващ ред мълчаливо губи промяната.
+ */
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
   const { resource } = await requireStaff();
   const d = updateSchema.parse(input);
+  const existing = await db.query.resourceServices.findFirst({
+    where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
+  });
+  if (existing) {
+    await db
+      .update(schema.resourceServices)
+      .set({ ...d, priceMax: d.priceMax ?? null, updatedAt: new Date() })
+      .where(eq(schema.resourceServices.id, existing.id));
+  } else {
+    await db.insert(schema.resourceServices).values({
+      id: nanoid(),
+      resourceId: resource.id,
+      serviceItemId,
+      ...d,
+      priceMax: d.priceMax ?? null,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+  revalidate();
+  return { ok: true as const };
+}
+
+/**
+ * Включва/изключва ОНЛАЙН ЗАПИС за услуга (отделно от „Предлагам"). Изключен онлайн
+ * запис → услугата остава в ценоразписа с цена, но клиентът вижда телефон вместо
+ * форма за час. Спирането изисква въведен телефон за връзка (иначе клиентът няма
+ * как да запази → разочарование).
+ */
+export async function toggleMyServiceOnline(serviceItemId: string) {
+  const { resource } = await requireStaff();
+  const existing = await db.query.resourceServices.findFirst({
+    where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
+  });
+  if (!existing) return { ok: false as const, error: "Първо включи услугата (Предлагам)." };
+  // Спиране (true → false) изисква телефон за връзка.
+  if (existing.onlineBookable && !resource.phone?.trim()) {
+    return { ok: false as const, error: "Първо въведи телефон за връзка в профила си." };
+  }
   await db
     .update(schema.resourceServices)
-    .set({ ...d, priceMax: d.priceMax ?? null, updatedAt: new Date() })
-    .where(and(eq(schema.resourceServices.resourceId, resource.id), eq(schema.resourceServices.serviceItemId, serviceItemId)));
+    .set({ onlineBookable: !existing.onlineBookable, updatedAt: new Date() })
+    .where(eq(schema.resourceServices.id, existing.id));
   revalidate();
   return { ok: true as const };
 }

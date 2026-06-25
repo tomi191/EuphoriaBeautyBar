@@ -47,7 +47,7 @@ export default async function BookingPage() {
 
   // Собствени услуги/цени по изпълнител (resource_services). Изпълнител с поне
   // един запис е „curated" — предлага само отметнатите; иначе fallback по kind.
-  const offeringsByResource = new Map<string, Record<string, { price: number; priceMax: number | null; priceFrom: boolean; currency: string; durationMin: number; bufferMin: number }>>();
+  const offeringsByResource = new Map<string, Record<string, { price: number; priceMax: number | null; priceFrom: boolean; currency: string; durationMin: number; bufferMin: number; onlineBookable: boolean }>>();
   for (const o of offerings) {
     const m = offeringsByResource.get(o.resourceId) ?? {};
     m[o.serviceItemId] = {
@@ -57,6 +57,7 @@ export default async function BookingPage() {
       currency: o.currency,
       durationMin: o.durationMin,
       bufferMin: o.bufferMin,
+      onlineBookable: o.onlineBookable,
     };
     offeringsByResource.set(o.resourceId, m);
   }
@@ -69,6 +70,7 @@ export default async function BookingPage() {
     kind: r.kind,
     image: r.image ?? null,
     bio: r.bio ?? null,
+    phone: r.phone ?? null,
     portfolio: portfolioByResource.get(r.id) ?? [],
     curated: offeringsByResource.has(r.id),
     offerings: offeringsByResource.get(r.id) ?? {},

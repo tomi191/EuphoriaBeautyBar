@@ -15,14 +15,17 @@ export function StaffProfileForm({
   initialName,
   initialImage,
   initialBio,
+  initialPhone,
 }: {
   initialName: string;
   initialImage: string | null;
   initialBio: string | null;
+  initialPhone: string | null;
 }) {
   const [name, setName] = React.useState(initialName);
   const [image, setImage] = React.useState(initialImage ?? "");
   const [bio, setBio] = React.useState(initialBio ?? "");
+  const [phone, setPhone] = React.useState(initialPhone ?? "");
   const [savingProfile, setSavingProfile] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -35,7 +38,7 @@ export function StaffProfileForm({
     e.preventDefault();
     setSavingProfile(true);
     try {
-      await updateStaffProfile({ name, image: image.trim() || null, bio: bio.trim() || null });
+      await updateStaffProfile({ name, image: image.trim() || null, bio: bio.trim() || null, phone: phone.trim() || null });
       toast.success("Профилът е запазен.");
     } catch {
       toast.error("Грешка при запазване.");
@@ -138,6 +141,11 @@ export function StaffProfileForm({
         <div className="space-y-1">
           <Label className="text-xs">Име</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-10" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Телефон за връзка</Label>
+          <Input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="напр. 0898 123 456" className="h-10" />
+          <p className="text-[11px] leading-snug text-muted-foreground">Показва се на клиента, когато спреш онлайн запис за услуга.</p>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Кратко описание</Label>

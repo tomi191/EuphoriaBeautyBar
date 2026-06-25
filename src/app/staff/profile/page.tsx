@@ -62,7 +62,7 @@ export default async function StaffProfilePage() {
         </section>
       )}
 
-      <StaffProfileForm initialName={resource.name} initialImage={resource.image} initialBio={resource.bio} />
+      <StaffProfileForm initialName={resource.name} initialImage={resource.image} initialBio={resource.bio} initialPhone={resource.phone} />
     </StaffShell>
   );
 }

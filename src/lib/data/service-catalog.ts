@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { ServiceCategory, ServiceItem, Currency } from "@/lib/data/services";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { slugify } from "@/lib/utils";
 
 /**
  * Презентационни/SEO полета, които НЕ са цени и не се менят от admin —
@@ -87,7 +88,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       where: (c, { eq }) => eq(c.active, true),
       orderBy: (c, { asc }) => [asc(c.sortOrder)],
     }),
-    db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
+    db.query.serviceItems.findMany({ where: (s, { eq }) => eq(s.bookableOnline, true), orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
     db.query.resources.findMany({ where: (r, { eq }) => eq(r.active, true), columns: { id: true, kind: true } }),
   ]);
@@ -152,4 +153,33 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
 export async function getCatalogCategory(slug: string): Promise<ServiceCategory | undefined> {
   const all = await getServiceCatalog();
   return all.find((c) => c.slug === slug);
+}
+
+export interface ServiceDetail {
+  category: ServiceCategory;
+  groupTitle: string;
+  item: ServiceItem;
+  /** Sibling услуги от същата категория (за cross-links). */
+  siblings: { name: string; slug: string }[];
+}
+
+/**
+ * Услуга по категория-slug + услуга-slug (slug = slugify(name) засега; виж spec
+ * за DB slug колона при scale). Връща и siblings за вътрешно линкване.
+ */
+export async function getServiceDetail(catSlug: string, serviceSlug: string): Promise<ServiceDetail | null> {
+  const cats = await getServiceCatalog();
+  const category = cats.find((c) => c.slug === catSlug);
+  if (!category) return null;
+  for (const g of category.groups) {
+    const item = g.items.find((i) => slugify(i.name) === serviceSlug);
+    if (item) {
+      const siblings = g.items
+        .filter((i) => i.name !== item.name)
+        .slice(0, 3)
+        .map((i) => ({ name: i.name, slug: slugify(i.name) }));
+      return { category, groupTitle: g.title, item, siblings };
+    }
+  }
+  return null;
 }

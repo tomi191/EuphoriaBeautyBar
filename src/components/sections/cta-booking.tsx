@@ -15,7 +15,7 @@ export function CtaBooking() {
       {/* Background image с тъмен treatment */}
       <Image
         src="/images/services/portrait-elegant.jpg"
-        alt=""
+        alt="Жена с елегантна прическа и грим след посещение в Euphoria Hair & Beauty Bar"
         fill
         sizes="100vw"
         className="absolute inset-0 -z-10 object-cover opacity-40"

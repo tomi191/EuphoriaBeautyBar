@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday } from "./time";
 import { parallelWindows } from "./parallel";
 import { isClosed } from "./closures";
+import { computeDaySlots, type SlotStatus, type DaySlot } from "./compute-slots";
+
+// Типовете живеят в ./compute-slots (pure, без DB); реекспорт за съвместимост.
+export type { SlotStatus, DaySlot };
 
 const GRANULARITY_MIN = 15;
 const DEFAULT_MIN_NOTICE_MIN = 60; // минимум предизвестие за онлайн запис
@@ -80,12 +84,6 @@ export async function hasTimeOffConflict(resourceId: string, start: Date, end: D
   return !!off;
 }
 
-export type SlotStatus = "free" | "busy" | "past" | "parallel";
-export interface DaySlot {
-  start: string; // ISO UTC
-  status: SlotStatus;
-}
-
 /**
  * Връща ЦЕЛИЯ работен ден като поредица от начални часове със статус — за да
  * вижда клиентът визуално кога е свободно, кога заето и кое е минало, вместо
@@ -99,6 +97,7 @@ export async function getDaySlots(opts: {
   now?: Date;
   minNoticeMin?: number;
   allowParallel?: boolean;
+  activeMin?: number;
 }): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
   if (await isClosed(opts.dateStr)) return null; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
@@ -144,19 +143,21 @@ export async function getDaySlots(opts: {
 
   const minStart = now.getTime() + minNotice * 60000;
   const stepMs = GRANULARITY_MIN * 60000;
-  const slots: DaySlot[] = [];
+  // Паралелът се мери по АКТИВНОТО време (нанасяне); ако услугата няма активно,
+  // връщаме се към целия блок (поведение както досега за услуги без престой).
+  const activeMs = (opts.activeMin && opts.activeMin > 0 ? opts.activeMin : opts.durationMin) * 60000;
 
-  for (let t = open; t + blockMs <= close; t += stepMs) {
-    const end = t + blockMs;
-    const overlaps = busy.some(([bs, be]) => t < be && end > bs);
-    let status: SlotStatus;
-    if (overlaps) {
-      // Зает слот, който се събира изцяло в свободен престой → паралелен.
-      status = opts.allowParallel && wins.some((w) => t >= w.start && end <= w.end) ? "parallel" : "busy";
-    } else if (t < minStart) status = "past";
-    else status = "free";
-    slots.push({ start: new Date(t).toISOString(), status });
-  }
+  const slots = computeDaySlots({
+    open,
+    close,
+    busy,
+    wins,
+    blockMs,
+    activeMs,
+    minStart,
+    stepMs,
+    allowParallel: opts.allowParallel === true,
+  });
 
   return { open: new Date(open).toISOString(), close: new Date(close).toISOString(), slots };
 }

@@ -25,8 +25,13 @@ interface ServiceDetailParams {
 }
 
 export async function generateStaticParams() {
-  const cats = await getServiceCatalog();
-  return cats.map((c) => ({ slug: c.slug }));
+  // DB може да липсва на build-time (Vercel preview без DATABASE_URL) → on-demand.
+  try {
+    const cats = await getServiceCatalog();
+    return cats.map((c) => ({ slug: c.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: ServiceDetailParams): Promise<Metadata> {

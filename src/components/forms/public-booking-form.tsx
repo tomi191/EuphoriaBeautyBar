@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Clock, type LucideIcon } from "lucide-react";
+import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Clock, Phone, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,10 @@ import { createPublicBooking, fetchPublicSlots } from "@/lib/actions/public-book
 import type { DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice, priceVaries } from "@/lib/booking/price";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
+import { serviceImageFor } from "@/lib/booking/length-icon";
+import { siteConfig } from "@/lib/site";
+
+const SALON_PHONE = siteConfig.contact.phone;
 
 export interface PublicServiceOpt {
   id: string;
@@ -54,6 +58,8 @@ export interface OfferingData {
   currency: string;
   durationMin: number;
   bufferMin: number;
+  /** Приема ли онлайн часове (иначе клиентът вижда телефон). */
+  onlineBookable: boolean;
 }
 
 export interface PerformerOpt {
@@ -62,6 +68,7 @@ export interface PerformerOpt {
   kind: string;
   image: string | null;
   bio: string | null;
+  phone: string | null;
   portfolio: { src: string; alt: string }[];
   /** Дали изпълнителят е „curated" (има собствен списък услуги). */
   curated: boolean;
@@ -80,6 +87,7 @@ function resolveOffering(svc: PublicServiceOpt, performer: PerformerOpt | undefi
     currency: svc.currency,
     durationMin: svc.durationMin,
     bufferMin: svc.bufferMin,
+    onlineBookable: true, // каталожен fallback (без оферта) приема онлайн по подразбиране
   };
 }
 
@@ -100,7 +108,7 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
     >
       {image ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="size-full object-cover" />
+        <img src={image} alt="Профилна снимка на специалист от Euphoria Hair & Beauty Bar" className="size-full object-cover" />
       ) : (
         <div className="grid size-full place-items-center p-1.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -185,6 +193,13 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   }, [hasSelection, activeKind, selectedServices, performers]);
   const performer = performers.find((p) => p.id === performerId);
 
+  // Услуга, за която този изпълнител е спрял онлайн запис → показваме телефон вместо час.
+  const offlineService = performer
+    ? selectedServices.find((s) => !resolveOffering(s, performer).onlineBookable)
+    : undefined;
+  const isOffline = !!performer && !!offlineService;
+  const contactPhone = performer?.phone?.trim() || SALON_PHONE;
+
   // Дали избраният слот е паралелен (в престоя на чужд час) — определя allowParallel при записа.
   const slotIsParallel = React.useMemo(
     () => slots.some((s) => s.start === slot && s.status === "parallel"),
@@ -207,7 +222,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
 
   // Зареди дневния график за избрания изпълнител и сумарната продължителност.
   React.useEffect(() => {
-    if (!hasSelection || !performerId || !date) {
+    if (!hasSelection || !performerId || !date || isOffline) {
       setSlots([]);
       setDayClosed(false);
       return;
@@ -230,7 +245,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     return () => {
       cancelled = true;
     };
-  }, [performerId, date, totalDuration, totalBuffer]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [performerId, date, totalDuration, totalBuffer, isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -361,6 +376,10 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       >
                         {selected && <Check className="size-3.5" strokeWidth={2.5} />}
                       </span>
+                      {serviceImageFor(s.name, s.groupTitle) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={serviceImageFor(s.name, s.groupTitle)!} alt={s.name} className="size-10 shrink-0 rounded-lg object-cover" />
+                      )}
                       <span className="font-medium leading-tight">{s.name}</span>
                     </span>
                     <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
@@ -466,11 +485,29 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           </div>
         )}
 
+        {isOffline ? (
+          <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-5 text-center">
+            <Phone className="mx-auto size-7 text-primary" />
+            <p className="font-display text-lg font-medium leading-snug">
+              {performer?.name} приема часове за „{offlineService?.name}" по телефона
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Тази услуга не се записва онлайн при този изпълнител. Обади се, за да запазиш час.
+            </p>
+            <Button asChild size="lg" className="h-12 w-full rounded-full bg-foreground text-background hover:bg-primary">
+              <a href={`tel:${contactPhone.replace(/\s/g, "")}`}>
+                <Phone className="size-4" /> {contactPhone}
+              </a>
+            </Button>
+          </div>
+        ) : (
         <div className="space-y-2">
           <Label>Дата</Label>
           <BookingCalendar value={date} onChange={setDate} disabledDates={closedDates} />
         </div>
+        )}
 
+        {!isOffline && (<>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Час</Label>
@@ -614,6 +651,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             "Запази час"
           )}
         </Button>
+        </>)}
       </form>
 
       <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>

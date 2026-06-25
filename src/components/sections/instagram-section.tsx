@@ -6,12 +6,36 @@ import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const tiles = [
-  { src: "/images/gallery/g-1.webp", span: "row-span-2" },
-  { src: "/images/gallery/g-7.webp", span: "" },
-  { src: "/images/gallery/g-14.webp", span: "" },
-  { src: "/images/gallery/g-21.webp", span: "row-span-2" },
-  { src: "/images/gallery/g-28.webp", span: "" },
-  { src: "/images/gallery/g-35.webp", span: "" },
+  {
+    src: "/images/gallery/g-1.webp",
+    span: "row-span-2",
+    alt: "Дамска прическа от салон Euphoria Hair & Beauty Bar в кв. Левски, Варна",
+  },
+  {
+    src: "/images/gallery/g-7.webp",
+    span: "",
+    alt: "Стилизиране на коса в салон Euphoria, кв. Левски, Варна",
+  },
+  {
+    src: "/images/gallery/g-14.webp",
+    span: "",
+    alt: "Боядисана коса след процедура в Euphoria Hair & Beauty Bar, Варна",
+  },
+  {
+    src: "/images/gallery/g-21.webp",
+    span: "row-span-2",
+    alt: "Атмосфера в салона Euphoria Hair & Beauty Bar, кв. Левски, Варна",
+  },
+  {
+    src: "/images/gallery/g-28.webp",
+    span: "",
+    alt: "Готова визия от майсторско подстригване в салон Euphoria, Варна",
+  },
+  {
+    src: "/images/gallery/g-35.webp",
+    span: "",
+    alt: "Грижа за косата при специалист в Euphoria Hair & Beauty Bar, кв. Левски",
+  },
 ];
 
 export function InstagramSection() {
@@ -69,7 +93,7 @@ export function InstagramSection() {
               >
                 <Image
                   src={tile.src}
-                  alt=""
+                  alt={tile.alt}
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-transform duration-[1100ms] ease-out group-hover:scale-110"

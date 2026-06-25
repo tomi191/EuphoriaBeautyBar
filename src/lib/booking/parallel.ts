@@ -1,20 +1,9 @@
 import { db } from "@/lib/db";
+import { PARALLEL_SAFETY_MIN, windowFor, type ParallelWindow } from "./parallel-window";
 
-export const PARALLEL_SAFETY_MIN = 5;
-
-export interface ParallelWindow {
-  hostBookingId: string;
-  start: number; // ms UTC, already shrunk by safety buffer
-  end: number;
-}
-
-/** Pure (testable) free window of a booking, or null if none. */
-export function windowFor(startMs: number, activeMin: number, processingMin: number): { start: number; end: number } | null {
-  if (processingMin <= 2 * PARALLEL_SAFETY_MIN) return null;
-  const winStart = startMs + (activeMin + PARALLEL_SAFETY_MIN) * 60000;
-  const winEnd = startMs + (activeMin + processingMin - PARALLEL_SAFETY_MIN) * 60000;
-  return winEnd > winStart ? { start: winStart, end: winEnd } : null;
-}
+// Реекспорт за съвместимост — pure ядрото живее в ./parallel-window (без DB, за тестове).
+export { PARALLEL_SAFETY_MIN, windowFor };
+export type { ParallelWindow };
 
 export async function parallelWindows(resourceId: string, dayStart: Date, dayEnd: Date, excludeId?: string): Promise<ParallelWindow[]> {
   const all = await db.query.bookings.findMany({

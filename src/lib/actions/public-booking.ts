@@ -85,6 +85,16 @@ export async function createPublicBooking(input: PublicBookingInput) {
     return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
   }
 
+  // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услугата.
+  if (data.serviceItemId) {
+    const offering = await db.query.resourceServices.findFirst({
+      where: (rs, { and, eq }) => and(eq(rs.resourceId, data.resourceId), eq(rs.serviceItemId, data.serviceItemId as string)),
+    });
+    if (offering && !offering.onlineBookable) {
+      return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
+    }
+  }
+
   // Снимка на активното/престой времето от каталожната услуга (0/0 при няколко услуги).
   const snapItem = data.serviceItemId
     ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
