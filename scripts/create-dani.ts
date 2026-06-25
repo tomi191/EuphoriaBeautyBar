@@ -12,10 +12,14 @@ import { db, schema } from "../src/lib/db";
 import { auth } from "../src/lib/auth";
 
 const EMAIL = "dani@euphoriabeauty.eu";
-const PASSWORD = "dani@promenime!";
+const PASSWORD = process.env.DANI_PASSWORD; // подава се през env, не се hardcode-ва (public repo)
 const NAME = "Дани";
 
 async function main() {
+  if (!PASSWORD) {
+    console.error("✗ Задай DANI_PASSWORD (напр. DANI_PASSWORD=… npx tsx --env-file=.env.local scripts/create-dani.ts)");
+    process.exit(1);
+  }
   // 1. Resource Дани (nails, active=false → скрита онлайн; staff входът работи).
   let resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.name, NAME) });
   let resourceId: string;

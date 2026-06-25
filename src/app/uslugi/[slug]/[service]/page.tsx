@@ -73,21 +73,28 @@ interface Params {
 }
 
 export async function generateStaticParams() {
-  const cats = await getServiceCatalog();
-  const out: { slug: string; service: string }[] = [];
-  for (const c of cats) {
-    for (const g of c.groups) {
-      for (const i of g.items) {
-        const s = slugify(i.name);
-        if (SERVICE_CONTENT[s]) out.push({ slug: c.slug, service: s });
+  // DB може да е недостъпна на build-time (напр. Vercel preview build без
+  // DATABASE_URL) → не чупим build-а, рендираме on-demand вместо това.
+  try {
+    const cats = await getServiceCatalog();
+    const out: { slug: string; service: string }[] = [];
+    for (const c of cats) {
+      for (const g of c.groups) {
+        for (const i of g.items) {
+          const s = slugify(i.name);
+          if (SERVICE_CONTENT[s]) out.push({ slug: c.slug, service: s });
+        }
       }
     }
+    return out;
+  } catch {
+    return [];
   }
-  return out;
 }
 
-// Само услуги от shortlist (със съдържание) имат страница; всичко друго → 404.
-export const dynamicParams = false;
+// On-demand за URL-и извън прегенерираните (вкл. когато build няма DB). Невалидни
+// услуги → notFound() в самата страница (SERVICE_CONTENT + getServiceDetail guard).
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug, service } = await params;

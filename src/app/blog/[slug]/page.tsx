@@ -21,8 +21,13 @@ interface Params {
 }
 
 export async function generateStaticParams() {
-  const posts = await getPublishedPosts();
-  return posts.map((p) => ({ slug: p.slug }));
+  // DB може да липсва на build-time (Vercel preview без DATABASE_URL) → on-demand.
+  try {
+    const posts = await getPublishedPosts();
+    return posts.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {

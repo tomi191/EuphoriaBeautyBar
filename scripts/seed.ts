@@ -12,8 +12,12 @@ import { galleryImages as gallerySeed } from "../src/lib/data/gallery";
 
 async function ensureAdmin() {
   const email = process.env.ADMIN_EMAIL ?? "admin@euphoriabeauty.eu";
-  const password = process.env.ADMIN_PASSWORD ?? "Promenime2026!";
+  const password = process.env.ADMIN_PASSWORD; // подава се през env, не се hardcode-ва (public repo)
   const name = process.env.ADMIN_NAME ?? "Snezhana";
+  if (!password) {
+    console.error("✗ Задай ADMIN_PASSWORD в средата преди seed.");
+    process.exit(1);
+  }
 
   const existing = await db.query.user.findFirst({ where: (u, { eq }) => eq(u.email, email) });
   if (existing) {
