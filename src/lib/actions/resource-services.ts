@@ -55,14 +55,34 @@ const updateSchema = z.object({
   bufferMin: z.number().int().min(0),
 });
 
-/** Изпълнителят редактира собствената си цена/продължителност за дадена услуга. */
+/**
+ * Изпълнителят редактира собствената си цена/продължителност за дадена услуга.
+ * UPSERT: ако още няма оферта (не е отметнал услугата изрично), задаването на
+ * цена я СЪЗДАВА — иначе UPDATE без съществуващ ред мълчаливо губи промяната.
+ */
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
   const { resource } = await requireStaff();
   const d = updateSchema.parse(input);
-  await db
-    .update(schema.resourceServices)
-    .set({ ...d, priceMax: d.priceMax ?? null, updatedAt: new Date() })
-    .where(and(eq(schema.resourceServices.resourceId, resource.id), eq(schema.resourceServices.serviceItemId, serviceItemId)));
+  const existing = await db.query.resourceServices.findFirst({
+    where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
+  });
+  if (existing) {
+    await db
+      .update(schema.resourceServices)
+      .set({ ...d, priceMax: d.priceMax ?? null, updatedAt: new Date() })
+      .where(eq(schema.resourceServices.id, existing.id));
+  } else {
+    await db.insert(schema.resourceServices).values({
+      id: nanoid(),
+      resourceId: resource.id,
+      serviceItemId,
+      ...d,
+      priceMax: d.priceMax ?? null,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
   revalidate();
   return { ok: true as const };
 }
