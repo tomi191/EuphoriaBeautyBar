@@ -58,7 +58,8 @@ async function main() {
   let done = 0, skipped = 0, failed = 0;
   for (const { slug, scene } of scenes) {
     const path = join(outDir, `${slug}.png`);
-    if (existsSync(path)) { skipped++; continue; }
+    // Прескачаме ако вече има PNG ИЛИ оптимизирания WebP (optimize изтрива PNG-а).
+    if (existsSync(path) || existsSync(join(outDir, `${slug}.webp`))) { skipped++; continue; }
     try {
       const taskId = await kieCreate(apiKey, `${scene} ${STYLE}`);
       const urls = await kiePoll(apiKey, taskId);

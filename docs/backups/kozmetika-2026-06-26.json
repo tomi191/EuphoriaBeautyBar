@@ -1,0 +1,330 @@
+[
+  {
+    "id": "ZDQw79tN7ygYUqEdjG2QR",
+    "name": "Ултразвуково почистване",
+    "description": "Дълбоко почистване чрез ултразвук, премахва замърсявания",
+    "price": 35.79,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "5IuQe_DspXrJm-CSxscoA",
+    "name": "Hydra facial почистване",
+    "description": "Модерно почистване, хидратира и ексфолира",
+    "price": 51.13,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "XoLege9NrScg2fQ3U4wQY",
+    "name": "BIOREPEELCL3 биостимулиращ пилинг",
+    "description": "Подмладяващ пилинг, възстановява кожата",
+    "price": 61.36,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "69zvG3A1Kk7bvrZeZcr-_",
+    "name": "Тотална хидратация с пептиди GIGI",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "kdSXBAEidifWbnHh_FDSG",
+    "name": "ALUDE тотален лифтинг Montibello",
+    "description": null,
+    "price": 56.24,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "9ghl57D_-j4mq7K9oMEn8",
+    "name": "OXYGEN инфузия Montibello",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "EaerqfrijAn5ZbV3BzfMd",
+    "name": "Bioplasma с азелаинова киселина GIGI",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "M6_8r92cZDF_yuWot0PKS",
+    "name": "HYALOFUUL Montibello",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "wHzxmyWCAKYCDDomsLze7",
+    "name": "RETIDERM ретинол + Вит. C Montibello",
+    "description": null,
+    "price": 51.13,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "CMDLzOJr1p24udokA9bWg",
+    "name": "Acnon анти акне GIGI",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "ySEEoy-ry17z1MosU_ZLi",
+    "name": "Ester C анти пигмент",
+    "description": null,
+    "price": 51.13,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "CfHWXeqP3i5husiN8e3TX",
+    "name": "Анти ейдж криотерапия Esthemax",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "tesJQrEyj0WZ_MR1_X0eM",
+    "name": "Безиглена мезотерапия с хиалурон",
+    "description": null,
+    "price": 46.02,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "5AEov8F52JfFloFch_1zi",
+    "name": "Микронидлинг",
+    "description": "Терапия с микроигли, стимулира регенерацията",
+    "price": 61.36,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "UC_B_z0Z00J2PpwadcTaH",
+    "name": "GOYUKI лифтинг (90 мин)",
+    "description": "Релаксиращ масаж с подмладяващ и стягащ ефект",
+    "price": 30.68,
+    "groupTitle": "Японски масаж на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "1AJaI3EP3l7bgb7WwTEox",
+    "name": "Ламиниране мигли",
+    "description": null,
+    "price": 35.79,
+    "groupTitle": "Ламиниране",
+    "bookableOnline": true
+  },
+  {
+    "id": "sXaw8bmh2JCBnrVDoiM0X",
+    "name": "Ламиниране вежди",
+    "description": null,
+    "price": 35.79,
+    "groupTitle": "Ламиниране",
+    "bookableOnline": true
+  },
+  {
+    "id": "XfCkx80jYokMReOOWEt4k",
+    "name": "½ ръце",
+    "description": null,
+    "price": 7.67,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "XJZNQVg8V162E2opNQvbE",
+    "name": "Цели ръце",
+    "description": null,
+    "price": 10.23,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "bI_C3JZLYrPkm3Qcu4J-a",
+    "name": "Горна устна",
+    "description": null,
+    "price": 2.56,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "NpcU2Rsj6TabSzAsh9fCw",
+    "name": "Подмишници",
+    "description": null,
+    "price": 7.67,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "AlRNwiFQFd4eTi-MEaKdj",
+    "name": "½ крака",
+    "description": null,
+    "price": 10.23,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "gluuLQvNvo2zWBtB5j-Ob",
+    "name": "Цели крака",
+    "description": null,
+    "price": 17.9,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "abSOVVZzwnxkxVpG5p9BM",
+    "name": "Оформяне вежди",
+    "description": null,
+    "price": 4.09,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "hcPID9nAOTlWD4oJJBFow",
+    "name": "Боядисване вежди",
+    "description": null,
+    "price": 2.56,
+    "groupTitle": "Епилация и оформяне",
+    "bookableOnline": true
+  },
+  {
+    "id": "dxjDlHeJrQTIKFH-M1FCJ",
+    "name": "Меso Boost - Безиглена електропорация с PDRN/ днк от сьомга/ стерилен серум от Тoskani - апаратна процедура. Защо да изберете MesoBoost? 100% безболезнено: Без убождания, без синини и без възстановителен период. Чувствате само леко, приятно охлаждане Максимална ефективност: Резултатите са видими още след първата процедура — стимулира засилено производство на колаген и еластин в кожата.Системата използва иновативна технология електропорация), която временно отваря микроканали в епидермиса Това позволява на активните серуми да проникнат директно в дермата — точно там, където кожата има най-голяма нужда от тях.",
+    "description": null,
+    "price": 100,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "aAIuA6_vd2GYqijfcag5a",
+    "name": "Комбинирано почиствани на лице / ултразвук + ръчна екстакция/ GIGI, Esthemax, Montibello, Germaine de capuccini - според типа на кожата",
+    "description": null,
+    "price": 50,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "cU8II3skWkgOpvxeRrq4t",
+    "name": "Почистване на лице с ултразвук + Карбоkси терапия CO2 от GiGI. Хидратира кожата в дълбочина и я насища с кислород..",
+    "description": null,
+    "price": 60,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "IO5UIGRl5FEym0IqbJciP",
+    "name": "Платинум терапия -хибриден протокол от няколко линини на GIGI (CityNap,СО2,Texture)работи в няколко направления. Mногостепенна терапия, която цели всяка следваща стъпка да подготви- хидратация и баланс. Успокоява кожата през летния сезон, като я насища с нутриенти, антиоксиданти, минерали и пробиотици за финал.",
+    "description": null,
+    "price": 80,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "1fdz12vX3whB1aL1jD_4Z",
+    "name": "Тотален лифтиг от GiGi -терапия с 21 еактивни съставки за зряла кожа 50+. Терапията е мануална.",
+    "description": null,
+    "price": 65,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "kWPlGDLxUike1lOLMKi16",
+    "name": "Комбинирано почистване на лице,включва ултразвук + ръчна екстакция  /GIGI, Esthemax, Montibello, Germaine de capuccini /според типа на кожата",
+    "description": null,
+    "price": 50,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "PeVjAKefXM3zW43AF9W97",
+    "name": "Тотален антиейдж - хибриден протокол на две терапи /nutri peptide +G4/ в една сесия от GiGi./",
+    "description": null,
+    "price": 90,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "PsP8_gFFL6kH5HSbnjcyo",
+    "name": "Хибриден протокол от Montibello включва две линии в една сесия. Кислородна инфузия,чрез впръскване върху кожата на 90% чист кислород под налягане и серум с про и пребиотици + терапия Hialufuull с три вида хиалурон. Заключва влагата и съставките в дълбочина, в резултат кожата получава незабавна, дълбока хидратация и заздравена кожна бариера.",
+    "description": null,
+    "price": 80,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "vWyllK7ddKoRDoVtitDm6",
+    "name": "Кислородна инфузия със серум от Montibello. Впръскване на 90% чист кислород под налягане с козметичен пистолет и серум с про и пребиотици. Резултат кожата получава незабавна, дълбока хидратация и блякък.",
+    "description": null,
+    "price": 65,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "m0DxUlVfXyC0FcAUtM1WA",
+    "name": "HYALOFUUL от Montibello - Запаси кожата си с влага и я хидратирай в дълбочина с 3 вида хиалурон с различно молекулярно тегло. Многостепенен протокол подходящ и за чувствителна и реактивна кожа.",
+    "description": null,
+    "price": 80,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "mGv8TQ35zpJ_QebrHbyuw",
+    "name": "Комбинирано почистване на лице /ултразвук + ръчна екстракция/",
+    "description": null,
+    "price": 50,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "HGCv3OEJlk30JVnK1MHTe",
+    "name": "Медицинко почистване на лице със серия Acnon на Gigi",
+    "description": null,
+    "price": 60,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "hWNVPNZYMKlOiCUAdZkMM",
+    "name": "Почистване на лице с Hydrafaсial с 3 вида разтвори + Карбокси терапия от GIGi. Терапията има дълбоко въздействие, непосредствено след почистване. Има за цел да осигури на кожата премахване на петна от преминали възпалиния вследствие на комедони и да подсили нейната кожна бариера.",
+    "description": null,
+    "price": 90,
+    "groupTitle": "Почистване на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "-lbe1dLGsUpXwFAbGPH9x",
+    "name": "Остеоестекика  - масаж за лице щия и деколте - авторска техника с подготовка кожата и маска според типа на кожата. Масажът притежава редица предимства, пред някои скъпоструващи процедури в грижата за кожата. Основни му предимства и ползи: Масажът лифтира лицето. Овалът и контура се повдигат. Обичайно подкожната мускулатура с времето се свива и кожата се свлича надолу, чрез определени масажни техники, мускулите се релаксират и отпускат и кожата естествено се освобождава и повдига. Бръчките се разглаждат от релаксацията на свитите мускули. Метаболитните процеси се засилват в зоната на лицето и отточностите спадат, чрез специфични дренажни техники. Кислородът се концентрира в масажираната зона на лицето и спомага да достигнат повече от хранителните нутриенти, с които разполага нашия организъм, а това повлиява на излъчването и промяната в общия вид и тен на кожата. Масажът ще накара кожата ви да изглежда отпочинала, съживена и блестяща, а  лицевите контури дефинирани. Релакса по време на масажа наподобява цялостно спа преживяване.",
+    "description": null,
+    "price": 40,
+    "groupTitle": "Японски масаж на лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "sqBp00pAdr88_BLFldnG-",
+    "name": "Безиглена мезотерапия с PDRN от Toskani. Днк на сьомга - биосъвместима молекула за мощно клетъчно подмлядяване. Подобрява структурата на кожата и стивура производството на колаген и еластин в кожата.",
+    "description": null,
+    "price": 65,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  },
+  {
+    "id": "4FTx7OvFXE8sLPK6fSsAx",
+    "name": "Карбокси терапия СО2 от GIGI за блясък и хидратация. Насища кожата с ендогенен кислород",
+    "description": null,
+    "price": 50,
+    "groupTitle": "Терапии за лице",
+    "bookableOnline": true
+  }
+]
