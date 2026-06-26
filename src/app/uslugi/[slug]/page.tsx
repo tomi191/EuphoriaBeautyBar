@@ -13,13 +13,6 @@ import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 
-const heroIllustrations: Record<string, { primary: string; secondary?: string }> = {
-  "frizorski-uslugi": { primary: "/illustrations/hairdryer.svg", secondary: "/illustrations/comb.svg" },
-  "frizorski-terapii": { primary: "/illustrations/droplet.svg", secondary: "/illustrations/leaf.svg" },
-  "manikyur-i-pedikyur": { primary: "/illustrations/nail-polish.svg", secondary: "/illustrations/flowers.svg" },
-  kozmetika: { primary: "/illustrations/mirror.svg", secondary: "/illustrations/lipstick.svg" },
-};
-
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
 }
@@ -73,27 +66,20 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   return (
     <>
       {/* HERO */}
-      <section id="info" className="relative overflow-hidden bg-cream pt-32 pb-16 lg:pt-40 lg:pb-24">
-        {heroIllustrations[category.slug]?.primary && (
-          <Image
-            src={heroIllustrations[category.slug].primary}
-            alt=""
-            aria-hidden
-            width={300}
-            height={300}
-            className="pointer-events-none absolute right-[5%] top-24 hidden h-44 w-auto opacity-50 mix-blend-multiply lg:block"
-          />
-        )}
-        {heroIllustrations[category.slug]?.secondary && (
-          <Image
-            src={heroIllustrations[category.slug].secondary!}
-            alt=""
-            aria-hidden
-            width={280}
-            height={280}
-            className="pointer-events-none absolute right-[22%] bottom-12 hidden h-32 w-auto rotate-[-12deg] opacity-40 mix-blend-multiply lg:block"
-          />
-        )}
+      <section id="info" className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24">
+        <Image
+          src={category.heroImage}
+          alt=""
+          aria-hidden
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
 
         <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
           <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
