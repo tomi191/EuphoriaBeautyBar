@@ -1,5 +1,5 @@
 /** Pure (без DB) ядро на дневния график — изолирано за unit тестване. */
-import { slotParallelFits, type SlotNeighbor } from "./parallel-window";
+import { slotParallelFits, windowFor, type SlotNeighbor } from "./parallel-window";
 
 export type SlotStatus = "free" | "busy" | "past" | "parallel";
 
@@ -46,5 +46,24 @@ export function computeDaySlots(p: ComputeSlotsParams): DaySlot[] {
     }
     out.push({ start: new Date(t).toISOString(), status });
   }
+
+  // „Snap" слотове: 15-мин мрежата може да пропусне тесен престой прозорец (напр.
+  // престой 15:50–16:20 — grid дава 15:45/16:00, но само 15:50 се събира). Добавяме
+  // слот точно в началото на всеки престой прозорец, ако паралелен час се събира там.
+  if (p.allowParallel) {
+    const seen = new Set(out.map((s) => Date.parse(s.start)));
+    for (const n of p.neighbors) {
+      const w = windowFor(n.start, n.activeMin, n.processingMin);
+      if (!w) continue;
+      const t = w.start;
+      if (seen.has(t) || t < p.open || t + activeMs > p.close) continue;
+      if (slotParallelFits(t, t + p.blockMs, p.activeMin, p.processingMin, p.neighbors)) {
+        out.push({ start: new Date(t).toISOString(), status: t < p.minStart ? "past" : "parallel" });
+        seen.add(t);
+      }
+    }
+    out.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+  }
+
   return out;
 }
