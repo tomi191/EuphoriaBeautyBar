@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday } from "./time";
-import { parallelWindows } from "./parallel";
 import { isClosed } from "./closures";
 import { computeDaySlots, type SlotStatus, type DaySlot } from "./compute-slots";
+import type { SlotNeighbor } from "./parallel-window";
 
 // Типовете живеят в ./compute-slots (pure, без DB); реекспорт за съвместимост.
 export type { SlotStatus, DaySlot };
@@ -98,6 +98,7 @@ export async function getDaySlots(opts: {
   minNoticeMin?: number;
   allowParallel?: boolean;
   activeMin?: number;
+  processingMin?: number;
 }): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
   if (await isClosed(opts.dateStr)) return null; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
@@ -132,28 +133,36 @@ export async function getDaySlots(opts: {
       and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
   });
 
-  const busy: Array<[number, number]> = [
-    ...busyBookings.map((b) => [b.startAt.getTime(), b.endAt.getTime()] as [number, number]),
-    ...busyOff.map((t) => [t.startAt.getTime(), t.endAt.getTime()] as [number, number]),
+  // Съседи за паралелната проверка: реалните часове (с фази) + отпуски като
+  // ПЛЪТНИ блокове (processingMin=0 → не приемат паралел).
+  const neighbors: SlotNeighbor[] = [
+    ...busyBookings.map((b) => ({
+      start: b.startAt.getTime(),
+      end: b.endAt.getTime(),
+      activeMin: b.activeMin,
+      processingMin: b.processingMin,
+    })),
+    ...busyOff.map((t) => ({
+      start: t.startAt.getTime(),
+      end: t.endAt.getTime(),
+      activeMin: Math.max(0, Math.round((t.endAt.getTime() - t.startAt.getTime()) / 60000)),
+      processingMin: 0,
+    })),
   ];
-
-  // При паралелни записи: свободните „престои" в чужди часове (напр. боя), в
-  // които се събира кратък втори час. Изчисляват се веднъж за деня.
-  const wins = opts.allowParallel ? await parallelWindows(opts.resourceId, dayStart, dayEnd) : [];
 
   const minStart = now.getTime() + minNotice * 60000;
   const stepMs = GRANULARITY_MIN * 60000;
-  // Паралелът се мери по АКТИВНОТО време (нанасяне); ако услугата няма активно,
-  // връщаме се към целия блок (поведение както досега за услуги без престой).
-  const activeMs = (opts.activeMin && opts.activeMin > 0 ? opts.activeMin : opts.durationMin) * 60000;
+  // Паралелът се мери по АКТИВНОТО време; ако услугата няма активно, връщаме се
+  // към целия блок (поведение както за услуги без престой).
+  const activeMin = opts.activeMin && opts.activeMin > 0 ? opts.activeMin : opts.durationMin;
 
   const slots = computeDaySlots({
     open,
     close,
-    busy,
-    wins,
+    neighbors,
     blockMs,
-    activeMs,
+    activeMin,
+    processingMin: opts.processingMin ?? 0,
     minStart,
     stepMs,
     allowParallel: opts.allowParallel === true,

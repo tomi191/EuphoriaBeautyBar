@@ -25,6 +25,8 @@ export interface MyServiceOpt {
   currency: string;
   durationMin: number;
   bufferMin: number;
+  activeMin: number;
+  processingMin: number;
   /** Може да се изтрие от каталога (никой друг изпълнител не я предлага). */
   deletable: boolean;
 }
@@ -285,6 +287,8 @@ function EditSheet({
   const [priceFrom, setPriceFrom] = React.useState(service.priceFrom);
   const [currency, setCurrency] = React.useState(service.currency);
   const [durationMin, setDurationMin] = React.useState(service.durationMin);
+  const [activeMin, setActiveMin] = React.useState(service.activeMin);
+  const [processingMin, setProcessingMin] = React.useState(service.processingMin);
   const [saving, setSaving] = React.useState(false);
 
   async function save() {
@@ -297,9 +301,11 @@ function EditSheet({
         currency,
         durationMin,
         bufferMin: service.bufferMin,
+        activeMin,
+        processingMin,
       });
       toast.success("Запазено.");
-      onSaved({ ...service, price, priceMax: priceMax === "" ? null : Number(priceMax), priceFrom, currency, durationMin });
+      onSaved({ ...service, price, priceMax: priceMax === "" ? null : Number(priceMax), priceFrom, currency, durationMin, activeMin, processingMin });
     } catch {
       toast.error("Грешка при запазване.");
     } finally {
@@ -340,6 +346,22 @@ function EditSheet({
           <span className="text-sm font-medium">&quot;от&quot; цена (ориентировъчна)</span>
           <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
         </label>
+        <div className="mt-3 rounded-xl border border-border p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Паралелни часове</p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1.5">
+              <Label>Активни (намазване) мин</Label>
+              <Input type="number" min={0} step={5} value={activeMin} onChange={(e) => setActiveMin(Number(e.target.value))} className="h-11 text-base" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Престой (мин)</Label>
+              <Input type="number" min={0} step={5} value={processingMin} onChange={(e) => setProcessingMin(Number(e.target.value))} className="h-11 text-base" />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            Престой &gt; 10 мин отваря паралелен час, докато боята действа. 0 = няма престой. Важи за всички, които предлагат услугата.
+          </p>
+        </div>
         <Button onClick={save} disabled={saving} className="mt-4 h-11 w-full rounded-full bg-foreground text-sm text-background hover:bg-primary">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Запазване</> : "Запази"}
         </Button>

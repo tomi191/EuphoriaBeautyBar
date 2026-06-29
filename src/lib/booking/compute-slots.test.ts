@@ -1,17 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { computeDaySlots } from "./compute-slots";
+import type { SlotNeighbor } from "./parallel-window";
 
-const H = (hhmm: string) => Date.UTC(2026, 5, 25, +hhmm.slice(0, 2), +hhmm.slice(3)); // "09:00" → ms
+const H = (hhmm: string) => Date.UTC(2026, 5, 30, +hhmm.slice(0, 2), +hhmm.slice(3));
 const STEP = 15 * 60000;
 
 describe("computeDaySlots", () => {
   const base = {
     open: H("09:00"),
     close: H("19:00"),
-    busy: [] as Array<[number, number]>,
-    wins: [] as Array<{ start: number; end: number }>,
+    neighbors: [] as SlotNeighbor[],
     blockMs: 30 * 60000,
-    activeMs: 30 * 60000,
+    activeMin: 30,
+    processingMin: 0,
     minStart: H("09:00"),
     stepMs: STEP,
     allowParallel: false,
@@ -30,39 +31,49 @@ describe("computeDaySlots", () => {
   });
 
   it("маркира busy при застъпване със зает час", () => {
-    const slots = computeDaySlots({ ...base, busy: [[H("10:00"), H("11:00")]] });
+    const neighbors: SlotNeighbor[] = [{ start: H("10:00"), end: H("11:00"), activeMin: 60, processingMin: 0 }];
+    const slots = computeDaySlots({ ...base, neighbors });
     expect(slots.find((s) => s.start === new Date(H("10:00")).toISOString())!.status).toBe("busy");
   });
 
   it("НЕ показва паралел когато allowParallel=false", () => {
-    const slots = computeDaySlots({
-      ...base,
-      busy: [[H("10:00"), H("12:00")]],
-      wins: [{ start: H("10:00"), end: H("12:00") }],
-    });
+    const neighbors: SlotNeighbor[] = [{ start: H("10:00"), end: H("12:00"), activeMin: 25, processingMin: 40 }];
+    const slots = computeDaySlots({ ...base, neighbors, allowParallel: false });
     expect(slots.find((s) => s.start === new Date(H("10:30")).toISOString())!.status).toBe("busy");
   });
 
-  it("паралел по АКТИВНО време: дълъг блок се вмъква ако активното се събира в прозореца", () => {
-    // host боя 10:00-11:30 busy; прозорец 10:30-11:15; втора услуга blockMs=90 (overflow), activeMs=25
+  it("REVERSE: нов по-ранен час пада паралелно преди записан боя-час", () => {
+    // записан боя 10:30 (active=25, proc=40, блок 100мин); нов боя 10:00 (същата услуга)
+    const neighbors: SlotNeighbor[] = [{ start: H("10:30"), end: H("10:30") + 100 * 60000, activeMin: 25, processingMin: 40 }];
     const slots = computeDaySlots({
-      ...base,
-      busy: [[H("10:00"), H("11:30")]],
-      wins: [{ start: H("10:30"), end: H("11:15") }],
-      blockMs: 90 * 60000,
-      activeMs: 25 * 60000,
-      allowParallel: true,
+      ...base, neighbors, blockMs: 100 * 60000, activeMin: 25, processingMin: 40, allowParallel: true,
     });
-    // 10:30: активното 10:30-10:55 е в прозореца 10:30-11:15 → parallel (макар блокът да излиза)
-    expect(slots.find((s) => s.start === new Date(H("10:30")).toISOString())!.status).toBe("parallel");
-    // 11:00: активното 11:00-11:25 излиза от прозореца (11:15) → busy
-    expect(slots.find((s) => s.start === new Date(H("11:00")).toISOString())!.status).toBe("busy");
+    expect(slots.find((s) => s.start === new Date(H("10:00")).toISOString())!.status).toBe("parallel");
   });
 
-  it("пропуска слотове, чийто блок излиза извън работното време и не са паралел", () => {
-    // близо до края: activeMs се събира, blockMs не → не се показва (както досега)
-    const slots = computeDaySlots({ ...base, blockMs: 60 * 60000, activeMs: 20 * 60000, open: H("18:30") });
-    // 18:30: block до 19:30 > close, не паралел → пропуснат
-    expect(slots.find((s) => s.start === new Date(H("18:30")).toISOString())).toBeUndefined();
+  it("FORWARD: кратка услуга в престоя на записан боя-час", () => {
+    // боя 10:00 (active=25, proc=40 → престой 10:30-11:00); нова услуга active=20, proc=0, блок 25
+    const neighbors: SlotNeighbor[] = [{ start: H("10:00"), end: H("10:00") + 100 * 60000, activeMin: 25, processingMin: 40 }];
+    const slots = computeDaySlots({
+      ...base, neighbors, blockMs: 25 * 60000, activeMin: 20, processingMin: 0, allowParallel: true,
+    });
+    expect(slots.find((s) => s.start === new Date(H("10:30")).toISOString())!.status).toBe("parallel");
+  });
+
+  it("блъскащи намазвания → busy, не parallel", () => {
+    // записан боя 10:30; нов боя 10:00 с дълго намазване (active=40) → блъска 10:30 намазване
+    const neighbors: SlotNeighbor[] = [{ start: H("10:30"), end: H("10:30") + 100 * 60000, activeMin: 25, processingMin: 40 }];
+    const slots = computeDaySlots({
+      ...base, neighbors, blockMs: 120 * 60000, activeMin: 40, processingMin: 40, allowParallel: true,
+    });
+    expect(slots.find((s) => s.start === new Date(H("10:00")).toISOString())!.status).toBe("busy");
+  });
+
+  it("услуга без престой като съсед (стара боя 0/0) не дава паралел", () => {
+    const neighbors: SlotNeighbor[] = [{ start: H("10:30"), end: H("10:30") + 90 * 60000, activeMin: 0, processingMin: 0 }];
+    const slots = computeDaySlots({
+      ...base, neighbors, blockMs: 100 * 60000, activeMin: 25, processingMin: 40, allowParallel: true,
+    });
+    expect(slots.find((s) => s.start === new Date(H("10:00")).toISOString())!.status).toBe("busy");
   });
 });
