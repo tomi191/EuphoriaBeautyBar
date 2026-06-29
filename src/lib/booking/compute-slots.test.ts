@@ -76,4 +76,18 @@ describe("computeDaySlots", () => {
     });
     expect(slots.find((s) => s.start === new Date(H("10:00")).toISOString())!.status).toBe("busy");
   });
+
+  it("SNAP: добавя слот в началото на тесен престой прозорец (извън 15-мин мрежа)", () => {
+    // боя 10:00 (active=15, proc=40 → престой [10:20, 10:50]); кратка услуга блок=25, active=20, proc=0
+    const neighbors: SlotNeighbor[] = [{ start: H("10:00"), end: H("10:00") + 100 * 60000, activeMin: 15, processingMin: 40 }];
+    const slots = computeDaySlots({
+      ...base, neighbors, blockMs: 25 * 60000, activeMin: 20, processingMin: 0, allowParallel: true,
+    });
+    // 10:20 НЕ е на 15-мин мрежата (09:00,…,10:15,10:30), но престоят започва точно там → snap, parallel
+    const at1020 = slots.find((s) => s.start === new Date(H("10:20")).toISOString());
+    expect(at1020?.status).toBe("parallel");
+    // слотовете остават сортирани по време след вмъкване на snap-а
+    const times = slots.map((s) => s.start);
+    expect(times).toEqual([...times].sort());
+  });
 });
