@@ -25,8 +25,17 @@ async function ensureAdmin() {
     return;
   }
 
-  await auth.api.signUpEmail({
-    body: { email, password, name },
+  // Директно създаване (sign-up endpoint е disabled заради security) — като
+  // createStaffAccount, но с изрична role="admin".
+  const ctx = await auth.$context;
+  const hashed = await ctx.password.hash(password);
+  const userId = nanoid();
+  const now = new Date();
+  await db.insert(schema.user).values({
+    id: userId, name, email, emailVerified: true, role: "admin", createdAt: now, updatedAt: now,
+  });
+  await db.insert(schema.account).values({
+    id: nanoid(), accountId: userId, providerId: "credential", userId, password: hashed, createdAt: now, updatedAt: now,
   });
   console.log(`✓ Създаден admin: ${email}  (парола: ${password})`);
 }
