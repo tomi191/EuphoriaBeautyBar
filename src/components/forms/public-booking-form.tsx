@@ -257,14 +257,13 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     setSubmitting(true);
     try {
       const single = selectedServices.length === 1 ? selectedServices[0] : null;
-      // Снимка на сумата (€) при записването - сборът от цените на избраните услуги при този изпълнител.
-      const totalPrice = selectedServices.reduce((sum, s) => sum + resolveOffering(s, performer).price, 0);
+      // priceEur вече се снима server-side (не от клиента) — тук подаваме само
+      // priceLabel за имейла. При няколко услуги оборотът пада на fallback в getMyStats.
       const res = await createPublicBooking({
         resourceId: performerId,
         serviceItemId: single ? single.id : null,
         serviceName: serviceNamesLabel,
         priceLabel: single ? formatPrice(resolveOffering(single, performer)) : null,
-        priceEur: Math.round(totalPrice * 100) / 100,
         durationMin: totalDuration,
         bufferMin: totalBuffer,
         startAt: slot,
