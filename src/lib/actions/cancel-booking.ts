@@ -2,7 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { sendPushToResource } from "@/lib/push";
+import { notifyResource } from "@/lib/notify";
 import { formatWhen } from "@/lib/email/booking";
 
 /**
@@ -22,7 +22,7 @@ export async function cancelOwnBooking(id: string) {
     .set({ status: "cancelled", cancelledAt: new Date(), cancelReason: "отменен от клиента", updatedAt: new Date() })
     .where(eq(schema.bookings.id, id));
   // Извести изпълнителя, че клиентът се е отказал.
-  await sendPushToResource(booking.resourceId, {
+  await notifyResource(booking.resourceId, {
     title: "Отменен час (от клиента)",
     body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
     url: "/staff",

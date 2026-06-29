@@ -213,6 +213,8 @@ export const resources = pgTable("resources", {
   image: text("image"),
   bio: text("bio"),
   phone: text("phone"), // личен телефон за връзка — показва се при изключен онлайн запис
+  telegramChatId: text("telegram_chat_id"), // Telegram chat за известия (null = несвързан)
+  telegramLinkToken: text("telegram_link_token"), // еднократен код за свързване през /start
   active: boolean("active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),

@@ -11,7 +11,7 @@ import { isClosed } from "@/lib/booking/closures";
 import { formatServicePrice } from "@/lib/booking/price";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
-import { sendPushToResource } from "@/lib/push";
+import { notifyResource } from "@/lib/notify";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -177,10 +177,12 @@ export async function createPublicBooking(input: PublicBookingInput) {
         clientPhone: data.clientPhone,
         clientEmail: data.clientEmail,
       }),
-      sendPushToResource(data.resourceId, {
+      notifyResource(data.resourceId, {
         title: "Нов запис",
         body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})`,
         url: "/staff",
+        clientPhone: data.clientPhone,
+        dateKey: sofiaDateStr(start),
       }),
     ]);
 
