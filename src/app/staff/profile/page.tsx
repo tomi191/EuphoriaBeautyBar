@@ -4,6 +4,7 @@ import { getMyStats } from "@/lib/actions/staff-bookings";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { StaffProfileForm } from "@/components/staff/profile-form";
 import { StaffNotifications } from "@/components/staff/staff-notifications";
+import { TelegramConnect } from "@/components/staff/telegram-connect";
 import { BiometricManage } from "@/components/staff/biometric-manage";
 import { passkeysEnabled } from "@/lib/passkey-support";
 
@@ -51,7 +52,8 @@ export default async function StaffProfilePage() {
         <p className="mt-1.5 text-[10px] text-muted-foreground">По цените на услугите; ориентировъчно.</p>
       </section>
 
-      <div className="mb-3">
+      <div className="mb-3 space-y-2">
+        <TelegramConnect initialConnected={!!resource.telegramChatId} />
         <StaffNotifications />
       </div>
 

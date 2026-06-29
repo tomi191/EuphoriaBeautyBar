@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authorizeCron } from "@/lib/cron-auth";
-import { sendPushToResource } from "@/lib/push";
+import { notifyResource } from "@/lib/notify";
 import { sofiaDateStr, sofiaTimeLabel, sofiaWallToUtc } from "@/lib/booking/time";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
     .filter((t): t is { id: string; body: string } => t !== null);
 
   const results = await Promise.allSettled(
-    targets.map((t) => sendPushToResource(t.id, { title: "Утрешен график", body: t.body, url: "/staff" })),
+    targets.map((t) => notifyResource(t.id, { title: "Утрешен график", body: t.body, url: "/staff" })),
   );
   const notified = results.filter((r) => r.status === "fulfilled").length;
   const failed = results.length - notified;

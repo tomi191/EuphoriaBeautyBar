@@ -13,7 +13,7 @@ import { sofiaWallToUtc, sofiaDateStr } from "@/lib/booking/time";
 import { isClosed } from "@/lib/booking/closures";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 import { sendBookingConfirmation, formatWhen } from "@/lib/email/booking";
-import { sendPushToResource } from "@/lib/push";
+import { notifyResource } from "@/lib/notify";
 import { siteConfig } from "@/lib/site";
 
 export interface DayScheduleResult {
@@ -127,10 +127,12 @@ export async function createBooking(input: BookingInput) {
     // САМО при онлайн запис (public-booking), затова ръчно въведените от админ часове
     // не уведомяваха никого. await-нато (serverless не убива функцията преди push да
     // тръгне); .catch — доставка не блокира записа.
-    await sendPushToResource(data.resourceId, {
+    await notifyResource(data.resourceId, {
       title: "Нов запис",
       body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})`,
       url: "/staff",
+      clientPhone: data.clientPhone,
+      dateKey: sofiaDateStr(start),
     }).catch(() => {});
 
     // Потвърждение към клиента, ако е оставил имейл (не блокира записа).
@@ -212,10 +214,12 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
     revalidatePath("/admin/bookings");
     revalidatePath("/staff");
     // Известие до изпълнителя — ресепцията промени негов час (час/услуга/време).
-    await sendPushToResource(booking.resourceId, {
+    await notifyResource(booking.resourceId, {
       title: "Променен час",
       body: `${d.serviceName} — ${formatWhen(start)}${d.clientName ? ` (${d.clientName})` : ""}`,
       url: "/staff",
+      clientPhone: d.clientPhone,
+      dateKey: sofiaDateStr(start),
     }).catch(() => {});
     return { ok: true as const };
   } catch (err: unknown) {
@@ -255,10 +259,11 @@ export async function cancelBooking(id: string, reason?: string) {
   revalidate();
   // Известие до изпълнителя — ресепцията отмени негов час.
   if (booking) {
-    await sendPushToResource(booking.resourceId, {
+    await notifyResource(booking.resourceId, {
       title: "Отменен час",
       body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
       url: "/staff",
+      dateKey: sofiaDateStr(booking.startAt),
     }).catch(() => {});
   }
 }
