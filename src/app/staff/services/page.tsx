@@ -47,6 +47,9 @@ export default async function StaffServicesPage() {
         currency: m?.currency ?? i.currency,
         durationMin: m?.durationMin ?? i.durationMin,
         bufferMin: m?.bufferMin ?? i.bufferMin,
+        // Престоят е глобален на услугата (каталог) — управлява се от /staff редакцията.
+        activeMin: i.activeMin,
+        processingMin: i.processingMin,
         // Може да се изтрие от каталога само ако друг изпълнител не я предлага.
         deletable: !offeredByOthers.has(i.id),
       },

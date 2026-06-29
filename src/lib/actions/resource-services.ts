@@ -61,6 +61,8 @@ const updateSchema = z.object({
   currency: z.string().min(1),
   durationMin: z.number().int().positive(),
   bufferMin: z.number().int().min(0),
+  activeMin: z.number().int().min(0).optional(),
+  processingMin: z.number().int().min(0).optional(),
 });
 
 /**
@@ -71,25 +73,36 @@ const updateSchema = z.object({
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
   const { resource } = await requireStaff();
   const d = updateSchema.parse(input);
+  const { activeMin, processingMin, ...own } = d;
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
   if (existing) {
     await db
       .update(schema.resourceServices)
-      .set({ ...d, priceMax: d.priceMax ?? null, updatedAt: new Date() })
+      .set({ ...own, priceMax: own.priceMax ?? null, updatedAt: new Date() })
       .where(eq(schema.resourceServices.id, existing.id));
   } else {
     await db.insert(schema.resourceServices).values({
       id: nanoid(),
       resourceId: resource.id,
       serviceItemId,
-      ...d,
-      priceMax: d.priceMax ?? null,
+      ...own,
+      priceMax: own.priceMax ?? null,
       active: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+  }
+  // Престоят е характеристика на услугата (глобален) → пише се в каталога.
+  if (activeMin !== undefined || processingMin !== undefined) {
+    await db
+      .update(schema.serviceItems)
+      .set({
+        ...(activeMin !== undefined ? { activeMin } : {}),
+        ...(processingMin !== undefined ? { processingMin } : {}),
+      })
+      .where(eq(schema.serviceItems.id, serviceItemId));
   }
   revalidate();
   return { ok: true as const };

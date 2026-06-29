@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Check, Lock, Search, X } from "lucide-react";
+import { Loader2, CheckCircle2, Check, Lock, Search, X, Contact } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { fetchMySlots, createMyBooking, type DayScheduleResult } from "@/lib/actions/staff-bookings";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { serviceImageFor } from "@/lib/booking/length-icon";
+import { contactPickerSupported, pickContact } from "@/lib/contact-picker";
 
 export interface StaffServiceOpt {
   id: string;
@@ -44,6 +45,16 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
   const [phone, setPhone] = React.useState("");
   const [notes, setNotes] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  // Contact Picker API е достъпен само на Android Chrome (HTTPS) — бутонът се крие иначе.
+  const [canPick, setCanPick] = React.useState(false);
+  React.useEffect(() => setCanPick(contactPickerSupported()), []);
+
+  async function onPickContact() {
+    const c = await pickContact();
+    if (!c) return;
+    if (c.name) setName(c.name);
+    if (c.phone) setPhone(c.phone);
+  }
 
   const svc = services.find((s) => s.id === serviceId);
   // Дали избраният слот е паралелен (в престоя на чужд час) — определя allowParallel при запис.
@@ -273,6 +284,11 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
       {/* Клиент */}
       <section className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Клиент</p>
+        {canPick && (
+          <Button type="button" variant="outline" onClick={onPickContact} className="h-10 w-full rounded-full text-sm">
+            <Contact className="size-4" /> Избери от контакти
+          </Button>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="sbf-name">Име</Label>
