@@ -35,7 +35,7 @@ export function ClientsList({ clients }: { clients: MyClientRow[] }) {
           placeholder="Търси по име или телефон…"
           aria-label="Търсене на клиент по име или телефон"
           autoComplete="off"
-          className="h-11 w-full rounded-2xl border border-border bg-background pl-10 pr-10 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40 [&::-webkit-search-cancel-button]:hidden"
+          className="h-11 w-full rounded-2xl border border-border bg-background pl-10 pr-10 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40 [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <button

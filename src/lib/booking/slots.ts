@@ -24,34 +24,31 @@ export async function getAvailableSlots(opts: {
   now?: Date;
   minNoticeMin?: number;
 }): Promise<string[]> {
-  if (await isClosed(opts.dateStr)) return []; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
   const blockMs = (opts.durationMin + opts.bufferMin) * 60000;
-
   const wd = sofiaWeekday(opts.dateStr);
-  const wh = await db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) });
+  const dayStart = sofiaWallToUtc(opts.dateStr, "00:00");
+  const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
+
+  // Четирите независими заявки паралелно (бяха серийни → 4 RTT).
+  const [closed, wh, busyBookings, busyOff] = await Promise.all([
+    isClosed(opts.dateStr),
+    db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }),
+    db.query.bookings.findMany({
+      where: (b, { and, eq, gte, lt, notInArray }) =>
+        and(eq(b.resourceId, opts.resourceId), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
+    }),
+    db.query.timeOff.findMany({
+      where: (t, { and, or, eq, isNull, lt, gt }) =>
+        and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
+    }),
+  ]);
+  if (closed) return []; // салонът е затворен (празник/отпуск)
   if (!wh || wh.closed || !wh.openTime || !wh.closeTime) return [];
 
   const open = sofiaWallToUtc(opts.dateStr, wh.openTime).getTime();
   const close = sofiaWallToUtc(opts.dateStr, wh.closeTime).getTime();
-
-  const dayStart = sofiaWallToUtc(opts.dateStr, "00:00");
-  const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
-
-  const busyBookings = await db.query.bookings.findMany({
-    where: (b, { and, eq, gte, lt, notInArray }) =>
-      and(
-        eq(b.resourceId, opts.resourceId),
-        gte(b.startAt, dayStart),
-        lt(b.startAt, dayEnd),
-        notInArray(b.status, ["cancelled", "no_show"]),
-      ),
-  });
-  const busyOff = await db.query.timeOff.findMany({
-    where: (t, { and, or, eq, isNull, lt, gt }) =>
-      and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
-  });
 
   const busy: Array<[number, number]> = [
     ...busyBookings.map((b) => [b.startAt.getTime(), b.endAt.getTime()] as [number, number]),
@@ -100,38 +97,37 @@ export async function getDaySlots(opts: {
   activeMin?: number;
   processingMin?: number;
 }): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
-  if (await isClosed(opts.dateStr)) return null; // салонът е затворен (празник/отпуск)
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
   const blockMs = (opts.durationMin + opts.bufferMin) * 60000;
-
   const wd = sofiaWeekday(opts.dateStr);
-  // Собствено работно време на изпълнителя има предимство; иначе салонното.
-  const ownWh = await db.query.resourceWorkingHours.findFirst({
-    where: (w, { and, eq }) => and(eq(w.resourceId, opts.resourceId), eq(w.weekday, wd)),
-  });
-  const wh = ownWh ?? (await db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }));
+  const dayStart = sofiaWallToUtc(opts.dateStr, "00:00");
+  const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
+
+  // Петте независими заявки текат ПАРАЛЕЛНО (преди бяха серийни → 5 RTT на всеки
+  // slot fetch, т.е. 1-3s на слаба мрежа). salonWh се чете винаги (евтино), а в JS
+  // решаваме own ?? салон. Лек overhead в рядкия случай, голям печат на честия.
+  const [closed, ownWh, salonWh, busyBookings, busyOff] = await Promise.all([
+    isClosed(opts.dateStr),
+    db.query.resourceWorkingHours.findFirst({
+      where: (w, { and, eq }) => and(eq(w.resourceId, opts.resourceId), eq(w.weekday, wd)),
+    }),
+    db.query.workingHours.findFirst({ where: (w, { eq }) => eq(w.weekday, wd) }),
+    db.query.bookings.findMany({
+      where: (b, { and, eq, gte, lt, notInArray }) =>
+        and(eq(b.resourceId, opts.resourceId), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
+    }),
+    db.query.timeOff.findMany({
+      where: (t, { and, or, eq, isNull, lt, gt }) =>
+        and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
+    }),
+  ]);
+  if (closed) return null; // салонът е затворен (празник/отпуск)
+  const wh = ownWh ?? salonWh; // собственото работно време има предимство
   if (!wh || wh.closed || !wh.openTime || !wh.closeTime) return null;
 
   const open = sofiaWallToUtc(opts.dateStr, wh.openTime).getTime();
   const close = sofiaWallToUtc(opts.dateStr, wh.closeTime).getTime();
-
-  const dayStart = sofiaWallToUtc(opts.dateStr, "00:00");
-  const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
-
-  const busyBookings = await db.query.bookings.findMany({
-    where: (b, { and, eq, gte, lt, notInArray }) =>
-      and(
-        eq(b.resourceId, opts.resourceId),
-        gte(b.startAt, dayStart),
-        lt(b.startAt, dayEnd),
-        notInArray(b.status, ["cancelled", "no_show"]),
-      ),
-  });
-  const busyOff = await db.query.timeOff.findMany({
-    where: (t, { and, or, eq, isNull, lt, gt }) =>
-      and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
-  });
 
   // Съседи за паралелната проверка: реалните часове (с фази) + отпуски като
   // ПЛЪТНИ блокове (processingMin=0 → не приемат паралел).

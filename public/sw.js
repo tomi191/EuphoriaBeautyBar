@@ -80,7 +80,10 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       try {
         const res = await fetch(req);
-        if (res.ok) {
+        // НЕ кешираме следван redirect — requireStaff() при изтекла сесия връща 307
+        // към /staff/login, чийто 200 иначе се записва под ключ /staff и офлайн
+        // показва login на „логнат" потребител.
+        if (res.ok && !res.redirected) {
           const cache = await caches.open(STAFF_CACHE);
           cache.put(req, res.clone());
         }
@@ -150,4 +153,9 @@ self.addEventListener("notificationclick", (event) => {
 // „waiting" и устройството върти стар код → поправките не достигат). Виж SwRegister.
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+  // При logout страницата праща това → трием кеша с server-rendered /staff HTML,
+  // който съдържа клиентски PII (имена/телефони/бележки). GDPR: да не остава on-device.
+  if (event.data && event.data.type === "CLEAR_STAFF_CACHE") {
+    event.waitUntil(caches.delete(STAFF_CACHE));
+  }
 });

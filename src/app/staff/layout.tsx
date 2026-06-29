@@ -20,8 +20,8 @@ export const viewport: Viewport = {
   themeColor: "#2b2b2b",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Не блокираме zoom (WCAG 1.4.4) — слабовиждащите трябва да могат да увеличават.
+  // Случайният zoom при фокус се избягва с 16px инпути, не със забрана.
   viewportFit: "cover",
 };
 

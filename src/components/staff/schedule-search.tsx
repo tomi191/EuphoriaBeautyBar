@@ -59,7 +59,7 @@ export function ScheduleSearch({ upcoming, children }: { upcoming: UpcomingBooki
             placeholder="Търси клиент, телефон или услуга…"
             aria-label="Търсене в графика по клиент, телефон или услуга"
             autoComplete="off"
-            className="h-11 w-full rounded-2xl border border-border bg-background pl-10 pr-10 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40 [&::-webkit-search-cancel-button]:hidden"
+            className="h-11 w-full rounded-2xl border border-border bg-background pl-10 pr-10 text-base outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40 [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
