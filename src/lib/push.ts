@@ -56,6 +56,12 @@ export async function sendPushToResource(
   const subs = await db.query.pushSubscriptions.findMany({
     where: (s, { eq }) => eq(s.resourceId, resourceId),
   });
+  // Видимост: ресурс без нито един абонамент = известието се изпарява тихо. Логваме, за да
+  // не остане невидимо (точно това скри, че изпълнител не получава известия за нови записи).
+  if (subs.length === 0) {
+    console.warn("[push] няма абонирани устройства за resource %s — известието се пропуска", resourceId);
+    return { sent: 0, failed: 0 };
+  }
   const body = JSON.stringify(payload);
   // W3C Push лимит ~4KB (некриптиран payload). Текущите са ~200B; пазим срещу бъдеща регресия,
   // която иначе би върнала тих 413 за всяко устройство.
