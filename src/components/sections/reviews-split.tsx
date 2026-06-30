@@ -1,13 +1,11 @@
-import Image from "next/image";
-import { Quote, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { Reveal } from "@/components/reactbits/reveal";
 import { Marquee } from "@/components/reactbits/marquee";
-import { testimonials as fallbackTestimonials } from "@/lib/data/testimonials";
 
 const dateFmt = new Intl.DateTimeFormat("bg-BG", { month: "long", year: "numeric" });
 
-/** Официалното многоцветно Google „G" — източникът на отзивите личи веднага (авторитет). */
+/** Официалното многоцветно Google „G" — източникът личи веднага (авторитет). */
 function GoogleG({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -19,8 +17,8 @@ function GoogleG({ className }: { className?: string }) {
   );
 }
 
-/** Реална профилна снимка от Google (native <img> → директно от Google CDN, без Vercel
- *  optimizer/429); инициалът отдолу е fallback, ако снимката липсва или не зареди. */
+/** Реална профилна снимка от Google (native <img> → директно от Google CDN, без
+ *  Vercel optimizer/429); инициалът отдолу е fallback при липса/грешка. */
 function ReviewAvatar({ name, photo }: { name: string; photo: string | null }) {
   return (
     <span className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-mint text-sm font-medium">
@@ -39,8 +37,7 @@ function ReviewAvatar({ name, photo }: { name: string; photo: string | null }) {
   );
 }
 
-/** Реден от 5 звезди в Google-златисто, `count` запълнени (1:1 с източника —
- *  негативен 1★ се вижда честно като 1 пълна + 4 празни). */
+/** Реден от 5 звезди в Google-златисто, `count` запълнени. */
 function Stars({ count = 5 }: { count?: number }) {
   return (
     <div className="flex">
@@ -54,178 +51,108 @@ function Stars({ count = 5 }: { count?: number }) {
   );
 }
 
+interface ReviewRow {
+  id: string;
+  authorName: string;
+  authorPhoto: string | null;
+  rating: number;
+  text: string;
+  publishedAt: Date;
+}
+
+/** Компактна карта-отзив за marquee реда. */
+function ReviewCard({ r }: { r: ReviewRow }) {
+  return (
+    <figure className="mx-3 flex h-full w-[300px] shrink-0 flex-col rounded-2xl border border-foreground/10 bg-cream p-5 sm:w-[340px]">
+      <div className="flex items-center gap-3">
+        <ReviewAvatar name={r.authorName} photo={r.authorPhoto} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{r.authorName}</p>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <Stars count={r.rating} />
+            <span className="truncate">· {dateFmt.format(r.publishedAt)}</span>
+          </div>
+        </div>
+        <GoogleG className="size-4 shrink-0 opacity-90" />
+      </div>
+      <blockquote className="mt-3 line-clamp-4 text-sm leading-relaxed text-foreground/80">{r.text}</blockquote>
+    </figure>
+  );
+}
+
 export async function ReviewsSplit() {
-  const [google, manual, summaryRow] = await Promise.all([
+  const [google, summaryRow] = await Promise.all([
     db.query.googleReviews.findMany({ orderBy: (r, { desc }) => [desc(r.publishedAt)], limit: 50 }),
-    db.query.testimonials.findMany({
-      where: (t, { eq }) => eq(t.approved, true),
-      orderBy: (t, { asc }) => [asc(t.sortOrder)],
-      limit: 6,
-    }),
     db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") }),
   ]);
 
-  const manualList = manual.length > 0 ? manual : fallbackTestimonials.map((t, i) => ({ ...t, id: `m-${i}` }));
-  const hasGoogle = google.length > 0;
-  // Реалните рейтинг/брой са от целия Google профил (вкл. отзивите само със звезди),
-  // а не от заредените карти — иначе би показвало 5,0 / 24 вместо реалните 4,8 / 43.
+  if (google.length === 0) return null;
+
+  // Реалните брой/рейтинг са от целия Google профил (вкл. отзивите само със
+  // звезди), а не от заредените карти — иначе би показвало 5,0 вместо реалните 4,8.
   const summary = summaryRow?.value as { rating: number; total: number; placeUrl?: string } | undefined;
-  const avgRating = summary?.rating ?? (hasGoogle ? google.reduce((s, r) => s + r.rating, 0) / google.length : 0);
-  const totalGoogle = summary?.total ?? google.length;
+  const avgRating = summary?.rating ?? google.reduce((s, r) => s + r.rating, 0) / google.length;
+  const totalCount = summary?.total ?? google.length;
   const placeUrl = summary?.placeUrl ?? "https://www.google.com/search?q=Euphoria+Hair+Beauty+Bar+Varna";
 
-  return (
-    <section id="reviews" className="relative overflow-hidden bg-background py-24 lg:py-32">
-      <Image
-        src="/illustrations/star-burst.svg"
-        alt=""
-        aria-hidden
-        width={160}
-        height={160}
-        className="pointer-events-none absolute right-12 top-12 hidden h-20 w-auto opacity-50 mix-blend-multiply lg:block"
-      />
+  // Два хоризонтални реда (компактно — височината не расте с броя отзиви).
+  const half = Math.ceil(google.length / 2);
+  const top = google.slice(0, half);
+  const bottom = google.slice(half);
 
+  return (
+    <section id="reviews" className="relative overflow-hidden bg-background py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-10">
         <Reveal>
-          <div className="grid gap-6 md:grid-cols-12 md:items-end">
-            <div className="md:col-span-7">
-              <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">
-                Отзиви
-              </span>
-              <h2 className="mt-6 font-display text-5xl leading-[1] font-medium text-balance md:text-7xl">
-                Какво казват клиентите.
-              </h2>
-            </div>
-            {hasGoogle && (
-              <div className="md:col-span-5">
-                <a
-                  href={placeUrl}
-                  target="_blank"
-                  rel="noopener"
-                  className="inline-flex items-center gap-3 rounded-full border border-foreground/15 bg-cream px-4 py-2 transition hover:border-foreground/30"
-                >
-                  <GoogleG className="size-5" />
-                  <span className="font-display text-2xl font-medium leading-none">{avgRating.toFixed(1)}</span>
-                  <Stars />
-                  <span className="text-sm text-muted-foreground">· {totalGoogle} отзива</span>
-                </a>
-              </div>
-            )}
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Отзиви</span>
+            <h2 className="mt-5 font-display text-4xl leading-[1.05] font-medium text-balance md:text-6xl">
+              Какво казват клиентите.
+            </h2>
+            <a
+              href={placeUrl}
+              target="_blank"
+              rel="noopener"
+              className="mt-6 inline-flex items-center gap-3 rounded-full border border-foreground/15 bg-cream px-5 py-2.5 transition hover:border-foreground/30"
+            >
+              <GoogleG className="size-5" />
+              <span className="font-display text-2xl font-medium leading-none">{avgRating.toFixed(1)}</span>
+              <Stars count={Math.round(avgRating)} />
+              <span className="text-sm text-muted-foreground">· {totalCount} отзива</span>
+            </a>
           </div>
         </Reveal>
+      </div>
 
-        <div className={`mt-14 grid gap-8 ${hasGoogle ? "lg:grid-cols-2" : "lg:mx-auto lg:max-w-3xl"}`}>
-          {/* GOOGLE — лява колона. Рендва се само когато има синхронизирани отзиви —
-              никога placeholder-инструкция пред публиката. */}
-          {hasGoogle && (
-            <Reveal>
-              <div className="rounded-md border border-foreground/10 bg-cream p-6 md:p-8">
-                <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
-                  <div className="flex items-center gap-3">
-                    <GoogleG className="size-7" />
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">Отзиви от Google</p>
-                      <h3 className="mt-0.5 font-display text-2xl leading-none">
-                        {avgRating.toFixed(1)} от 5 · {totalGoogle} ревюта
-                      </h3>
-                    </div>
-                  </div>
-                  <a
-                    href={placeUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className="shrink-0 text-sm text-foreground/70 underline decoration-dotted underline-offset-4 hover:text-foreground"
-                  >
-                    Виж в Google →
-                  </a>
-                </header>
-                <ul className="space-y-5">
-                  {google.slice(0, 4).map((r) => (
-                    <li key={r.id} className="border-b border-foreground/10 pb-5 last:border-0">
-                      <div className="flex items-center gap-3">
-                        <ReviewAvatar name={r.authorName} photo={r.authorPhoto} />
-                        <div>
-                          <p className="text-sm font-medium">{r.authorName}</p>
-                          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                            <Stars count={r.rating} />
-                            <span>· {dateFmt.format(r.publishedAt)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-foreground/80">{r.text}</p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
-          )}
-
-          {/* MANUAL — дясна колона (пълна ширина, когато няма Google отзиви) */}
-          <Reveal delay={hasGoogle ? 0.15 : 0}>
-            <div className="rounded-md border border-foreground/10 bg-blush-soft p-6 md:p-8">
-              <header className="mb-6 flex items-center justify-between border-b border-foreground/10 pb-4">
-                <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-foreground/70">Лични отзиви</p>
-                  <h3 className="mt-1 font-display text-2xl">Споделени директно с нас</h3>
-                </div>
-              </header>
-
-              <ul className="space-y-5">
-                {manualList.slice(0, 4).map((t) => (
-                  <li key={t.id} className="relative border-b border-foreground/10 pb-5 last:border-0">
-                    <Quote className="absolute -top-1 right-0 size-5 text-foreground/30" strokeWidth={1.4} />
-                    <div className="flex items-center gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-background text-sm font-medium">
-                        {t.initials}
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">{t.service}</p>
-                      </div>
-                    </div>
-                    <p className="mt-3 line-clamp-4 font-serif italic text-foreground/85">&ldquo;{t.quote}&rdquo;</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Marquee на още отзиви отдолу — реалните Google отзиви (повече от показаните
-            4 в колоната се виждат в движение); личните като fallback, ако няма Google. */}
-        {hasGoogle ? (
-          <div className="mt-12 border-y border-foreground/10 py-4">
-            <Marquee pauseOnHover>
-              {google.map((r) => (
-                <span
-                  key={r.id}
-                  className="mx-6 inline-flex items-center gap-2 font-serif text-sm italic text-muted-foreground"
-                >
-                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  &ldquo;{r.text.slice(0, 80)}{r.text.length > 80 ? "…" : ""}&rdquo;
-                  <span className="text-foreground/70">— {r.authorName}</span>
-                </span>
+      <Reveal delay={0.1}>
+        <div className="mt-12 flex flex-col gap-4">
+          <Marquee pauseOnHover>
+            {top.map((r) => (
+              <ReviewCard key={r.id} r={r} />
+            ))}
+          </Marquee>
+          {bottom.length > 0 && (
+            <Marquee reverse pauseOnHover>
+              {bottom.map((r) => (
+                <ReviewCard key={r.id} r={r} />
               ))}
             </Marquee>
-          </div>
-        ) : (
-          manualList.length > 3 && (
-            <div className="mt-12 border-y border-foreground/10 py-4">
-              <Marquee pauseOnHover>
-                {manualList.map((t) => (
-                  <span
-                    key={t.id}
-                    className="mx-6 inline-flex items-center gap-2 font-serif text-sm italic text-muted-foreground"
-                  >
-                    <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                    &ldquo;{t.quote.slice(0, 80)}{t.quote.length > 80 ? "…" : ""}&rdquo;
-                    <span className="text-foreground/70">— {t.name}</span>
-                  </span>
-                ))}
-              </Marquee>
-            </div>
-          )
-        )}
+          )}
+        </div>
+      </Reveal>
+
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-background to-transparent lg:w-32" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-background to-transparent lg:w-32" />
+
+      <div className="mt-10 text-center">
+        <a
+          href={placeUrl}
+          target="_blank"
+          rel="noopener"
+          className="text-sm text-foreground/70 underline decoration-dotted underline-offset-4 hover:text-foreground"
+        >
+          Виж всички {totalCount} отзива в Google →
+        </a>
       </div>
     </section>
   );
