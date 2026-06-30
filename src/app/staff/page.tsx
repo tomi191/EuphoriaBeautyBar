@@ -401,14 +401,6 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
           </div>
         )}
       </ScheduleSearch>
-
-      <Link
-        href="/staff/new"
-        aria-label="Нов час"
-        className="fixed bottom-[86px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-xl shadow-foreground/25 hover:bg-primary sm:left-auto sm:right-[max(1rem,calc(50%-15rem))] sm:translate-x-0"
-      >
-        <Plus className="size-5" strokeWidth={2.4} /> Нов час
-      </Link>
     </StaffShell>
   );
 }

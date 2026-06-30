@@ -6,6 +6,7 @@ import { Loader2, MessageCircle, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { getMyClientFile, saveMyClientNote, deleteMyClient, type ClientFileData } from "@/lib/actions/staff-clients";
 
@@ -95,21 +96,25 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
 
   return (
     <>
-      <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[85dvh] max-w-lg overflow-y-auto rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
 
-        {loading ? (
+      {loading ? (
+        <>
+          <SheetTitle className="sr-only">Зареждане на досие</SheetTitle>
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="size-6 animate-spin" />
           </div>
-        ) : !data ? (
+        </>
+      ) : !data ? (
+        <>
+          <SheetTitle className="sr-only">Досие на клиент</SheetTitle>
           <p className="py-8 text-center text-sm text-muted-foreground">Клиентът не е намерен.</p>
-        ) : (
+        </>
+      ) : (
           <>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-base font-bold leading-tight">{data.client.name}</h3>
+                <SheetTitle className="text-base font-bold leading-tight">{data.client.name}</SheetTitle>
                 {data.client.phone && <p className="mt-0.5 text-sm text-muted-foreground">{data.client.phone}</p>}
               </div>
               {data.client.phone && (
@@ -223,7 +228,6 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
             </div>
           </>
         )}
-      </div>
     </>
   );
 }
@@ -232,11 +236,19 @@ export function ClientFileSheet({ clientId, onClose }: { clientId: string; onClo
 export function ClientFileTrigger({ clientId, name, className }: { clientId: string; name: string; className?: string }) {
   const [open, setOpen] = React.useState(false);
   return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} className={className}>
-        {name}
-      </button>
-      {open && <ClientFileSheet clientId={clientId} onClose={() => setOpen(false)} />}
-    </>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button type="button" className={className}>
+          {name}
+        </button>
+      </SheetTrigger>
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className="mx-auto max-h-[85dvh] max-w-lg gap-0 overflow-y-auto rounded-t-3xl p-4 pb-6"
+      >
+        {open && <ClientFileSheet clientId={clientId} onClose={() => setOpen(false)} />}
+      </SheetContent>
+    </Sheet>
   );
 }

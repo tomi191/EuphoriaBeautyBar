@@ -206,7 +206,7 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
                 onClick={() => remove(o.id)}
                 disabled={deleting === o.id}
                 aria-label="Изтрий"
-                className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               >
                 {deleting === o.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               </button>

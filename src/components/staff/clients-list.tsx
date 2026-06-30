@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Search, Users, X } from "lucide-react";
 import { ClientFileSheet } from "@/components/staff/client-file-sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { MyClientRow } from "@/lib/actions/staff-clients";
 
 const TZ = "Europe/Sofia";
@@ -82,7 +83,15 @@ export function ClientsList({ clients }: { clients: MyClientRow[] }) {
         </div>
       )}
 
-      {openId && <ClientFileSheet clientId={openId} onClose={() => setOpenId(null)} />}
+      <Sheet open={!!openId} onOpenChange={(o) => { if (!o) setOpenId(null); }}>
+        <SheetContent
+          side="bottom"
+          aria-describedby={undefined}
+          className="mx-auto max-h-[85dvh] max-w-lg gap-0 overflow-y-auto rounded-t-3xl p-4 pb-6"
+        >
+          {openId && <ClientFileSheet clientId={openId} onClose={() => setOpenId(null)} />}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
