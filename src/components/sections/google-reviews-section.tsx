@@ -4,17 +4,27 @@ import { Marquee } from "@/components/reactbits/marquee";
 import { Reveal } from "@/components/reactbits/reveal";
 
 export async function GoogleReviewsSection() {
-  const reviews = await db.query.googleReviews.findMany({
-    orderBy: (r, { desc }) => [desc(r.publishedAt)],
-    limit: 12,
-  });
+  const [reviews, summaryRow] = await Promise.all([
+    db.query.googleReviews.findMany({
+      orderBy: (r, { desc }) => [desc(r.publishedAt)],
+      limit: 24,
+    }),
+    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") }),
+  ]);
 
   if (reviews.length === 0) return null;
+
+  // Реалните брой/рейтинг идват от целия Google профил (вкл. отзивите само със
+  // звезди), не от визуализираните карти — иначе header-ът би лъгал (5,0 / 24
+  // вместо реалните 4,8 / 43). Fallback на изчисленото, ако summary липсва.
+  const summary = summaryRow?.value as { rating: number; total: number; placeUrl?: string } | undefined;
+  const avgRating = summary?.rating ?? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  const totalCount = summary?.total ?? reviews.length;
+  const placeUrl = summary?.placeUrl;
 
   const half = Math.ceil(reviews.length / 2);
   const top = reviews.slice(0, half);
   const bottom = reviews.slice(half);
-  const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
   const dateFmt = new Intl.DateTimeFormat("bg-BG", { month: "long", year: "numeric" });
 
   return (
@@ -32,8 +42,20 @@ export async function GoogleReviewsSection() {
                   <Star key={i} className={"size-4 " + (i < Math.round(avgRating) ? "fill-foreground text-foreground" : "text-muted-foreground/30")} />
                 ))}
               </div>
-              <span className="font-medium">{reviews.length} реални отзива</span>
+              <span className="font-medium">{totalCount} реални отзива</span>
             </div>
+            {placeUrl && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                <a
+                  href={placeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  Вижте всички {totalCount} отзива в Google →
+                </a>
+              </p>
+            )}
           </div>
         </Reveal>
       </div>
