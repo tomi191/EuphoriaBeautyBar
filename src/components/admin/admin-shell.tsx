@@ -17,6 +17,7 @@ import {
   Settings,
   Star,
   Users,
+  Wallet,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Logo } from "@/components/brand/logo";
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/admin", label: "Табло", icon: Home, exact: true },
   { href: "/admin/bookings", label: "График", icon: CalendarDays },
+  { href: "/admin/revenue", label: "Оборот", icon: Wallet },
   { href: "/admin/resources", label: "Изпълнители", icon: Contact },
   { href: "/admin/team", label: "Екип", icon: Users },
   { href: "/admin/services", label: "Услуги и цени", icon: Scissors },

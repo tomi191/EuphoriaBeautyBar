@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarClock, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users } from "lucide-react";
+import { ArrowUpRight, CalendarClock, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users, Wallet } from "lucide-react";
 import { db, schema } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { getSalonRevenue } from "@/lib/actions/revenue";
+import { formatEur } from "@/lib/booking/revenue";
 
 async function counts() {
   const [t, s, b, r, g, f, gr] = await Promise.all([
@@ -35,7 +37,8 @@ const stats = [
 ] as const;
 
 export default async function AdminDashboardPage() {
-  const data = await counts();
+  const [data, revenue] = await Promise.all([counts(), getSalonRevenue()]);
+  const m = revenue.total.month;
 
   return (
     <>
@@ -46,6 +49,29 @@ export default async function AdminDashboardPage() {
           Бърз преглед на съдържанието и преки пътеки до управление.
         </p>
       </header>
+
+      <Link
+        href="/admin/revenue"
+        className="group mb-8 block rounded-xl border border-foreground bg-foreground p-6 text-background transition-opacity hover:opacity-95"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-background/60">
+              <Wallet className="size-4" strokeWidth={1.8} /> Оборот този месец
+            </p>
+            <p className="mt-3 font-display text-4xl font-medium tabular-nums">{formatEur(m.earned.total)} €</p>
+            <p className="mt-1 text-sm text-background/70">
+              изкарани от {m.earned.count} {m.earned.count === 1 ? "час" : "часа"}
+              {m.expected.total > 0 && (
+                <>
+                  {" "}· очакват се още <span className="font-semibold text-mint">{formatEur(m.expected.total)} €</span>
+                </>
+              )}
+            </p>
+          </div>
+          <ArrowUpRight className="size-5 shrink-0 text-background/40 transition-colors group-hover:text-background" />
+        </div>
+      </Link>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ key, label, icon: Icon, href }) => (
