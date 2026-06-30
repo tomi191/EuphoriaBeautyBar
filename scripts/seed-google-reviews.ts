@@ -210,6 +210,15 @@ const REVIEWS: Seed[] = [
     avatar: "https://lh3.googleusercontent.com/a/ACg8ocLvnNv4dc0m9DpDxNFCCcu7IshLdoc19SYGPEc_p-B7cio7Xg=s64-c-rp-mo-br100",
     text: "Отличен фризьор ❤️",
   },
+  // Негативен отзив (1★) — включен за пълна прозрачност. Не е за услугата, а
+  // забележка за името на салона. Най-стара дата → не води картите, но е честно видим.
+  {
+    name: "MrPetrov75",
+    rating: 1,
+    days: 752,
+    avatar: "https://lh3.googleusercontent.com/a/ACg8ocJBZsWRyN2J9mz16aUpEFvM62oAC0-cmxVXQtUza0Cm37mAKQ=s64-c-rp-mo-ba12-br100",
+    text: "Снежи, хубаво би било да измислиш друго име на салона! Не е добре да се копира!",
+  },
 ];
 
 async function main() {

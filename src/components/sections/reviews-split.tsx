@@ -39,12 +39,16 @@ function ReviewAvatar({ name, photo }: { name: string; photo: string | null }) {
   );
 }
 
-/** Реден звезди в Google-златисто (1:1 с източника). */
+/** Реден от 5 звезди в Google-златисто, `count` запълнени (1:1 с източника —
+ *  негативен 1★ се вижда честно като 1 пълна + 4 празни). */
 function Stars({ count = 5 }: { count?: number }) {
   return (
     <div className="flex">
-      {Array.from({ length: count }).map((_, i) => (
-        <Star key={i} className="size-3 fill-amber-400 text-amber-400" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={i < count ? "size-3 fill-amber-400 text-amber-400" : "size-3 fill-transparent text-amber-400/40"}
+        />
       ))}
     </div>
   );
