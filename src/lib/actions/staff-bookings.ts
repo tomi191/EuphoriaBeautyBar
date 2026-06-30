@@ -9,7 +9,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelSlot } from "@/lib/booking/parallel";
-import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
+import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 
 export interface DayScheduleResult {
@@ -292,74 +292,5 @@ export async function markMyNoShow(id: string) {
   return { ok: true as const };
 }
 
-export interface PeriodStats {
-  count: number;
-  total: number;
-}
-
-export interface MyStats {
-  today: PeriodStats;
-  week: PeriodStats;
-  month: PeriodStats;
-}
-
-/**
- * Оборот на изпълнителя: брой и сума (€) на приключените часове за днес,
- * седмицата (от понеделник) и месеца (от 1-во число) в Europe/Sofia.
- * Цена: снимката price_eur от записването; за стари часове без снимка -
- * текущата собствена цена (resource_services) или каталожната.
- */
-export async function getMyStats(): Promise<MyStats> {
-  const { resource } = await requireStaff();
-
-  const now = new Date();
-  const todayStr = sofiaDateStr(now);
-  const todayStart = sofiaWallToUtc(todayStr, "00:00");
-  const todayEnd = new Date(todayStart.getTime() + 24 * 3600000);
-
-  const daysSinceMonday = (sofiaWeekday(todayStr) + 6) % 7;
-  const weekStart = sofiaWallToUtc(sofiaDateStr(new Date(todayStart.getTime() - daysSinceMonday * 86400000)), "00:00");
-  const monthStart = sofiaWallToUtc(`${todayStr.slice(0, 7)}-01`, "00:00");
-  const from = new Date(Math.min(weekStart.getTime(), monthStart.getTime()));
-
-  const rows = await db.query.bookings.findMany({
-    where: (b, { and, eq, gte, lt }) =>
-      and(eq(b.resourceId, resource.id), eq(b.status, "completed"), gte(b.startAt, from), lt(b.startAt, todayEnd)),
-    columns: { startAt: true, priceEur: true, serviceItemId: true },
-  });
-
-  // Fallback цени за часове без снимка price_eur.
-  const missingIds = [...new Set(rows.filter((r) => r.priceEur == null && r.serviceItemId).map((r) => r.serviceItemId as string))];
-  const [own, items] = missingIds.length
-    ? await Promise.all([
-        db.query.resourceServices.findMany({
-          where: (rs, { and, eq, inArray }) => and(eq(rs.resourceId, resource.id), inArray(rs.serviceItemId, missingIds)),
-        }),
-        db.query.serviceItems.findMany({ where: (s, { inArray }) => inArray(s.id, missingIds) }),
-      ])
-    : [[], []];
-  const ownByItem = new Map(own.map((o) => [o.serviceItemId, o.price]));
-  const itemById = new Map(items.map((i) => [i.id, i.price]));
-
-  const stats: MyStats = { today: { count: 0, total: 0 }, week: { count: 0, total: 0 }, month: { count: 0, total: 0 } };
-  for (const r of rows) {
-    const price = r.priceEur ?? (r.serviceItemId ? ownByItem.get(r.serviceItemId) ?? itemById.get(r.serviceItemId) ?? 0 : 0);
-    const t = r.startAt.getTime();
-    if (t >= todayStart.getTime()) {
-      stats.today.count += 1;
-      stats.today.total += price;
-    }
-    if (t >= weekStart.getTime()) {
-      stats.week.count += 1;
-      stats.week.total += price;
-    }
-    if (t >= monthStart.getTime()) {
-      stats.month.count += 1;
-      stats.month.total += price;
-    }
-  }
-  for (const k of ["today", "week", "month"] as const) {
-    stats[k].total = Math.round(stats[k].total * 100) / 100;
-  }
-  return stats;
-}
+// Оборотът на изпълнителя живее в @/lib/actions/revenue (getMyRevenue) — модел
+// „Изкарано + Очаквано", не зависи от ръчно маркиране на часовете.
