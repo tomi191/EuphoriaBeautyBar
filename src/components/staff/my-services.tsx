@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { formatServicePrice } from "@/lib/booking/price";
 import { toggleMyService, updateMyService, createMyService, deleteMyService, toggleMyServiceOnline } from "@/lib/actions/resource-services";
 
@@ -205,7 +206,7 @@ export function MyServices({ services, categories, phone }: { services: MyServic
                     onClick={() => setConfirmDeleteId(s.id)}
                     aria-label={`Изтрий ${s.name} от каталога`}
                     title="Изтрий от каталога"
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
+                    className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -247,39 +248,44 @@ export function MyServices({ services, categories, phone }: { services: MyServic
         <Plus className="size-4" /> Добави нова услуга
       </Button>
 
-      {editing && (
-        <EditSheet
-          service={editing}
-          onClose={() => setEditing(null)}
-          onSaved={(updated) => {
-            setList((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-            setEditing(null);
-          }}
-        />
-      )}
+      <Sheet open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        <SheetContent side="bottom" className="mx-auto max-h-[92vh] max-w-lg gap-0 overflow-y-auto rounded-t-3xl p-4 pb-6">
+          {editing && (
+            <EditSheet
+              key={editing.id}
+              service={editing}
+              onSaved={(updated) => {
+                setList((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+                setEditing(null);
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
 
-      {adding && (
-        <AddSheet
-          groups={allGroups}
-          categories={categories}
-          onClose={() => setAdding(false)}
-          onAdded={() => {
-            setAdding(false);
-            router.refresh();
-          }}
-        />
-      )}
+      <Sheet open={adding} onOpenChange={(o) => { if (!o) setAdding(false); }}>
+        <SheetContent side="bottom" className="mx-auto max-h-[92vh] max-w-lg gap-0 overflow-y-auto rounded-t-3xl p-4 pb-6">
+          {adding && (
+            <AddSheet
+              groups={allGroups}
+              categories={categories}
+              onAdded={() => {
+                setAdding(false);
+                router.refresh();
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
 
 function EditSheet({
   service,
-  onClose,
   onSaved,
 }: {
   service: MyServiceOpt;
-  onClose: () => void;
   onSaved: (s: MyServiceOpt) => void;
 }) {
   const [price, setPrice] = React.useState(service.price);
@@ -315,11 +321,10 @@ function EditSheet({
 
   return (
     <>
-      <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <h3 className="text-base font-bold">{service.name}</h3>
-        <div className="mt-3 grid grid-cols-2 gap-2.5">
+      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+      <SheetTitle className="text-base font-bold">{service.name}</SheetTitle>
+      <SheetDescription className="sr-only">Редакция на цена, продължителност и времена за паралелни часове.</SheetDescription>
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label>Цена</Label>
             <Input type="number" step="0.5" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-11 text-base" />
@@ -365,7 +370,6 @@ function EditSheet({
         <Button onClick={save} disabled={saving} className="mt-4 h-11 w-full rounded-full bg-foreground text-sm text-background hover:bg-primary">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Запазване</> : "Запази"}
         </Button>
-      </div>
     </>
   );
 }
@@ -373,12 +377,10 @@ function EditSheet({
 function AddSheet({
   groups,
   categories,
-  onClose,
   onAdded,
 }: {
   groups: string[];
   categories: MyCategoryOpt[];
-  onClose: () => void;
   onAdded: () => void;
 }) {
   const [name, setName] = React.useState("");
@@ -424,13 +426,11 @@ function AddSheet({
 
   return (
     <>
-      <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-6 shadow-2xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
-        <h3 className="text-base font-bold">Нова услуга</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Влиза в общия ценоразпис на сайта и в онлайн записването при теб.
-        </p>
+      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
+      <SheetTitle className="text-base font-bold">Нова услуга</SheetTitle>
+      <SheetDescription className="mt-1 text-xs text-muted-foreground">
+        Влиза в общия ценоразпис на сайта и в онлайн записването при теб.
+      </SheetDescription>
         <div className="mt-3 space-y-2.5">
           <div className="space-y-1.5">
             <Label>Име на услугата</Label>
@@ -518,7 +518,6 @@ function AddSheet({
         <Button onClick={save} disabled={saving} className="mt-4 h-11 w-full rounded-full bg-foreground text-sm text-background hover:bg-primary">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Добавяне</> : "Добави услугата"}
         </Button>
-      </div>
     </>
   );
 }

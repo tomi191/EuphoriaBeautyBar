@@ -52,14 +52,14 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
 const publicSchema = z.object({
   resourceId: z.string().min(1),
   serviceItemId: z.string().nullable().optional(), // null при няколко услуги (комбиниран запис)
-  serviceName: z.string().min(1),
-  priceLabel: z.string().nullable().optional(), // показва се в имейла (особено при няколко услуги)
-  priceEur: z.number().nonnegative().nullable().optional(), // снимка на сумата (€) за оборот статистиката
-  durationMin: z.number().int().positive(),
-  bufferMin: z.number().int().min(0),
+  serviceName: z.string().min(1).max(200),
+  priceLabel: z.string().max(200).nullable().optional(), // показва се в имейла (особено при няколко услуги)
+  // priceEur НЕ идва от клиента (можеше priceEur:0 → € 0 в оборота) — снима се server-side.
+  durationMin: z.number().int().positive().max(1440),
+  bufferMin: z.number().int().min(0).max(120),
   startAt: z.string(),
-  clientName: z.string().min(2),
-  clientPhone: z.string().min(5),
+  clientName: z.string().min(2).max(100),
+  clientPhone: z.string().min(5).max(30),
   clientEmail: z.string().email(),
   consentLate: z.literal(true),
   allowParallel: z.boolean().optional(),
@@ -141,7 +141,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
       processingMin: snapItem?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: "online",
-      priceEur: data.priceEur ?? null,
+      priceEur: snapItem?.price ?? null, // server authority — не от клиента
       consentLate: true,
       createdAt: new Date(),
       updatedAt: new Date(),

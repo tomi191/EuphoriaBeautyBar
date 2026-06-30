@@ -7,7 +7,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
-import { parallelWindows } from "@/lib/booking/parallel";
+import { parallelWindowsFrom } from "@/lib/booking/parallel";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
@@ -113,7 +113,10 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const closeAt = wh && !wh.closed && wh.closeTime ? sofiaWallToUtc(selectedKey, wh.closeTime) : null;
 
   // Свободни „престои" в чужди часове (напр. боя), в които се събира паралелен час.
-  const wins = await parallelWindows(resource.id, dayStart, dayEnd);
+  // Ползва ВЕЧЕ заредените bookings (същия филтър) → нула допълнителни заявки.
+  const wins = parallelWindowsFrom(
+    bookings.map((b) => ({ id: b.id, start: b.startAt.getTime(), end: b.endAt.getTime(), allowParallel: b.allowParallel, activeMin: b.activeMin, processingMin: b.processingMin })),
+  );
 
   // Timeline = часове + „свободно" прозорци (>= 20 мин) между тях + паралелни престои.
   type TimelineItem =
@@ -324,7 +327,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                               href={`tel:${dialNumber(client.phone)}`}
                               aria-label={`Обади се на ${client.name}`}
                               title="Обади се"
-                              className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
                             >
                               <Phone className="size-3.5" strokeWidth={2.2} />
                             </a>
@@ -332,7 +335,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                               href={`viber://chat?number=${dialNumber(client.phone)}`}
                               aria-label={`Пиши във Viber на ${client.name}`}
                               title="Viber"
-                              className="inline-flex size-7 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
+                              className="inline-flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary transition-colors hover:bg-primary hover:text-background"
                             >
                               <MessageCircle className="size-3.5" strokeWidth={2.2} />
                             </a>
@@ -366,7 +369,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                                 type="button"
                                 aria-label="Редактирай часа"
                                 title="Редактирай"
-                                className="grid size-7 place-items-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-foreground hover:text-background"
+                                className="grid size-9 place-items-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-foreground hover:text-background"
                               >
                                 <Pencil className="size-3.5" strokeWidth={2} />
                               </button>
@@ -398,14 +401,6 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
           </div>
         )}
       </ScheduleSearch>
-
-      <Link
-        href="/staff/new"
-        aria-label="Нов час"
-        className="fixed bottom-[86px] left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-xl shadow-foreground/25 hover:bg-primary sm:left-auto sm:right-[max(1rem,calc(50%-15rem))] sm:translate-x-0"
-      >
-        <Plus className="size-5" strokeWidth={2.4} /> Нов час
-      </Link>
     </StaffShell>
   );
 }

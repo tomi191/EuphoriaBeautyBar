@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { siteConfig } from "@/lib/site";
 import { getClosedDates } from "@/lib/booking/closures";
 import { ClosuresManager } from "@/components/admin/closures-manager";
+import { TestPushButton } from "@/components/admin/test-push-button";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,25 @@ export default async function AdminSettingsPage() {
             <IntegrationRow label="Google Place ID" present={!!process.env.GOOGLE_PLACE_ID} env="GOOGLE_PLACE_ID" />
             <IntegrationRow label="Google Maps embed" present={!!process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY} env="NEXT_PUBLIC_GOOGLE_MAPS_KEY" />
           </ul>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-background p-6">
+          <h2 className="font-display text-xl font-medium">Известия (push)</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Изпрати тестово push известие до всички абонирани устройства — в реалния формат на нов запис.
+            Ако устройството върне успех, но известие не дойде на телефона, причината е device-level
+            (battery optimization или изключени нотификации за инсталираното приложение), не в кода.
+          </p>
+          <ul className="mt-4 space-y-3 text-sm">
+            <IntegrationRow
+              label="Web Push (VAPID)"
+              present={!!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY}
+              env="VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY"
+            />
+          </ul>
+          <div className="mt-5">
+            <TestPushButton />
+          </div>
         </section>
 
         <Alert>

@@ -61,8 +61,8 @@ const updateSchema = z.object({
   currency: z.string().min(1),
   durationMin: z.number().int().positive(),
   bufferMin: z.number().int().min(0),
-  activeMin: z.number().int().min(0).optional(),
-  processingMin: z.number().int().min(0).optional(),
+  activeMin: z.number().int().min(0).max(600).optional(),
+  processingMin: z.number().int().min(0).max(600).optional(),
 });
 
 /**

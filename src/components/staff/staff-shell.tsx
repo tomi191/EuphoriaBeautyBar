@@ -47,6 +47,13 @@ export function StaffShell({ children, kind }: { children: React.ReactNode; kind
 
   async function handleSignOut() {
     await authClient.signOut();
+    // Изчисти кешираните /staff страници (клиентски PII) от Cache Storage — GDPR.
+    try {
+      const reg = await navigator.serviceWorker?.ready;
+      reg?.active?.postMessage({ type: "CLEAR_STAFF_CACHE" });
+    } catch {
+      /* SW не е наличен — нищо за чистене */
+    }
     window.location.href = "/staff/login";
   }
 

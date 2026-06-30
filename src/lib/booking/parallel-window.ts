@@ -71,3 +71,31 @@ export function slotParallelFits(
     pairFits(candStart, candEnd, candActiveMin, candProcMin, n.start, n.end, n.activeMin, n.processingMin),
   );
 }
+
+export interface ParallelHostRow {
+  id: string;
+  start: number; // ms UTC
+  end: number; // ms UTC
+  allowParallel: boolean;
+  activeMin: number;
+  processingMin: number;
+}
+
+/**
+ * Pure: свободните престой-прозорци (на host часове с престой, незаети от паралел)
+ * от ВЕЧЕ заредени редове — за визуализация на графика. Без DB → ползваемо там,
+ * където bookings са налични (избягва дублираща заявка).
+ */
+export function parallelWindowsFrom(rows: ParallelHostRow[], excludeId?: string): ParallelWindow[] {
+  const filtered = excludeId ? rows.filter((b) => b.id !== excludeId) : rows;
+  const hosts = filtered.filter((b) => !b.allowParallel && b.processingMin > 0);
+  const parallels = filtered.filter((b) => b.allowParallel);
+  const out: ParallelWindow[] = [];
+  for (const h of hosts) {
+    const w = windowFor(h.start, h.activeMin, h.processingMin);
+    if (!w) continue;
+    const taken = parallels.some((p) => p.start < w.end && p.end > w.start);
+    if (!taken) out.push({ hostBookingId: h.id, start: w.start, end: w.end });
+  }
+  return out;
+}

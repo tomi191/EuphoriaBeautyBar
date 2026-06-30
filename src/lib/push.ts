@@ -97,3 +97,44 @@ export async function sendPushToResource(
   );
   return { sent, failed };
 }
+
+/**
+ * Изпраща ТЕСТОВО известие до ВСИЧКИ абонирани устройства (за разлика от
+ * sendPushToResource, не филтрира по изпълнител). Така админ бутонът достига и до
+ * устройството, на което се тества, дори то да не е вързано към ресурс. Изтеклите
+ * абонаменти (404/410/400) се чистят. Не хвърля; връща разбивка за UI обратна връзка.
+ */
+export async function sendTestPushToAll(
+  payload: { title: string; body: string; url?: string },
+): Promise<{ sent: number; failed: number; expired: number; total: number }> {
+  if (!configure()) return { sent: 0, failed: 0, expired: 0, total: 0 };
+  const subs = await db.query.pushSubscriptions.findMany();
+  if (subs.length === 0) return { sent: 0, failed: 0, expired: 0, total: 0 };
+  const body = JSON.stringify(payload);
+  let sent = 0;
+  let failed = 0;
+  let expired = 0;
+  await Promise.allSettled(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          body,
+          // Същите параметри като реален „нов запис" — тестът минава по идентичен FCM път.
+          { urgency: "high", TTL: 86400, topic: "newbooking" },
+        );
+        sent++;
+      } catch (err) {
+        const code = (err as { statusCode?: number }).statusCode;
+        if (code === 404 || code === 410 || code === 400) {
+          await db.delete(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.id, s.id));
+          expired++;
+        } else {
+          failed++;
+          console.warn("[push] тест: изпращането се провали (code=%s) към …%s", code, s.endpoint.slice(-16));
+        }
+      }
+    }),
+  );
+  return { sent, failed, expired, total: subs.length };
+}

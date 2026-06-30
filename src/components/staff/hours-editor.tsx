@@ -80,9 +80,9 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
                 <div className="flex-1 text-sm text-muted-foreground">—</div>
               ) : (
                 <div className="flex flex-1 items-center gap-1.5">
-                  <Input type="time" value={r.openTime} onChange={(e) => patch(r.weekday, { openTime: e.target.value })} className="h-10 px-2 text-sm" />
+                  <Input type="time" value={r.openTime} onChange={(e) => patch(r.weekday, { openTime: e.target.value })} className="h-10 px-2 text-base" />
                   <span className="text-muted-foreground">–</span>
-                  <Input type="time" value={r.closeTime} onChange={(e) => patch(r.weekday, { closeTime: e.target.value })} className="h-10 px-2 text-sm" />
+                  <Input type="time" value={r.closeTime} onChange={(e) => patch(r.weekday, { closeTime: e.target.value })} className="h-10 px-2 text-base" />
                 </div>
               )}
               <Switch checked={!r.closed} onCheckedChange={(v) => patch(r.weekday, { closed: !v })} />
@@ -206,7 +206,7 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
                 onClick={() => remove(o.id)}
                 disabled={deleting === o.id}
                 aria-label="Изтрий"
-                className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
               >
                 {deleting === o.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               </button>

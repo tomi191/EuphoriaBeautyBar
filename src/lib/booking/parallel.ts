@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
-import { PARALLEL_SAFETY_MIN, windowFor, slotParallelFits, type ParallelWindow, type SlotNeighbor } from "./parallel-window";
+import { PARALLEL_SAFETY_MIN, windowFor, slotParallelFits, parallelWindowsFrom, type ParallelWindow, type SlotNeighbor } from "./parallel-window";
 
 // Реекспорт за съвместимост — pure ядрото живее в ./parallel-window (без DB, за тестове).
-export { PARALLEL_SAFETY_MIN, windowFor, slotParallelFits };
+export { PARALLEL_SAFETY_MIN, windowFor, slotParallelFits, parallelWindowsFrom };
 export type { ParallelWindow, SlotNeighbor };
 
 export async function parallelWindows(resourceId: string, dayStart: Date, dayEnd: Date, excludeId?: string): Promise<ParallelWindow[]> {
@@ -10,19 +10,10 @@ export async function parallelWindows(resourceId: string, dayStart: Date, dayEnd
     where: (b, { and, eq, gte, lt, notInArray }) =>
       and(eq(b.resourceId, resourceId), gte(b.startAt, dayStart), lt(b.startAt, dayEnd), notInArray(b.status, ["cancelled", "no_show"])),
   });
-  // При редакция/преместване на съществуващ час — изключи го, за да не се брои
-  // самият той като „зает" прозорец (иначе местене в собствения прозорец се отхвърля).
-  const rows = excludeId ? all.filter((b) => b.id !== excludeId) : all;
-  const hosts = rows.filter((b) => !b.allowParallel && b.processingMin > 0);
-  const parallels = rows.filter((b) => b.allowParallel);
-  const out: ParallelWindow[] = [];
-  for (const h of hosts) {
-    const w = windowFor(h.startAt.getTime(), h.activeMin, h.processingMin);
-    if (!w) continue;
-    const taken = parallels.some((p) => p.startAt.getTime() < w.end && p.endAt.getTime() > w.start);
-    if (!taken) out.push({ hostBookingId: h.id, start: w.start, end: w.end });
-  }
-  return out;
+  return parallelWindowsFrom(
+    all.map((b) => ({ id: b.id, start: b.startAt.getTime(), end: b.endAt.getTime(), allowParallel: b.allowParallel, activeMin: b.activeMin, processingMin: b.processingMin })),
+    excludeId,
+  );
 }
 
 export async function fitsParallelWindow(resourceId: string, start: Date, end: Date, excludeId?: string): Promise<boolean> {
