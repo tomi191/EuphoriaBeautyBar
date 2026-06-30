@@ -28,6 +28,11 @@ export const auth = betterAuth({
   ],
   emailAndPassword: {
     enabled: true,
+    // Спира sign-up изцяло (HTTP endpoint И auth.api.signUpEmail — better-auth го
+    // проверява в самия route). Без него всеки можеше POST /api/auth/sign-up/email →
+    // нов акаунт. Легитимните акаунти се правят САМО с директен insert + ctx.password.hash
+    // (createStaffAccount, seed ensureAdmin) с изрична роля.
+    disableSignUp: true,
     requireEmailVerification: false,
     minPasswordLength: 8,
   },
@@ -41,7 +46,10 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      role: { type: "string", defaultValue: "admin", input: false },
+      // defaultValue е защитна мрежа — реалните роли се задават изрично при insert
+      // (createStaffAccount → "staff", seed ensureAdmin → "admin"). „staff" е по-
+      // безопасен default, ако някога нов път създаде user без явна роля.
+      role: { type: "string", defaultValue: "staff", input: false },
     },
   },
   trustedOrigins: [
