@@ -8,18 +8,24 @@ import { testimonials as fallbackTestimonials } from "@/lib/data/testimonials";
 const dateFmt = new Intl.DateTimeFormat("bg-BG", { month: "long", year: "numeric" });
 
 export async function ReviewsSplit() {
-  const [google, manual] = await Promise.all([
-    db.query.googleReviews.findMany({ orderBy: (r, { desc }) => [desc(r.publishedAt)], limit: 8 }),
+  const [google, manual, summaryRow] = await Promise.all([
+    db.query.googleReviews.findMany({ orderBy: (r, { desc }) => [desc(r.publishedAt)], limit: 24 }),
     db.query.testimonials.findMany({
       where: (t, { eq }) => eq(t.approved, true),
       orderBy: (t, { asc }) => [asc(t.sortOrder)],
       limit: 6,
     }),
+    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") }),
   ]);
 
   const manualList = manual.length > 0 ? manual : fallbackTestimonials.map((t, i) => ({ ...t, id: `m-${i}` }));
   const hasGoogle = google.length > 0;
-  const avgRating = hasGoogle ? google.reduce((s, r) => s + r.rating, 0) / google.length : 0;
+  // Реалните рейтинг/брой са от целия Google профил (вкл. отзивите само със звезди),
+  // а не от заредените карти — иначе би показвало 5,0 / 24 вместо реалните 4,8 / 43.
+  const summary = summaryRow?.value as { rating: number; total: number; placeUrl?: string } | undefined;
+  const avgRating = summary?.rating ?? (hasGoogle ? google.reduce((s, r) => s + r.rating, 0) / google.length : 0);
+  const totalGoogle = summary?.total ?? google.length;
+  const placeUrl = summary?.placeUrl ?? "https://www.google.com/search?q=Euphoria+Hair+Beauty+Bar+Varna";
 
   return (
     <section id="reviews" className="relative overflow-hidden bg-background py-24 lg:py-32">
@@ -53,7 +59,7 @@ export async function ReviewsSplit() {
                     ))}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    · {google.length} отзива от Google
+                    · {totalGoogle} отзива от Google
                   </span>
                 </div>
               </div>
@@ -73,7 +79,7 @@ export async function ReviewsSplit() {
                     <h3 className="mt-1 font-display text-2xl">От Google Business Profile</h3>
                   </div>
                   <a
-                    href="https://www.google.com/search?q=Euphoria+Hair+Beauty+Bar+Varna"
+                    href={placeUrl}
                     target="_blank"
                     rel="noopener"
                     className="text-sm text-foreground/70 underline decoration-dotted underline-offset-4 hover:text-foreground"
@@ -139,22 +145,40 @@ export async function ReviewsSplit() {
           </Reveal>
         </div>
 
-        {/* Marquee на още отзиви отдолу — по 1 ред */}
-        {manualList.length > 3 && (
+        {/* Marquee на още отзиви отдолу — реалните Google отзиви (повече от показаните
+            3 в колоната се виждат в движение); личните като fallback, ако няма Google. */}
+        {hasGoogle ? (
           <div className="mt-12 border-y border-foreground/10 py-4">
             <Marquee pauseOnHover>
-              {manualList.map((t) => (
+              {google.map((r) => (
                 <span
-                  key={t.id}
+                  key={r.id}
                   className="mx-6 inline-flex items-center gap-2 font-serif text-sm italic text-muted-foreground"
                 >
                   <Star className="size-3.5 fill-foreground text-foreground" />
-                  &ldquo;{t.quote.slice(0, 80)}{t.quote.length > 80 ? "…" : ""}&rdquo;
-                  <span className="text-foreground/70">— {t.name}</span>
+                  &ldquo;{r.text.slice(0, 80)}{r.text.length > 80 ? "…" : ""}&rdquo;
+                  <span className="text-foreground/70">— {r.authorName}</span>
                 </span>
               ))}
             </Marquee>
           </div>
+        ) : (
+          manualList.length > 3 && (
+            <div className="mt-12 border-y border-foreground/10 py-4">
+              <Marquee pauseOnHover>
+                {manualList.map((t) => (
+                  <span
+                    key={t.id}
+                    className="mx-6 inline-flex items-center gap-2 font-serif text-sm italic text-muted-foreground"
+                  >
+                    <Star className="size-3.5 fill-foreground text-foreground" />
+                    &ldquo;{t.quote.slice(0, 80)}{t.quote.length > 80 ? "…" : ""}&rdquo;
+                    <span className="text-foreground/70">— {t.name}</span>
+                  </span>
+                ))}
+              </Marquee>
+            </div>
+          )
         )}
       </div>
     </section>
