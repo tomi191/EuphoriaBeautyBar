@@ -13,6 +13,7 @@ export interface RevenueBucket {
 export interface RevenuePeriod {
   earned: RevenueBucket; // минали часове (не отменени/неявили се) — реализирано
   expected: RevenueBucket; // бъдещи потвърдени/чакащи — очаквано
+  unpriced: number; // часове без въведена цена — броят се само за прозрачност, НЕ в сумите
 }
 export interface RevenueStats {
   today: RevenuePeriod;
@@ -25,6 +26,8 @@ export interface RevenueRow {
   startMs: number; // startAt в ms UTC
   status: string;
   price: number;
+  /** Има ли реална цена. false = липсва (priceEur и fallback) → не влиза в сумите, само се брои. */
+  priced: boolean;
 }
 
 export interface PeriodBounds {
@@ -75,7 +78,7 @@ export function formatEur(v: number): string {
 }
 
 function emptyPeriod(): RevenuePeriod {
-  return { earned: { count: 0, total: 0 }, expected: { count: 0, total: 0 } };
+  return { earned: { count: 0, total: 0 }, expected: { count: 0, total: 0 }, unpriced: 0 };
 }
 
 /**
@@ -95,13 +98,24 @@ export function summarizeRevenue(rows: RevenueRow[], b: PeriodBounds): RevenueSt
         ? "expected"
         : null;
     if (!kind) continue; // бъдещ arrived/completed (нелогично за бъдеще) — пропусни
+    const inToday = r.startMs >= b.todayStartMs && r.startMs < b.todayEndMs;
+    const inWeek = r.startMs >= b.weekStartMs && r.startMs < b.weekEndMs;
+    const inMonth = r.startMs >= b.monthStartMs && r.startMs < b.monthEndMs;
+    // Час без въведена цена: не изкривява сумите (би бил тих 0 €) — броим го отделно,
+    // за да е видимо, че оборотът е непълен (импортирани/недовършени часове).
+    if (!r.priced) {
+      if (inToday) stats.today.unpriced += 1;
+      if (inWeek) stats.week.unpriced += 1;
+      if (inMonth) stats.month.unpriced += 1;
+      continue;
+    }
     const apply = (p: RevenuePeriod) => {
       p[kind].count += 1;
       p[kind].total += r.price;
     };
-    if (r.startMs >= b.todayStartMs && r.startMs < b.todayEndMs) apply(stats.today);
-    if (r.startMs >= b.weekStartMs && r.startMs < b.weekEndMs) apply(stats.week);
-    if (r.startMs >= b.monthStartMs && r.startMs < b.monthEndMs) apply(stats.month);
+    if (inToday) apply(stats.today);
+    if (inWeek) apply(stats.week);
+    if (inMonth) apply(stats.month);
   }
   // Закръгляне до стотинки (избягва float дрейф при сумиране).
   for (const p of [stats.today, stats.week, stats.month]) {

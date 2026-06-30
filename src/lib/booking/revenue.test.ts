@@ -5,8 +5,8 @@ import { sofiaWallToUtc } from "./time";
 // Сряда, 17.06.2026, 14:00 Sofia (EEST). Понеделник тази седмица = 15.06; месец = юни.
 const NOW = sofiaWallToUtc("2026-06-17", "14:00");
 
-function row(dateStr: string, timeStr: string, status: string, price: number): RevenueRow {
-  return { startMs: sofiaWallToUtc(dateStr, timeStr).getTime(), status, price };
+function row(dateStr: string, timeStr: string, status: string, price: number, priced = true): RevenueRow {
+  return { startMs: sofiaWallToUtc(dateStr, timeStr).getTime(), status, price, priced };
 }
 
 describe("summarizeRevenue", () => {
@@ -53,5 +53,19 @@ describe("summarizeRevenue", () => {
     const s = summarizeRevenue(rows, b);
     expect(s.today.earned).toEqual({ count: 1, total: 25 });
     expect(s.today.expected.count).toBe(0);
+  });
+
+  it("часове без цена (priced=false) не влизат в сумите, а в unpriced", () => {
+    const rows: RevenueRow[] = [
+      row("2026-06-17", "09:00", "completed", 0, false), // минал без цена → unpriced
+      row("2026-06-18", "10:00", "confirmed", 0, false), // бъдещ без цена → unpriced
+      row("2026-06-17", "10:00", "completed", 30, true), // нормален → earned
+    ];
+    const s = summarizeRevenue(rows, b);
+    expect(s.today.earned).toEqual({ count: 1, total: 30 }); // безценният не е тук
+    expect(s.today.unpriced).toBe(1);
+    expect(s.week.unpriced).toBe(2); // и миналият, и бъдещият
+    expect(s.month.earned.total).toBe(30);
+    expect(s.month.unpriced).toBe(2);
   });
 });

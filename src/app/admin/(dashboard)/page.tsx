@@ -68,6 +68,11 @@ export default async function AdminDashboardPage() {
                 </>
               )}
             </p>
+            {m.unpriced > 0 && (
+              <p className="mt-1 text-xs text-amber-300">
+                {m.unpriced} {m.unpriced === 1 ? "час" : "часа"} без въведена цена — не са включени
+              </p>
+            )}
           </div>
           <ArrowUpRight className="size-5 shrink-0 text-background/40 transition-colors group-hover:text-background" />
         </div>

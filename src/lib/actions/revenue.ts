@@ -7,6 +7,7 @@ interface LoadedRow {
   startMs: number;
   status: string;
   price: number; // € — резолюрна (priceEur snapshot → собствена → каталожна → 0)
+  priced: boolean; // има ли реална цена (false → без въведена цена, не влиза в сумите)
 }
 
 /**
@@ -41,19 +42,25 @@ async function loadRevenueRows(opts: { resourceId?: string; fromMs: number; toMs
         db.query.serviceItems.findMany({ where: (s, { inArray }) => inArray(s.id, missingItemIds) }),
       ])
     : [[], []];
-  const ownByKey = new Map(own.map((o) => [`${o.resourceId}:${o.serviceItemId}`, o.price]));
-  const itemById = new Map(items.map((i) => [i.id, i.price]));
+  // Currency guard: fallback цените влизат само ако са в € (каталогът е изцяло €, но
+  // полето допуска „лв" по подразбиране — лв стойност, третирана като €, би надула оборота).
+  const ownByKey = new Map(own.filter((o) => o.currency === "€").map((o) => [`${o.resourceId}:${o.serviceItemId}`, o.price]));
+  const itemById = new Map(items.filter((i) => i.currency === "€").map((i) => [i.id, i.price]));
 
-  return rows.map((r) => ({
-    resourceId: r.resourceId,
-    startMs: r.startAt.getTime(),
-    status: r.status,
-    price:
-      r.priceEur ??
-      (r.serviceItemId
-        ? ownByKey.get(`${r.resourceId}:${r.serviceItemId}`) ?? itemById.get(r.serviceItemId) ?? 0
-        : 0),
-  }));
+  return rows.map((r) => {
+    const fallback = r.serviceItemId
+      ? ownByKey.get(`${r.resourceId}:${r.serviceItemId}`) ?? itemById.get(r.serviceItemId)
+      : undefined;
+    // priceEur е по дефиниция евро-снимка; fallback вече е филтриран до €.
+    const resolved = r.priceEur ?? fallback;
+    return {
+      resourceId: r.resourceId,
+      startMs: r.startAt.getTime(),
+      status: r.status,
+      price: resolved ?? 0,
+      priced: resolved != null, // няма нито snapshot, нито € fallback → без въведена цена
+    };
+  });
 }
 
 function rangeFor(now: Date) {
@@ -101,6 +108,10 @@ export async function getSalonRevenue(): Promise<SalonRevenue> {
       kind: resMap.get(id)?.kind ?? "",
       stats: summarizeRevenue(rs, b),
     }))
+    // Скрий „phantom" редове: изпълнители без НИКАКВА активност в месеца (само часове
+    // от съседен месец, влезли в прозореца заради седмица, преминаваща границата).
+    // Таблицата показва месечни числа → такъв ред би се появил безсмислено с 0,00 €.
+    .filter((r) => r.stats.month.earned.count + r.stats.month.expected.count + r.stats.month.unpriced > 0)
     // Подреди по приноса за месеца (изкарано + очаквано), най-голям отгоре.
     .sort(
       (a, c) =>
