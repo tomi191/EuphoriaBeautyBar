@@ -6,19 +6,26 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { fetchPlaceReviews } from "@/lib/google-business";
+import { fetchFeaturableReviews } from "@/lib/featurable";
 import { deleteConnection, fetchGbpReviews } from "@/lib/google-oauth";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 
-export async function syncGoogleReviews() {
-  await requireAdmin();
-  // Приоритет: Business Profile OAuth (всички отзиви, безплатно) →
-  // Places API ключ (5 отзива) → грешка.
-  const summary = (await fetchGbpReviews()) ?? (await fetchPlaceReviews());
-  if (!summary) return { ok: false, reason: "missing-credentials" as const };
+// Линк към Google профила (за „Виж в Google" в публичната секция).
+const PLACE_URL = "https://www.google.com/maps/place/?q=place_id:ChIJAadCMDVVpEAR15dn6Gh-2U4";
 
-  // Транзакция: ако insert гръмне, delete-ът се връща — иначе публичната
-  // секция остава с полупразна таблица. Ръчните отзиви (id "manual-…")
-  // оцеляват; sync ID-тата са nanoid (без колизии от име+timestamp ключ).
+/**
+ * Ядрото на sync-а (без auth) — преизползва се от admin action и от cron route.
+ * Приоритет: Featurable (всички отзиви, безплатно, public widget — без secret) →
+ * Business Profile OAuth → Places API (5). Запазва ръчните ("manual-") отзиви,
+ * вкл. ръчно добавения негативен (за прозрачност), който източниците филтрират.
+ */
+export async function runReviewsSync() {
+  const summary = (await fetchFeaturableReviews()) ?? (await fetchGbpReviews()) ?? (await fetchPlaceReviews());
+  if (!summary) return { ok: false as const, reason: "missing-credentials" as const };
+
+  // Транзакция: ако insert гръмне, delete-ът се връща — иначе публичната секция
+  // остава с полупразна таблица. Ръчните отзиви (id "manual-…") оцеляват; sync
+  // ID-тата са nanoid (без колизии от име+timestamp ключ).
   await db.transaction(async (tx) => {
     await tx.delete(schema.googleReviews).where(notLike(schema.googleReviews.id, "manual-%"));
     for (const r of summary.reviews) {
@@ -33,11 +40,24 @@ export async function syncGoogleReviews() {
         fetchedAt: new Date(),
       });
     }
+    // Реалните брой/рейтинг за header-а (вкл. отзивите само със звезди, които не
+    // се визуализират) — иначе header-ът би показал 5,0/24 вместо реалните 4,8/43.
+    const summaryValue = { rating: summary.rating, total: summary.totalReviews, placeUrl: PLACE_URL, fetchedAt: new Date().toISOString() };
+    await tx
+      .insert(schema.siteSettings)
+      .values({ key: "google_reviews_summary", value: summaryValue, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: schema.siteSettings.key, set: { value: summaryValue, updatedAt: new Date() } });
   });
 
+  return { ok: true as const, count: summary.reviews.length, rating: summary.rating, total: summary.totalReviews };
+}
+
+export async function syncGoogleReviews() {
+  await requireAdmin();
+  const res = await runReviewsSync();
   revalidatePath("/admin/reviews");
   revalidatePath("/");
-  return { ok: true as const, count: summary.reviews.length, rating: summary.rating, total: summary.totalReviews };
+  return res;
 }
 
 export async function deleteGoogleReview(id: string) {
