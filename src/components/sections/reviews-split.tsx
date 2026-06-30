@@ -56,7 +56,7 @@ function Stars({ count = 5 }: { count?: number }) {
 
 export async function ReviewsSplit() {
   const [google, manual, summaryRow] = await Promise.all([
-    db.query.googleReviews.findMany({ orderBy: (r, { desc }) => [desc(r.publishedAt)], limit: 24 }),
+    db.query.googleReviews.findMany({ orderBy: (r, { desc }) => [desc(r.publishedAt)], limit: 50 }),
     db.query.testimonials.findMany({
       where: (t, { eq }) => eq(t.approved, true),
       orderBy: (t, { asc }) => [asc(t.sortOrder)],
