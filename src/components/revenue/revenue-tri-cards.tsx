@@ -30,6 +30,11 @@ export function RevenueTriCards({ stats }: { stats: RevenueStats }) {
                 + {formatEur(p.expected.total)} € очаквани
               </p>
             )}
+            {p.unpriced > 0 && (
+              <p className="mt-1 text-[10px] font-medium text-amber-600 sm:text-xs">
+                {p.unpriced} {p.unpriced === 1 ? "час без цена" : "часа без цена"}
+              </p>
+            )}
           </div>
         );
       })}
