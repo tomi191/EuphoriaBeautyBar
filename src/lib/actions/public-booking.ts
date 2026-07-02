@@ -67,8 +67,30 @@ const publicSchema = z.object({
 
 export type PublicBookingInput = z.infer<typeof publicSchema>;
 
+// Anti-abuse: не повече от RL_MAX записа на един клиент (имейл/телефон) за RL_WINDOW_MIN
+// минути → спира email bombing / спам записи. DB-based (serverless няма обща памет).
+const RL_WINDOW_MIN = 10;
+const RL_MAX = 3;
+
 export async function createPublicBooking(input: PublicBookingInput) {
   const data = publicSchema.parse(input);
+
+  const since = new Date(Date.now() - RL_WINDOW_MIN * 60000);
+  const rlClients = await db.query.clients.findMany({
+    where: (c, { or, eq }) => or(eq(c.email, data.clientEmail), eq(c.phone, data.clientPhone)),
+    columns: { id: true },
+  });
+  if (rlClients.length) {
+    const ids = rlClients.map((c) => c.id);
+    const recent = await db.query.bookings.findMany({
+      where: (b, { and, gte, inArray }) => and(gte(b.createdAt, since), inArray(b.clientId, ids)),
+      columns: { id: true },
+    });
+    if (recent.length >= RL_MAX) {
+      return { ok: false as const, error: "Твърде много заявки за кратко време. Опитай след малко или се обади." };
+    }
+  }
+
   const start = new Date(data.startAt);
 
   // Офертата се резолюрва СЪРВЪРНО (не се вярва на клиентски duration/buffer/price):

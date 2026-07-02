@@ -122,7 +122,12 @@ export function SiteFooter() {
         <Separator className="my-10 bg-border/60" />
 
         <div className="flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} {siteConfig.name}. Всички права запазени.</p>
+          <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <span>© {new Date().getFullYear()} {siteConfig.name}. Всички права запазени.</span>
+            <Link href="/politika-za-poveritelnost" className="underline decoration-dotted underline-offset-4 transition-colors hover:text-primary">
+              Политика за поверителност
+            </Link>
+          </p>
           <p>
             Дизайн и разработка от{" "}
             <a

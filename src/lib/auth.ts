@@ -36,13 +36,22 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     minPasswordLength: 8,
   },
+  // Тротлиране на auth endpoint-ите (brute force на login). Стриктно за паролния вход.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 60,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+    },
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 14, // 14 дни
     updateAge: 60 * 60 * 24, // на ден
-    // Кешира сесията в подписана cookie за 5 мин → requireStaff спестява session
-    // DB lookup на ВСЯКА навигация (остава само resource заявката). Logout пак
-    // чисти cookie-то; role промяна се отразява до 5 мин.
-    cookieCache: { enabled: true, maxAge: 5 * 60 },
+    // Кешира сесията в подписана cookie → requireStaff спестява session DB lookup на
+    // ВСЯКА навигация. 60 сек (не 5 мин): компрометирана сесия остава валидна до
+    // минута след revoke (resetStaffPassword), не до 5. Logout пак чисти cookie-то.
+    cookieCache: { enabled: true, maxAge: 60 },
   },
   user: {
     additionalFields: {
@@ -58,8 +67,8 @@ export const auth = betterAuth({
     // иначе login от www.euphoriabeauty.eu връща 403.
     "https://euphoriabeauty.eu",
     "https://www.euphoriabeauty.eu",
-    "http://localhost:3000",
-    "http://localhost:3003",
+    // localhost е доверен САМО извън production (иначе е излишна повърхност в prod).
+    ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:3000", "http://localhost:3003"]),
   ],
 });
 

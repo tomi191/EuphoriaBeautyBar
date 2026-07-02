@@ -78,6 +78,14 @@ export async function updateMyService(serviceItemId: string, input: z.infer<type
   if ((d.activeMin ?? 0) + (d.processingMin ?? 0) > d.durationMin + d.bufferMin) {
     return { ok: false as const, error: "Активно + престой не може да надвишава продължителност + буфер." };
   }
+  // Ownership по kind: activeMin/processingMin се пишат ГЛОБАЛНО в каталога → крафтнат
+  // serviceItemId от чужд тип не бива да променя чужда услуга.
+  const target = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
+  if (!target) return { ok: false as const, error: "Услугата не е намерена." };
+  const targetCat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, target.categoryId) });
+  if (!targetCat || KIND_BY_SLUG[targetCat.slug] !== resource.kind) {
+    return { ok: false as const, error: "Услугата не е от твоя тип." };
+  }
   const { activeMin, processingMin, ...own } = d;
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),

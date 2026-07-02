@@ -627,7 +627,16 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4" />
           <span className="text-foreground/80">
-            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата.
+            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата. Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
+            <a
+              href="/politika-za-poveritelnost"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              Политиката за поверителност
+            </a>
+            .
           </span>
         </label>
 

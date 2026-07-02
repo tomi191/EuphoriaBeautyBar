@@ -65,6 +65,14 @@ export async function saveMyClientNote(clientId: string, note: string) {
   const { resource } = await requireStaff();
   const trimmed = note.trim();
 
+  // Ownership: бележка само за клиент, с когото изпълнителят има поне 1 час. Иначе
+  // произволен clientId + бележка заобикаля PII guard-а на getMyClientFile (име+телефон).
+  const mine = await db.query.bookings.findFirst({
+    where: (b, { and, eq }) => and(eq(b.clientId, clientId), eq(b.resourceId, resource.id)),
+    columns: { id: true },
+  });
+  if (!mine) return { ok: false as const, error: "Нямаш достъп до този клиент." };
+
   if (trimmed === "") {
     await db
       .delete(schema.clientNotes)
