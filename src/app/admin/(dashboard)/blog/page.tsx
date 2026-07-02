@@ -42,7 +42,7 @@ export default async function AdminBlogPage() {
             <div className="flex shrink-0 items-center gap-2">
               <PublishBlogButton id={p.id} status={p.status} />
               <Link
-                href={`/blog/${p.slug}`}
+                href={p.status === "published" ? `/blog/${p.slug}` : `/admin/blog/preview/${p.slug}`}
                 target="_blank"
                 className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-secondary"
               >

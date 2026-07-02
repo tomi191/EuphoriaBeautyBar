@@ -233,7 +233,7 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
               </Button>
               <Button
                 type="button"
-                onClick={() => window.open(`/blog/${result.slug}`, "_blank")}
+                onClick={() => window.open(`/admin/blog/preview/${result.slug}`, "_blank")}
                 className="bg-foreground text-background hover:bg-foreground/90"
               >
                 Виж черновата

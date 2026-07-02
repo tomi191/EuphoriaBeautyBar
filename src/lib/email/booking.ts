@@ -33,19 +33,29 @@ export function formatWhen(start: Date): string {
   return `${d}, ${t} ч.`;
 }
 
-/** Изпраща имейл през Resend. Без ключ → логва и тихо пропуска (dev). Не хвърля. */
-async function send(opts: { to: string; subject: string; html: string; replyTo?: string }): Promise<void> {
+/**
+ * Изпраща имейл през Resend. Връща true само при реално приет имейл — false при
+ * липсващ ключ, Resend грешка или API отговор с error. Не хвърля. Извикващите, за
+ * които доставката е важна (reminders), маркират „изпратено" само при true.
+ */
+async function send(opts: { to: string; subject: string; html: string; replyTo?: string }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn("RESEND_API_KEY липсва — имейлът не е изпратен:", opts.subject);
-    return;
+    return false;
   }
   try {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
-    await resend.emails.send({ from: fromAddr(), ...opts });
+    const res = await resend.emails.send({ from: fromAddr(), ...opts });
+    if (res.error) {
+      console.error("Resend error", res.error);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error("Resend error", err);
+    return false;
   }
 }
 
@@ -134,8 +144,8 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
 }
 
 /** Напомняне към клиента преди часа. */
-export async function sendReminder(to: string, data: BookingEmailData): Promise<void> {
-  await send({
+export async function sendReminder(to: string, data: BookingEmailData): Promise<boolean> {
+  return await send({
     to,
     subject: `Напомняне: имаш час в Euphoria — ${formatWhen(data.start)}`,
     html: wrap(`
