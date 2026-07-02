@@ -9,6 +9,7 @@ import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { sofiaDateStr } from "@/lib/booking/time";
 import { isClosed } from "@/lib/booking/closures";
 import { formatServicePrice } from "@/lib/booking/price";
+import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
 import { notifyResource } from "@/lib/notify";
@@ -52,6 +53,7 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
 const publicSchema = z.object({
   resourceId: z.string().min(1),
   serviceItemId: z.string().nullable().optional(), // null при няколко услуги (комбиниран запис)
+  serviceItemIds: z.array(z.string()).max(10).optional(), // при комбиниран запис — за сумарна цена в оборота
   serviceName: z.string().min(1).max(200),
   priceLabel: z.string().max(200).nullable().optional(), // показва се в имейла (особено при няколко услуги)
   // priceEur НЕ идва от клиента (можеше priceEur:0 → € 0 в оборота) — снима се server-side.
@@ -95,10 +97,15 @@ export async function createPublicBooking(input: PublicBookingInput) {
     }
   }
 
-  // Снимка на активното/престой времето от каталожната услуга (0/0 при няколко услуги).
-  const snapItem = data.serviceItemId
-    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
-    : undefined;
+  // Снимка на цената (€) + активно/престой времето. Собствената цена на изпълнителя
+  // печели пред каталожната (resolveOffering). При комбиниран запис (няколко услуги)
+  // сумираме резолюрните цени вместо да броим 0 € в оборота.
+  const single = data.serviceItemId ? await resolveOffering(data.resourceId, data.serviceItemId) : null;
+  const priceEurSnap = single
+    ? single.priceEur
+    : data.serviceItemIds?.length
+      ? await sumOfferingPrices(data.resourceId, data.serviceItemIds)
+      : null;
 
   // upsert клиент по имейл; генерира verify token за неверифицирани (онбординг)
   let clientId: string;
@@ -137,11 +144,11 @@ export async function createPublicBooking(input: PublicBookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
-      activeMin: snapItem?.activeMin ?? 0,
-      processingMin: snapItem?.processingMin ?? 0,
+      activeMin: single?.activeMin ?? 0,
+      processingMin: single?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: "online",
-      priceEur: snapItem?.price ?? null, // server authority — не от клиента
+      priceEur: priceEurSnap, // server authority (собствена цена > каталожна) — не от клиента
       consentLate: true,
       createdAt: new Date(),
       updatedAt: new Date(),

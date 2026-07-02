@@ -29,7 +29,7 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
   const [price, setPrice] = React.useState(initial?.price ?? 0);
   const [priceMax, setPriceMax] = React.useState<number | "">(initial?.priceMax ?? "");
   const [priceFrom, setPriceFrom] = React.useState(initial?.priceFrom ?? false);
-  const [currency, setCurrency] = React.useState(initial?.currency ?? "лв");
+  const [currency, setCurrency] = React.useState(initial?.currency ?? "€");
   const [duration, setDuration] = React.useState(initial?.duration ?? "");
   const [description, setDescription] = React.useState(initial?.description ?? "");
   const [durationMin, setDurationMin] = React.useState<number>(initial?.durationMin ?? 30);
@@ -96,8 +96,10 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="лв">лв</SelectItem>
                   <SelectItem value="€">€</SelectItem>
+                  {/* „лв" остава избираемо за легаси данни, но priceEur snapshot-ът вече
+                      конвертира лв→€ (toEur) — левова цена няма да надуе оборота. */}
+                  <SelectItem value="лв">лв</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -174,9 +174,10 @@ export async function createMyService(input: z.infer<typeof createSchema>) {
   const dup = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.name, d.name.trim()) });
   if (dup) return { ok: false as const, error: "Услуга с това име вече съществува в каталога." };
 
-  // Валутата следва съществуващите услуги в категорията (без хардкод € → смесена валута).
+  // Валутата следва съществуващите услуги в категорията; € по подразбиране (целият
+  // каталог е в €), за да не влезе левова цена в priceEur snapshot-а.
   const sibling = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.categoryId, categoryId), columns: { currency: true } });
-  const currency = sibling?.currency ?? "лв";
+  const currency = sibling?.currency ?? "€";
 
   const itemId = nanoid();
   await db.insert(schema.serviceItems).values({

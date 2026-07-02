@@ -30,6 +30,11 @@ export function RevenueTriCards({ stats }: { stats: RevenueStats }) {
                 + {formatEur(p.expected.total)} € очаквани
               </p>
             )}
+            {p.unpriced > 0 && (
+              <p className="mt-1 text-[10px] text-amber-600 sm:text-xs" title="Часове без зададена цена — броят се, но с 0 € в сумата">
+                {p.unpriced === 1 ? "1 час без цена" : `${p.unpriced} часа без цена`}
+              </p>
+            )}
           </div>
         );
       })}

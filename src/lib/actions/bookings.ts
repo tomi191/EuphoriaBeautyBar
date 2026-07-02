@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
 import { fitsParallelWindow } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
+import { resolveOffering } from "@/lib/booking/offering";
 import { sofiaWallToUtc, sofiaDateStr } from "@/lib/booking/time";
 import { isClosed } from "@/lib/booking/closures";
 import { upsertClientByPhone } from "@/lib/booking/clients";
@@ -95,10 +96,12 @@ export async function createBooking(input: BookingInput) {
     });
   }
 
-  // Каталожна услуга (ако е посочена) - за снимка на цената (€) и за имейла.
+  // Каталожна услуга (ако е посочена) - за имейла. Цената/времето за оборота идват от
+  // resolveOffering (собствената цена на изпълнителя печели пред каталожната).
   const item = data.serviceItemId
     ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
     : undefined;
+  const offering = data.serviceItemId ? await resolveOffering(data.resourceId, data.serviceItemId) : null;
 
   try {
     const id = nanoid();
@@ -111,11 +114,11 @@ export async function createBooking(input: BookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
-      activeMin: item?.activeMin ?? 0,
-      processingMin: item?.processingMin ?? 0,
+      activeMin: offering?.activeMin ?? 0,
+      processingMin: offering?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: data.source,
-      priceEur: item?.price ?? null,
+      priceEur: offering?.priceEur ?? null,
       notes: data.notes ?? null,
       createdBy: session.user.id,
       createdAt: new Date(),
@@ -191,10 +194,14 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
-  const item = d.serviceItemId
-    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, d.serviceItemId as string) })
-    : undefined;
-  const priceEur = d.serviceItemId ? item?.price ?? null : booking.priceEur;
+  // priceEur е СНИМКА към момента на записване — не го пипаме при редакция на време/бележка.
+  // Пре-снимаме (по собствената цена) само ако услугата реално е сменена.
+  const serviceChanged = (d.serviceItemId ?? null) !== (booking.serviceItemId ?? null);
+  const priceEur = serviceChanged
+    ? d.serviceItemId
+      ? (await resolveOffering(booking.resourceId, d.serviceItemId)).priceEur
+      : null
+    : booking.priceEur;
   try {
     await db
       .update(schema.bookings)

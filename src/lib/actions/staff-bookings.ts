@@ -11,6 +11,7 @@ import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
+import { resolveOffering } from "@/lib/booking/offering";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -18,27 +19,10 @@ export interface DayScheduleResult {
   slots: DaySlot[];
 }
 
-/** Собствена продължителност и цена на изпълнителя за услуга (resource_services) или каталожна. */
-async function ownOffering(resourceId: string, serviceItemId: string) {
-  const [rs, item] = await Promise.all([
-    db.query.resourceServices.findFirst({
-      where: (r, { and, eq }) => and(eq(r.resourceId, resourceId), eq(r.serviceItemId, serviceItemId)),
-    }),
-    db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) }),
-  ]);
-  return {
-    durationMin: rs?.durationMin ?? item?.durationMin ?? 30,
-    bufferMin: rs?.bufferMin ?? item?.bufferMin ?? 10,
-    priceEur: rs?.price ?? item?.price ?? null,
-    activeMin: item?.activeMin ?? 0,
-    processingMin: item?.processingMin ?? 0,
-  };
-}
-
 /** Дневен график за собствения изпълнител (без мин. предизвестие — ръчно записване). */
 export async function fetchMySlots(serviceItemId: string, dateStr: string): Promise<DayScheduleResult> {
   const { resource } = await requireStaff();
-  const { durationMin, bufferMin, activeMin, processingMin } = await ownOffering(resource.id, serviceItemId);
+  const { durationMin, bufferMin, activeMin, processingMin } = await resolveOffering(resource.id, serviceItemId);
   // Паралелни записи (gap booking) са активни в staff формата: услуга с престой
   // отваря записваеми слотове в чужди престои (симетрично).
   const res = await getDaySlots({
@@ -68,7 +52,7 @@ const bookingSchema = z.object({
 export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   const { session, resource } = await requireStaff();
   const d = bookingSchema.parse(input);
-  const { durationMin, bufferMin, priceEur, activeMin, processingMin } = await ownOffering(resource.id, d.serviceItemId);
+  const { durationMin, bufferMin, priceEur, activeMin, processingMin } = await resolveOffering(resource.id, d.serviceItemId);
   const start = new Date(d.startAt);
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
 
@@ -214,7 +198,13 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
-  const priceEur = d.serviceItemId ? (await ownOffering(resource.id, d.serviceItemId)).priceEur : booking.priceEur;
+  // priceEur е снимка към записване — пре-снимаме (по собствената цена) само при реална смяна на услугата.
+  const serviceChanged = (d.serviceItemId ?? null) !== (booking.serviceItemId ?? null);
+  const priceEur = serviceChanged
+    ? d.serviceItemId
+      ? (await resolveOffering(resource.id, d.serviceItemId)).priceEur
+      : null
+    : booking.priceEur;
   try {
     await db
       .update(schema.bookings)
