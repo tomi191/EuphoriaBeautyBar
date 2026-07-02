@@ -33,12 +33,29 @@ type Mode = "hidden" | "ios" | "android-prompt" | "android-manual";
  * - iOS/Safari → инструкция Share → Добави.
  * Скрит само ако app-ът е инсталиран (standalone) или потребителят го скрие.
  */
+const DISMISS_KEY = "euphoria-install-dismissed";
+
 export function InstallBanner() {
   const [evt, setEvt] = React.useState<InstallPromptEvent | null>(null);
   const [mode, setMode] = React.useState<Mode>("hidden");
 
+  // Скриването се помни (иначе банерът се връща при всяка навигация).
+  function dismiss() {
+    try {
+      localStorage.setItem(DISMISS_KEY, "1");
+    } catch {
+      /* private mode / забранен storage — просто скрий за сесията */
+    }
+    setMode("hidden");
+  }
+
   React.useEffect(() => {
     if (isStandalone()) return;
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === "1") return;
+    } catch {
+      /* storage недостъпен — продължи да показваш */
+    }
     if (isIOS()) {
       setMode("ios");
       return;
@@ -72,7 +89,7 @@ export function InstallBanner() {
 
   const wrap = "mb-4 rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-3.5 text-primary-foreground";
   const closeBtn = (
-    <button onClick={() => setMode("hidden")} aria-label="Скрий" className="shrink-0 p-1 text-white/70 hover:text-white">
+    <button onClick={dismiss} aria-label="Скрий" className="grid size-11 shrink-0 place-items-center text-white/70 hover:text-white">
       <X className="size-4" />
     </button>
   );

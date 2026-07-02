@@ -18,15 +18,24 @@ const dayNumFmt = new Intl.DateTimeFormat("bg-BG", { timeZone: TZ, day: "numeric
 
 const DAYS_AHEAD = 7;
 
+/** YYYY-MM-DD + n дни през обед-UTC → без DST изместване на деня (23/25-часови дни). */
+function addDaysStr(dateStr: string, n: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d, 12));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
 export default async function StaffBoardPage() {
   const { resource } = await requireStaff();
 
   const now = new Date();
   const todayKey = sofiaDateStr(now);
 
-  // Прозорец: от началото на днешния ден (Sofia) до края на 7-ия ден напред.
+  // Прозорец: от началото на днешния ден (Sofia) до началото на 7-ия ден напред.
+  // Границите се смятат от датовия низ (DST-safe), не с фиксирани 24h стъпки.
   const windowStart = sofiaWallToUtc(todayKey, "00:00");
-  const windowEnd = new Date(windowStart.getTime() + DAYS_AHEAD * 24 * 3600000);
+  const windowEnd = sofiaWallToUtc(addDaysStr(todayKey, DAYS_AHEAD), "00:00");
 
   const bookings = await db.query.bookings.findMany({
     where: (b, { and, eq, gte, lt, inArray }) =>
@@ -45,14 +54,15 @@ export default async function StaffBoardPage() {
     : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
 
-  // Колони = всеки от следващите 7 дни (вкл. днес).
+  // Колони = всеки от следващите 7 дни (вкл. днес). Ключът се смята през датов низ
+  // (DST-safe), а форматирането — при обед (12:00), за да не се измести денят.
   const days: BoardDay[] = Array.from({ length: DAYS_AHEAD }, (_, i) => {
-    const d = new Date(windowStart.getTime() + i * 86400000);
-    const key = sofiaDateStr(d);
+    const key = addDaysStr(todayKey, i);
+    const noon = sofiaWallToUtc(key, "12:00");
     return {
       dateKey: key,
-      weekday: dayLongFmt.format(d),
-      dayLabel: dayNumFmt.format(d),
+      weekday: dayLongFmt.format(noon),
+      dayLabel: dayNumFmt.format(noon),
       isToday: key === todayKey,
       bookings: [] as BoardBooking[],
     };

@@ -14,9 +14,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function StaffNewBookingPage() {
+export default async function StaffNewBookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   const { resource } = await requireStaff();
   const closed = await getClosedDates();
+  // Линкът „Свободно (престой) → нов час" от графика подава ?date=YYYY-MM-DD → отваряме
+  // формата направо на този ден (иначе се игнорираше и се показваше днес).
+  const { date } = await searchParams;
+  const initialDate = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;
 
   const [items, cats, mine] = await Promise.all([
     db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
@@ -46,7 +54,7 @@ export default async function StaffNewBookingPage() {
         <h1 className="font-display text-lg font-medium">Нов час</h1>
       </header>
       <div className="mx-auto max-w-lg px-4 py-6">
-        <StaffBookingForm services={services} closedDates={closed} />
+        <StaffBookingForm services={services} closedDates={closed} initialDate={initialDate} />
       </div>
     </div>
   );

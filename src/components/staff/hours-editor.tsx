@@ -51,12 +51,19 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
     try {
       // Само custom (редактираните/собствени) дни → останалите остават на салонното време.
       const toSave = rows.filter((r) => r.custom);
-      await Promise.all(
+      // allSettled (не all): частичен провал не бива да оставя графика полузаписан без
+      // да се знае кои дни са минали → отчитаме поименно неуспелите.
+      const results = await Promise.allSettled(
         toSave.map((r) =>
           setMyWorkingHours({ weekday: r.weekday, openTime: r.closed ? null : r.openTime, closeTime: r.closed ? null : r.closeTime, closed: r.closed }),
         ),
       );
-      toast.success("Работното време е запазено.");
+      const failed = results.flatMap((res, i) => (res.status === "rejected" ? [DAY_LABEL[toSave[i].weekday]] : []));
+      if (failed.length === 0) {
+        toast.success("Работното време е запазено.");
+      } else {
+        toast.error(`Не се запазиха: ${failed.join(", ")}. Опитай пак.`);
+      }
     } catch {
       toast.error("Грешка при запазване.");
     } finally {

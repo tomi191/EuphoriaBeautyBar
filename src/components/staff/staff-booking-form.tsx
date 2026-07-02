@@ -34,12 +34,13 @@ function uniq(values: string[]): string[] {
   return out;
 }
 
-export function StaffBookingForm({ services, closedDates }: { services: StaffServiceOpt[]; closedDates?: string[] }) {
+export function StaffBookingForm({ services, closedDates, initialDate }: { services: StaffServiceOpt[]; closedDates?: string[]; initialDate?: string }) {
   const router = useRouter();
   const [serviceId, setServiceId] = React.useState("");
-  const [date, setDate] = React.useState(todayStr());
+  const [date, setDate] = React.useState(initialDate ?? todayStr());
   const [data, setData] = React.useState<DayScheduleResult>({ open: null, close: null, slots: [] });
   const [loading, setLoading] = React.useState(false);
+  const [loadError, setLoadError] = React.useState(false);
   const [slot, setSlot] = React.useState("");
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
@@ -74,10 +75,11 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
     }
     let cancelled = false;
     setLoading(true);
+    setLoadError(false);
     setSlot("");
     fetchMySlots(serviceId, date)
-      .then((r) => !cancelled && setData(r))
-      .catch(() => !cancelled && setData({ open: null, close: null, slots: [] }))
+      .then((r) => { if (!cancelled) setData(r); })
+      .catch(() => { if (!cancelled) { setData({ open: null, close: null, slots: [] }); setLoadError(true); } })
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
   }, [serviceId, date]);
@@ -238,6 +240,10 @@ export function StaffBookingForm({ services, closedDates }: { services: StaffSer
         ) : loading ? (
           <p className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-background p-4 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" /> Зареждам графика…
+          </p>
+        ) : loadError ? (
+          <p className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
+            Грешка при зареждане на графика. Провери връзката и опитай пак.
           </p>
         ) : data.open === null ? (
           <p className="rounded-2xl border border-border bg-secondary/50 p-4 text-center text-sm text-muted-foreground">Не работиш на тази дата.</p>

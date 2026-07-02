@@ -119,6 +119,16 @@ export function StaffNotifications() {
           } catch {
             /* ако се провали — остави стария абонамент, не чупи UI-то */
           }
+        } else {
+          // Споделено устройство: пре-вържи съществуващия абонамент към ТЕКУЩИЯ акаунт
+          // (subscribeStaffPush upsert-ва endpoint→resourceId). Иначе известията за нови
+          // записи продължават да отиват при предишния влязъл на този таблет.
+          try {
+            const json = sub.toJSON() as { keys?: { p256dh: string; auth: string } };
+            if (json.keys) await subscribeStaffPush({ endpoint: sub.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth });
+          } catch {
+            /* re-bind провал не бива да чупи UI-то */
+          }
         }
         setState("on");
       })

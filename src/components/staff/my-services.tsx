@@ -66,7 +66,12 @@ export function MyServices({ services, categories, phone }: { services: MyServic
     setPendingId(s.id);
     setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: !x.offered } : x)));
     try {
-      await toggleMyService(s.id);
+      const res = await toggleMyService(s.id);
+      if (!res.ok) {
+        // Сървърът отказа (напр. услугата не съществува) → върни оптимистичното състояние.
+        setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: s.offered } : x)));
+        toast.error("Услугата не можа да се обнови. Опресни и опитай пак.");
+      }
     } catch {
       setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: s.offered } : x)));
       toast.error("Грешка.");
@@ -300,7 +305,7 @@ function EditSheet({
   async function save() {
     setSaving(true);
     try {
-      await updateMyService(service.id, {
+      const res = await updateMyService(service.id, {
         price,
         priceMax: priceMax === "" ? null : Number(priceMax),
         priceFrom,
@@ -310,6 +315,12 @@ function EditSheet({
         activeMin,
         processingMin,
       });
+      if (!res.ok) {
+        // Сървърна валидация (напр. активно+престой > блок) → покажи причината, не „Запазено".
+        toast.error(res.error ?? "Неуспешно запазване.");
+        setSaving(false);
+        return;
+      }
       toast.success("Запазено.");
       onSaved({ ...service, price, priceMax: priceMax === "" ? null : Number(priceMax), priceFrom, currency, durationMin, activeMin, processingMin });
     } catch {

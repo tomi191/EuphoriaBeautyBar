@@ -15,16 +15,38 @@ export function TelegramConnect({ initialConnected }: { initialConnected: boolea
   const [connected, setConnected] = React.useState(initialConnected);
   const [url, setUrl] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(false);
 
-  React.useEffect(() => {
-    if (initialConnected) return;
+  const loadLink = React.useCallback(() => {
+    setError(false);
     getTelegramLink()
       .then((s) => {
         setConnected(s.connected);
         setUrl(s.url);
       })
-      .catch(() => {});
-  }, [initialConnected]);
+      .catch(() => setError(true)); // без това провалът остава вечен spinner без съобщение
+  }, []);
+
+  React.useEffect(() => {
+    if (initialConnected) return;
+    loadLink();
+  }, [initialConnected, loadLink]);
+
+  // Свързването става в Telegram (webhook записва chat_id сървърно). Когато потребителят
+  // се върне в таба, пре-проверяваме статуса → показва „Свързан" без ръчно презареждане.
+  React.useEffect(() => {
+    if (connected) return;
+    const recheck = () => {
+      if (document.visibilityState !== "visible") return;
+      getTelegramLink().then((s) => { setConnected(s.connected); if (!s.connected) setUrl(s.url); }).catch(() => {});
+    };
+    window.addEventListener("focus", recheck);
+    document.addEventListener("visibilitychange", recheck);
+    return () => {
+      window.removeEventListener("focus", recheck);
+      document.removeEventListener("visibilitychange", recheck);
+    };
+  }, [connected]);
 
   async function disconnect() {
     setBusy(true);
@@ -65,6 +87,10 @@ export function TelegramConnect({ initialConnected }: { initialConnected: boolea
           <a href={url} target="_blank" rel="noopener noreferrer">
             Свържи
           </a>
+        </Button>
+      ) : error ? (
+        <Button onClick={loadLink} size="sm" variant="ghost" className="rounded-full">
+          Опитай пак
         </Button>
       ) : (
         <Button disabled size="sm" className="rounded-full">
