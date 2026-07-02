@@ -59,7 +59,11 @@ const publicSchema = z.object({
   bufferMin: z.number().int().min(0).max(120),
   startAt: z.string(),
   clientName: z.string().min(2).max(100),
-  clientPhone: z.string().min(5).max(30),
+  clientPhone: z
+    .string()
+    .min(5)
+    .max(30)
+    .refine((v) => (v.match(/\d/g)?.length ?? 0) >= 6, "Въведи валиден телефонен номер (само букви не се приемат)."),
   clientEmail: z.string().email(),
   consentLate: z.literal(true),
   allowParallel: z.boolean().optional(),
@@ -73,7 +77,13 @@ const RL_WINDOW_MIN = 10;
 const RL_MAX = 3;
 
 export async function createPublicBooking(input: PublicBookingInput) {
-  const data = publicSchema.parse(input);
+  // safeParse (не parse): невалидни данни връщат приятелско съобщение във формата,
+  // вместо ZodError → generic „Възникна грешка".
+  const parsed = publicSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Провери въведените данни." };
+  }
+  const data = parsed.data;
 
   const since = new Date(Date.now() - RL_WINDOW_MIN * 60000);
   const rlClients = await db.query.clients.findMany({

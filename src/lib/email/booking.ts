@@ -23,6 +23,7 @@ export function formatWhen(start: Date): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric", // без година датата е двусмислена (напр. записи в края на декември)
   }).format(start);
   const t = new Intl.DateTimeFormat("bg-BG", {
     timeZone: "Europe/Sofia",
