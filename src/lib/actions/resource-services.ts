@@ -73,6 +73,11 @@ const updateSchema = z.object({
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
   const { resource } = await requireStaff();
   const d = updateSchema.parse(input);
+  // Инвариант: активно + престой ≤ блок (продължителност + буфер). Иначе паралелният
+  // прозорец (windowFor) излиза след края на часа → фантомни слотове.
+  if ((d.activeMin ?? 0) + (d.processingMin ?? 0) > d.durationMin + d.bufferMin) {
+    return { ok: false as const, error: "Активно + престой не може да надвишава продължителност + буфер." };
+  }
   const { activeMin, processingMin, ...own } = d;
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),

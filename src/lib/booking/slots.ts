@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { sofiaWallToUtc, sofiaWeekday } from "./time";
+import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr } from "./time";
 import { isClosed } from "./closures";
 import { computeDaySlots, type SlotStatus, type DaySlot } from "./compute-slots";
 import type { SlotNeighbor } from "./parallel-window";
@@ -66,6 +66,67 @@ export async function getAvailableSlots(opts: {
     if (!overlaps) slots.push(new Date(t).toISOString());
   }
   return slots;
+}
+
+/**
+ * Има ли активен час (не отменен/неявил се), който се застъпва с [start, end)?
+ * Нужно за НЕПАРАЛЕЛНИ записи: EXCLUDE constraint-ът е частичен (WHERE
+ * allow_parallel=false), т.е. паралелните редове НЕ са в индекса → нов непаралелен
+ * час, застъпващ паралелен, минаваше незабелязано (double-booking). Този app-level
+ * guard затваря дупката и е защита дори ако constraint-ът някога отпадне.
+ */
+export async function hasActiveConflict(resourceId: string, start: Date, end: Date, excludeId?: string): Promise<boolean> {
+  const row = await db.query.bookings.findFirst({
+    where: (b, { and, eq, lt, gt, ne, notInArray }) =>
+      and(
+        eq(b.resourceId, resourceId),
+        lt(b.startAt, end),
+        gt(b.endAt, start),
+        notInArray(b.status, ["cancelled", "no_show"]),
+        excludeId ? ne(b.id, excludeId) : undefined,
+      ),
+    columns: { id: true },
+  });
+  return !!row;
+}
+
+/**
+ * Авторитетна валидация на избран начален момент за ОНЛАЙН запис: преизчислява
+ * дневния график (същата логика като UI-а) и проверява, че startAt е реален
+ * свободен/паралелен слот. Затваря наведнъж: затворен ден, изпълнител със затворен
+ * график, час извън работно време, минал час / под минималното предизвестие,
+ * застъпване, и UI↔сървър несъгласуваност (една и съща computeDaySlots).
+ */
+export async function isStartBookable(opts: {
+  resourceId: string;
+  startISO: string;
+  durationMin: number;
+  bufferMin: number;
+  allowParallel: boolean;
+  activeMin?: number;
+  processingMin?: number;
+  minNoticeMin?: number;
+  now?: Date;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const start = new Date(opts.startISO);
+  if (Number.isNaN(start.getTime())) return { ok: false, reason: "Невалиден час." };
+  const day = await getDaySlots({
+    resourceId: opts.resourceId,
+    durationMin: opts.durationMin,
+    bufferMin: opts.bufferMin,
+    dateStr: sofiaDateStr(start),
+    now: opts.now,
+    minNoticeMin: opts.minNoticeMin,
+    allowParallel: opts.allowParallel,
+    activeMin: opts.activeMin,
+    processingMin: opts.processingMin,
+  });
+  if (!day) return { ok: false, reason: "Изпълнителят не работи на тази дата. Избери друга." };
+  const slot = day.slots.find((s) => Date.parse(s.start) === start.getTime());
+  if (!slot) return { ok: false, reason: "Този час е извън работното време. Избери от свободните." };
+  if (slot.status === "past") return { ok: false, reason: "Този час вече е минал или е твърде скоро. Избери по-късен." };
+  if (slot.status === "busy") return { ok: false, reason: "Този час вече е зает. Избери друг." };
+  return { ok: true }; // free | parallel
 }
 
 /**

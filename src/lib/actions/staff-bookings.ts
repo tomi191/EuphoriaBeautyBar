@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
-import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
+import { getDaySlots, hasTimeOffConflict, hasActiveConflict, type DaySlot } from "@/lib/booking/slots";
 import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
@@ -67,6 +67,11 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   // пада в нечий престой (важи и за по-ранен час преди записан host).
   if (d.allowParallel && !(await fitsParallelSlot(resource.id, start, end, activeMin > 0 ? activeMin : durationMin, processingMin))) {
     return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
+  }
+  // Непаралелен час: EXCLUDE constraint-ът е частичен → провери застъпване и с
+  // паралелни редове (иначе double-booking минава незабелязано).
+  if (!d.allowParallel && (await hasActiveConflict(resource.id, start, end))) {
+    return { ok: false as const, error: "Този час се застъпва с друг запис. Избери друг." };
   }
 
   // upsert клиент по телефон (схемата изисква phone min(5) → не може да е null)
@@ -142,6 +147,9 @@ export async function rescheduleMyBooking(id: string, newStartISO: string) {
   if (booking.allowParallel && !(await fitsParallelSlot(resource.id, newStart, newEnd, effActive, booking.processingMin, id))) {
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
+  if (!booking.allowParallel && (await hasActiveConflict(resource.id, newStart, newEnd, id))) {
+    return { ok: false as const, error: "Този час се застъпва с друг запис на това време." };
+  }
 
   try {
     await db
@@ -196,6 +204,9 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
   const procMinE = d.processingMin ?? booking.processingMin;
   if (booking.allowParallel && !(await fitsParallelSlot(resource.id, start, end, activeMinE > 0 ? activeMinE : d.durationMin, procMinE, id))) {
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
+  }
+  if (!booking.allowParallel && (await hasActiveConflict(resource.id, start, end, id))) {
+    return { ok: false as const, error: "Този час се застъпва с друг запис на това време." };
   }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
   // priceEur е снимка към записване — пре-снимаме (по собствената цена) само при реална смяна на услугата.

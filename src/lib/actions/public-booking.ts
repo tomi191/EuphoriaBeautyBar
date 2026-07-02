@@ -4,10 +4,8 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
-import { fitsParallelWindow } from "@/lib/booking/parallel";
+import { getDaySlots, isStartBookable, type DaySlot } from "@/lib/booking/slots";
 import { sofiaDateStr } from "@/lib/booking/time";
-import { isClosed } from "@/lib/booking/closures";
 import { formatServicePrice } from "@/lib/booking/price";
 import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
 import { siteConfig } from "@/lib/site";
@@ -72,35 +70,47 @@ export type PublicBookingInput = z.infer<typeof publicSchema>;
 export async function createPublicBooking(input: PublicBookingInput) {
   const data = publicSchema.parse(input);
   const start = new Date(data.startAt);
-  const end = new Date(start.getTime() + (data.durationMin + data.bufferMin) * 60000);
 
-  if (await isClosed(sofiaDateStr(start))) {
-    return { ok: false as const, error: "Салонът е затворен на тази дата." };
-  }
-  // Не приемаме час в период на отпуск/почивка на изпълнителя.
-  if (await hasTimeOffConflict(data.resourceId, start, end)) {
-    return { ok: false as const, error: "Този час вече не е свободен. Избери друг." };
-  }
-
-  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
-  if (data.allowParallel && !(await fitsParallelWindow(data.resourceId, start, end))) {
-    return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
-  }
-
-  // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услугата.
-  if (data.serviceItemId) {
-    const offering = await db.query.resourceServices.findFirst({
-      where: (rs, { and, eq }) => and(eq(rs.resourceId, data.resourceId), eq(rs.serviceItemId, data.serviceItemId as string)),
-    });
-    if (offering && !offering.onlineBookable) {
-      return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
-    }
-  }
-
-  // Снимка на цената (€) + активно/престой времето. Собствената цена на изпълнителя
-  // печели пред каталожната (resolveOffering). При комбиниран запис (няколко услуги)
-  // сумираме резолюрните цени вместо да броим 0 € в оборота.
+  // Офертата се резолюрва СЪРВЪРНО (не се вярва на клиентски duration/buffer/price):
+  // собствената цена/време на изпълнителя печели пред каталожната. При комбиниран
+  // запис сумираме продължителностите на всички избрани услуги.
   const single = data.serviceItemId ? await resolveOffering(data.resourceId, data.serviceItemId) : null;
+  const combined = !single && data.serviceItemIds?.length
+    ? await Promise.all(data.serviceItemIds.map((sid) => resolveOffering(data.resourceId, sid)))
+    : null;
+
+  const durationMin = single?.durationMin
+    ?? combined?.reduce((s, o) => s + o.durationMin, 0)
+    ?? data.durationMin;
+  const bufferMin = single?.bufferMin
+    ?? combined?.reduce((s, o) => s + o.bufferMin, 0)
+    ?? data.bufferMin;
+  const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
+
+  // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услуга
+  // (единична или коя да е от комбинираните).
+  if (single && !single.onlineBookable) {
+    return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
+  }
+  if (combined?.some((o) => !o.onlineBookable)) {
+    return { ok: false as const, error: "Една от услугите не се записва онлайн при този изпълнител. Обади се за час." };
+  }
+
+  // Авторитетна валидация: startAt трябва да е реален свободен/паралелен слот в
+  // работното време (не минал, не под предизвестие, не зает, не при затворен график).
+  // Една и съща логика като графика, който клиентът е видял → без несъгласуваност.
+  const check = await isStartBookable({
+    resourceId: data.resourceId,
+    startISO: data.startAt,
+    durationMin,
+    bufferMin,
+    allowParallel: data.allowParallel === true,
+    activeMin: single?.activeMin ?? 0,
+    processingMin: single?.processingMin ?? 0,
+  });
+  if (!check.ok) return { ok: false as const, error: check.reason };
+
+  // Снимка на цената (€): собствената цена печели; комбиниран запис → сбор.
   const priceEurSnap = single
     ? single.priceEur
     : data.serviceItemIds?.length
