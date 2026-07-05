@@ -82,6 +82,11 @@ export function SiteFooter() {
                   Кариери
                 </Link>
               </li>
+              <li>
+                <Link href="/salon-varna-levski" className="text-muted-foreground transition-colors hover:text-primary">
+                  Салон кв. Левски, Варна
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -89,6 +94,7 @@ export function SiteFooter() {
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">Услуги</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/uslugi/frizorski-uslugi" className="text-muted-foreground hover:text-primary">Фризьорски услуги</Link></li>
+              <li><Link href="/uslugi/balayazh-varna" className="text-muted-foreground hover:text-primary">Балаяж във Варна</Link></li>
               <li><Link href="/uslugi/frizorski-terapii" className="text-muted-foreground hover:text-primary">Фризьорски терапии</Link></li>
               <li><Link href="/uslugi/manikyur-i-pedikyur" className="text-muted-foreground hover:text-primary">Маникюр и педикюр</Link></li>
               <li><Link href="/uslugi/kozmetika" className="text-muted-foreground hover:text-primary">Козметика</Link></li>

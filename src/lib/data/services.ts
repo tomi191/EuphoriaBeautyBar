@@ -28,9 +28,9 @@ export interface ServiceCategory {
   popular: string[];
   /** SEO H1 — "X във Варна — ..." style */
   seoTitle: string;
-  /** <title> таг (без " · Euphoria" суфикса от template-а); fallback: title */
+  /** <title> таг 45–48 зн. с гео keywords (template добавя " · Euphoria"); fallback: title */
   metaTitle?: string;
-  /** Meta description 150–160 зн. с локални keywords; fallback: description */
+  /** Meta description 150–160 зн. с Варна + кв. Левски + онлайн записване; fallback: description */
   metaDescription?: string;
   groups: ServiceGroup[];
   featured: ServiceItem[];

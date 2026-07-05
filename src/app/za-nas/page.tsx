@@ -45,28 +45,26 @@ export default async function AboutPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24">
+      <section className="relative isolate min-h-[72svh] overflow-hidden bg-cream lg:min-h-[78svh]">
+        {/* Фон — реалната снимка на салона */}
         <Image
-          src="/illustrations/wave.svg"
-          alt=""
-          aria-hidden
-          width={360}
-          height={200}
-          className="pointer-events-none absolute right-0 top-24 hidden h-32 w-auto opacity-40 mix-blend-multiply lg:block"
+          src="/images/interior/salon-1.jpg"
+          alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
         />
-        <Image
-          src="/illustrations/scissors.svg"
-          alt=""
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
           aria-hidden
-          width={280}
-          height={280}
-          className="pointer-events-none absolute left-[5%] bottom-12 hidden h-32 w-auto rotate-[15deg] opacity-35 mix-blend-multiply lg:block"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
         />
 
-        <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
-          <Reveal>
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">Нашата история</p>
-          </Reveal>
+        <div className="relative z-10 mx-auto flex min-h-[72svh] max-w-7xl flex-col justify-center px-4 pt-28 pb-12 lg:min-h-[78svh] lg:px-8 lg:pt-32">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">Нашата история</p>
           <BlurText
             as="h1"
             text="Салон, в който има време за всеки клиент"
@@ -74,7 +72,7 @@ export default async function AboutPage() {
             stagger={0.04}
           />
           <Reveal delay={0.4}>
-            <p className="mt-8 max-w-2xl font-serif text-xl italic text-muted-foreground">
+            <p className="mt-8 max-w-2xl font-serif text-xl italic text-foreground/80">
               Снежана отвори Euphoria през 2023 г. след повече от двадесет години по чужди столове. Идеята беше проста: салон с време да изслуша клиента, преди да вдигне ножицата.
             </p>
           </Reveal>

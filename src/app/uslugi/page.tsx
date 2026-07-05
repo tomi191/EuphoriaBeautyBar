@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ServiceCard } from "@/components/service/service-card";
 import { Reveal } from "@/components/reactbits/reveal";
@@ -23,21 +24,36 @@ export default async function UslugiPage() {
   const serviceCategories = await getServiceCatalog();
   return (
     <>
-      <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-20">
-        <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <Reveal>
-            <div className="max-w-3xl">
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">
-                Каталог услуги
-              </p>
-              <h1 className="font-display text-5xl font-medium text-balance md:text-6xl lg:text-7xl">
-                Всичко, от което <span className="gradient-text">красотата</span> ти има нужда.
-              </h1>
-              <p className="mt-6 max-w-xl font-serif text-xl italic text-muted-foreground">
-                Четири направления и над 60 услуги, с прозрачни цени и професионални марки.
-              </p>
-            </div>
-          </Reveal>
+      <section className="relative isolate min-h-[62svh] overflow-hidden bg-cream lg:min-h-[66svh]">
+        {/* Фон — реалната снимка на салона */}
+        <Image
+          src="/images/interior/wash-station.jpg"
+          alt="Измивна станция в салон Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
+
+        <div className="relative z-10 mx-auto flex min-h-[62svh] max-w-7xl flex-col justify-center px-4 pt-28 pb-12 lg:min-h-[66svh] lg:px-8 lg:pt-32">
+          <div className="max-w-3xl">
+            <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-primary">
+              Каталог услуги
+            </p>
+            <h1 className="font-display text-5xl font-medium text-balance md:text-6xl lg:text-7xl">
+              Всичко, от което <span className="gradient-text">красотата</span> ти има нужда.
+            </h1>
+            <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
+              Четири направления и над 60 услуги, с прозрачни цени и професионални марки.
+            </p>
+          </div>
         </div>
       </section>
 

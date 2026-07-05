@@ -50,48 +50,43 @@ export default function MontibelloPage() {
     <>
       <JsonLd data={itemListSchema} />
 
-      {/* Hero — брандова история */}
-      <section className="relative overflow-hidden pt-32 pb-12 lg:pt-40 lg:pb-16">
-        <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <Reveal>
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              Партньорска марка
-            </p>
-          </Reveal>
-          <div className="grid items-end gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-7">
-              <BlurText
-                as="h1"
-                text="Montibello"
-                className="font-display text-5xl leading-[1.05] font-medium md:text-7xl lg:text-8xl"
-              />
-              <Reveal delay={0.3}>
-                <p className="mt-6 max-w-xl font-serif text-xl italic text-muted-foreground">
-                  Испанска професионална марка от Барселона.
-                </p>
-              </Reveal>
-              <Reveal delay={0.4}>
-                <p className="mt-5 max-w-xl text-base leading-relaxed text-foreground/85">
-                  В Euphoria работим с цялата гама Montibello — грижа за косата, цвят
-                  и стайлинг. Каталогът по-долу е подреден по категории, за да намериш
-                  по-лесно линията, която ти трябва. Купуваш на място в салона, след
-                  като майстор прецени какво е точно за твоята коса.
-                </p>
-              </Reveal>
-            </div>
-            <Reveal className="lg:col-span-5" delay={0.2}>
-              <div className="relative aspect-square w-full max-w-sm overflow-hidden rounded-md bg-secondary/40">
-                <Image
-                  src="/images/montibello/catalogue.jpg"
-                  alt="Продукти от каталога на Montibello в салон Euphoria, Варна"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            </Reveal>
-          </div>
+      {/* Hero — брандова история, реалните продукти Montibello във фон */}
+      <section className="relative isolate min-h-[64svh] overflow-hidden bg-cream lg:min-h-[70svh]">
+        {/* Фон — реална продуктова снимка Montibello HOP */}
+        <Image
+          src="/images/montibello/full-volume-bg.jpg"
+          alt="Професионалната гама Montibello HOP в салон Euphoria, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, продуктите се отварят отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/88 to-background/50 lg:bg-gradient-to-r lg:from-background lg:via-background/82 lg:to-transparent"
+        />
+
+        <div className="relative z-10 mx-auto flex min-h-[64svh] max-w-7xl flex-col justify-center px-4 pt-28 pb-12 lg:min-h-[70svh] lg:px-8 lg:pt-32">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/60">
+            Партньорска марка
+          </p>
+          <BlurText
+            as="h1"
+            text="Montibello"
+            className="font-display text-5xl leading-[1.05] font-medium md:text-7xl lg:text-8xl"
+          />
+          <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
+            Испанска професионална марка от Барселона.
+          </p>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-foreground/85">
+            В Euphoria работим с цялата гама Montibello — грижа за косата, цвят
+            и стайлинг. Каталогът по-долу е подреден по категории, за да намериш
+            по-лесно линията, която ти трябва. Купуваш на място в салона, след
+            като майстор прецени какво е точно за твоята коса.
+          </p>
         </div>
       </section>
 

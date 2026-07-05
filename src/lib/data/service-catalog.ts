@@ -10,7 +10,7 @@ import { slugify } from "@/lib/utils";
 const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDescription: string; popular: string[] }> = {
   "frizorski-uslugi": {
     seoTitle: "Фризьорски услуги във Варна — стил и качество от професионалисти",
-    metaTitle: "Фризьорски салон във Варна — прически и балаяж",
+    metaTitle: "Фризьорски салон във Варна, кв. Левски — балаяж",
     metaDescription:
       "Дамско и мъжко подстригване, боядисване, кичури, балаяж и официални прически. Фризьорски салон Euphoria в кв. Левски, Варна — запази час онлайн или по телефон.",
     popular: ["Балаяж", "Кичури на фолио", "Подстригване", "Официална прическа", "Корекция на цвят"],
@@ -19,7 +19,7 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
     seoTitle: "Фризьорски терапии във Варна — възстановяване, хидратация и блясък",
     metaTitle: "Фризьорски терапии във Варна — кератин, Kerasilk",
     metaDescription:
-      "Кератинова терапия Goldwell Kerasilk, ампули Nashi Argan, ламеларна вода и минерални терапии за коса във Варна. Възстановяване, хидратация и блясък.",
+      "Кератинова терапия Goldwell Kerasilk, ампули Nashi Argan, ламеларна вода и минерални терапии за коса във Варна. Запази час онлайн в Euphoria.",
     popular: ["Kerasilk кератин", "Nashi Argan", "Ламеларна вода", "Минерални ампули"],
   },
   "manikyur-i-pedikyur": {
@@ -31,9 +31,9 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
   },
   kozmetika: {
     seoTitle: "Козметични услуги във Варна — грижа за кожата и лицето ти",
-    metaTitle: "Козметик във Варна — терапии за лице и епилация",
+    metaTitle: "Козметик във Варна, кв. Левски — терапии за лице",
     metaDescription:
-      "Козметичен салон в кв. Левски, Варна — почистване на лице, Hydrafacial, микронидлинг, анти-ейдж терапии GIGI и Montibello, ламиниране на мигли и вежди, епилация.",
+      "Козметичен салон в кв. Левски, Варна — почистване на лице, Hydrafacial, микронидлинг, анти-ейдж терапии, ламиниране на мигли и вежди, епилация. Запази час онлайн.",
     popular: ["Hydra Facial", "Микронидлинг", "BIOREPEELCL3 пилинг", "GOYUKI японски лифтинг", "Ламиниране мигли"],
   },
 };
@@ -153,8 +153,8 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       icon,
       heroImage: c.heroImage,
       seoTitle: pres?.seoTitle ?? `${c.title} във Варна`,
-      metaTitle: pres?.metaTitle,
-      metaDescription: pres?.metaDescription,
+      metaTitle: pres?.metaTitle ?? `${c.title} във Варна`,
+      metaDescription: pres?.metaDescription ?? c.description,
       popular: pres?.popular ?? catItems.slice(0, 5).map((i) => i.name),
       groups,
       // „Препоръчани" за визитката на категорията — диапазонни цени across изпълнители.

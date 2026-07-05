@@ -4,7 +4,6 @@ import { Clock, Facebook, Instagram, Mail, MapPin, Phone, MessageCircle } from "
 import { ContactForm } from "@/components/forms/contact-form";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
-import { AuroraBackground } from "@/components/reactbits/aurora-background";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -17,52 +16,38 @@ export const metadata: Metadata = {
 export default function ContactsPage() {
   return (
     <>
-      <AuroraBackground intensity="subtle">
-        <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24">
-          <Image
-            src="/illustrations/arch.svg"
-            alt=""
-            aria-hidden
-            width={320}
-            height={200}
-            className="pointer-events-none absolute -top-4 left-1/2 hidden h-48 w-auto -translate-x-1/2 opacity-40 mix-blend-multiply md:block"
-          />
-          <Image
-            src="/illustrations/flowers.svg"
-            alt=""
-            aria-hidden
-            width={300}
-            height={320}
-            className="pointer-events-none absolute right-[3%] bottom-12 hidden h-44 w-auto opacity-50 mix-blend-multiply lg:block"
-          />
-          <Image
-            src="/illustrations/mirror.svg"
-            alt=""
-            aria-hidden
-            width={260}
-            height={320}
-            className="pointer-events-none absolute left-[5%] bottom-8 hidden h-40 w-auto opacity-40 mix-blend-multiply lg:block"
-          />
+      <section className="relative isolate min-h-[58svh] overflow-hidden bg-cream lg:min-h-[62svh]">
+        {/* Фон — реалната снимка на салона Euphoria */}
+        <Image
+          src="/images/interior/hero-bg.png"
+          alt="Салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
+          fill
+          priority
+          fetchPriority="high"
+          quality={75}
+          sizes="100vw"
+          className="-z-20 object-cover object-center"
+        />
+        {/* Топъл воал — четим текст отляво, снимката се отваря отдясно */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent"
+        />
 
-          <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
-            <Reveal>
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-primary">
-                Свържи се с нас
-              </p>
-            </Reveal>
-            <BlurText
-              as="h1"
-              text="Очакваме те."
-              className="font-display text-6xl font-medium md:text-8xl"
-            />
-            <Reveal delay={0.4}>
-              <p className="mt-6 max-w-xl font-serif text-xl italic text-muted-foreground">
-                Резервирай час, задай въпрос или просто ела да ни кажеш здравей.
-              </p>
-            </Reveal>
-          </div>
-        </section>
-      </AuroraBackground>
+        <div className="relative z-10 mx-auto flex min-h-[58svh] max-w-7xl flex-col justify-center px-4 pt-28 pb-12 lg:min-h-[62svh] lg:px-8 lg:pt-32">
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-primary">
+            Свържи се с нас
+          </p>
+          <BlurText
+            as="h1"
+            text="Очакваме те."
+            className="font-display text-6xl font-medium md:text-8xl"
+          />
+          <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
+            Резервирай час, задай въпрос или просто ела да ни кажеш здравей.
+          </p>
+        </div>
+      </section>
 
       <section id="booking" className="relative py-20 lg:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 lg:grid-cols-12 lg:px-8">
