@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter, Manrope, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -107,6 +108,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Toaster richColors closeButton position="top-right" />
         </ThemeProvider>
         <JsonLd data={[localBusinessSchema, websiteSchema, organizationSchema, personSchema]} />
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="PRk1wC2y9uRqhuw3oQ1zFA"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
