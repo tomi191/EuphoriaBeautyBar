@@ -18,7 +18,7 @@ import { siteConfig } from "@/lib/site";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "За нас",
+  title: "За нас — салон за красота в кв. Левски, Варна",
   alternates: { canonical: "/za-nas" },
   description:
     "Историята на Euphoria Hair & Beauty Bar в кв. Левски, Варна. Основан през 2023 г. от Снежана Саблева, фризьор с над 25 години опит.",

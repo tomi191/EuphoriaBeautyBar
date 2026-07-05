@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   description:
     "Пълен каталог услуги в Euphoria Beauty Bar — фризьорство, терапии, маникюр, педикюр и козметика с премиум продукти.",
   openGraph: {
+    type: "website",
     title: "Услуги — коса, нокти и козметика във Варна",
     description: "Пълен каталог услуги в Euphoria Beauty Bar с прозрачни цени.",
     url: "/uslugi",

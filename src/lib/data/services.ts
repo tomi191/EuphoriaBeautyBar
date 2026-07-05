@@ -28,6 +28,10 @@ export interface ServiceCategory {
   popular: string[];
   /** SEO H1 — "X във Варна — ..." style */
   seoTitle: string;
+  /** <title> таг (без " · Euphoria" суфикса от template-а); fallback: title */
+  metaTitle?: string;
+  /** Meta description 150–160 зн. с локални keywords; fallback: description */
+  metaDescription?: string;
   groups: ServiceGroup[];
   featured: ServiceItem[];
 }

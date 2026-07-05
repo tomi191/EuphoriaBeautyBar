@@ -7,21 +7,33 @@ import { slugify } from "@/lib/utils";
  * Презентационни/SEO полета, които НЕ са цени и не се менят от admin —
  * пазят се статично по slug. Всичко друго (текстове, групи, цени) идва от БД.
  */
-const PRESENTATION: Record<string, { seoTitle: string; popular: string[] }> = {
+const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDescription: string; popular: string[] }> = {
   "frizorski-uslugi": {
     seoTitle: "Фризьорски услуги във Варна — стил и качество от професионалисти",
+    metaTitle: "Фризьорски салон във Варна — прически и балаяж",
+    metaDescription:
+      "Дамско и мъжко подстригване, боядисване, кичури, балаяж и официални прически. Фризьорски салон Euphoria в кв. Левски, Варна — запази час онлайн или по телефон.",
     popular: ["Балаяж", "Кичури на фолио", "Подстригване", "Официална прическа", "Корекция на цвят"],
   },
   "frizorski-terapii": {
     seoTitle: "Фризьорски терапии във Варна — възстановяване, хидратация и блясък",
+    metaTitle: "Фризьорски терапии във Варна — кератин, Kerasilk",
+    metaDescription:
+      "Кератинова терапия Goldwell Kerasilk, ампули Nashi Argan, ламеларна вода и минерални терапии за коса във Варна. Възстановяване, хидратация и блясък.",
     popular: ["Kerasilk кератин", "Nashi Argan", "Ламеларна вода", "Минерални ампули"],
   },
   "manikyur-i-pedikyur": {
     seoTitle: "Маникюр и педикюр във Варна — грижа за ръцете и краката ти",
+    metaTitle: "Маникюр и медицински педикюр — кв. Левски, Варна",
+    metaDescription:
+      "Маникюр с гел лак, медицински педикюр и терапии за нокти в стерилна среда. Салон Euphoria в кв. Левски, Варна — прозрачни цени и онлайн записване на час.",
     popular: ["Гел маникюр", "Френски / омбре", "Класически педикюр", "Кератинова терапия", "Медицински педикюр"],
   },
   kozmetika: {
     seoTitle: "Козметични услуги във Варна — грижа за кожата и лицето ти",
+    metaTitle: "Козметик във Варна — терапии за лице и епилация",
+    metaDescription:
+      "Козметичен салон в кв. Левски, Варна — почистване на лице, Hydrafacial, микронидлинг, анти-ейдж терапии GIGI и Montibello, ламиниране на мигли и вежди, епилация.",
     popular: ["Hydra Facial", "Микронидлинг", "BIOREPEELCL3 пилинг", "GOYUKI японски лифтинг", "Ламиниране мигли"],
   },
 };
@@ -141,6 +153,8 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
       icon,
       heroImage: c.heroImage,
       seoTitle: pres?.seoTitle ?? `${c.title} във Варна`,
+      metaTitle: pres?.metaTitle,
+      metaDescription: pres?.metaDescription,
       popular: pres?.popular ?? catItems.slice(0, 5).map((i) => i.name),
       groups,
       // „Препоръчани" за визитката на категорията — диапазонни цени across изпълнители.

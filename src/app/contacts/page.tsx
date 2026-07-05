@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Контакти и резервации",
   alternates: { canonical: "/contacts" },
   description:
-    "Резервирай час, открий ни на картата или ни пиши директно. Euphoria Hair & Beauty Bar във Варна.",
+    "Запази час в Euphoria Hair & Beauty Bar — ул. Петър Райчев 18, кв. Левски, Варна. Телефон, Viber, карта и онлайн записване за фризьор, маникюр и козметика.",
 };
 
 export default function ContactsPage() {

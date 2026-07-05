@@ -32,12 +32,14 @@ export async function generateMetadata({ params }: ServiceDetailParams): Promise
   const category = await getCatalogCategory(slug);
   if (!category) return { robots: { index: false } };
   return {
-    title: category.title,
-    description: category.description,
+    title: category.metaTitle ?? category.title,
+    description: category.metaDescription ?? category.description,
     alternates: { canonical: `/uslugi/${category.slug}` },
     openGraph: {
+      type: "website",
+      url: `/uslugi/${category.slug}`,
       title: category.seoTitle,
-      description: category.description,
+      description: category.metaDescription ?? category.description,
       images: [category.heroImage],
     },
   };
@@ -93,7 +95,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
           <div className="grid items-end gap-10 lg:grid-cols-12">
             <div className="lg:col-span-8">
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">
-                {category.shortTitle} · Варна
+                {category.shortTitle} · кв. Левски · Варна
               </p>
               <BlurText
                 as="h1"
