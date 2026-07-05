@@ -1,7 +1,13 @@
 import { siteConfig } from "@/lib/site";
 import { faqItems } from "@/lib/data/faq";
 
-export const localBusinessSchema = {
+/**
+ * LocalBusiness schema. Приема опционален `rating` (от Google reviews в DB) →
+ * inject-ва AggregateRating за звезди в SERP rich result (CTR ливър при поз ~9.6).
+ * Адресът носи „кв. Левски" в streetAddress + areaServed — хипер-локален сигнал
+ * за „маникюр варна левски" (90 vol), заявка, която конкурентите не таргетират.
+ */
+export const localBusinessSchema = (rating?: { value: number; count: number }) => ({
   "@context": "https://schema.org",
   "@type": ["BeautySalon", "HairSalon", "LocalBusiness"],
   name: siteConfig.name,
@@ -25,7 +31,7 @@ export const localBusinessSchema = {
   foundingDate: String(siteConfig.founded),
   address: {
     "@type": "PostalAddress",
-    streetAddress: siteConfig.address.street,
+    streetAddress: `${siteConfig.address.street}, ${siteConfig.address.district}`,
     addressLocality: siteConfig.address.city,
     postalCode: siteConfig.address.postalCode,
     addressCountry: siteConfig.address.country,
@@ -38,6 +44,7 @@ export const localBusinessSchema = {
   },
   areaServed: [
     { "@type": "City", name: "Варна" },
+    { "@type": "Place", name: `${siteConfig.address.district}, Варна` },
     { "@type": "AdministrativeArea", name: "Варненска област" },
   ],
   openingHoursSpecification: [
@@ -69,7 +76,18 @@ export const localBusinessSchema = {
     "Сватбени прически",
   ],
   brand: siteConfig.brands.map((b) => ({ "@type": "Brand", name: b })),
-};
+  ...(rating && rating.count > 0
+    ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: rating.value.toFixed(1),
+          reviewCount: rating.count,
+          bestRating: "5",
+          worstRating: "1",
+        },
+      }
+    : {}),
+});
 
 /** Единен Person entity за Снежана — реферирай чрез @id навсякъде (E-E-A-T консолидация). */
 export const PERSON_ID = `${siteConfig.url}/za-nas#snezhana`;
@@ -124,10 +142,12 @@ export const organizationSchema = {
   sameAs: [siteConfig.social.facebook, siteConfig.social.instagram],
 };
 
+// FAQPage трябва да съответства 1:1 на ВИДИМИТЕ Q&A (Google policy).
+// FaqContactSection рендира faqItems.slice(0, 6) → schema-та ползва същите 6.
 export const faqPageSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqItems.map((item) => ({
+  mainEntity: faqItems.slice(0, 6).map((item) => ({
     "@type": "Question",
     name: item.question,
     acceptedAnswer: { "@type": "Answer", text: item.answer },

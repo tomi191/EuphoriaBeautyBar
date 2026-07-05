@@ -32,6 +32,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: `${product.name} — Montibello`,
     description: product.shortDescription,
     alternates: { canonical: `/montibello/${product.slug}` },
+    // 48-те продукта са thin near-duplicate (25-60 думи) и не се продават онлайн →
+    // noindex пести crawl budget на DR1 сайт; follow запазва link flow към хъба.
+    robots: { index: false, follow: true },
     openGraph: {
       title: `${product.name} — Montibello`,
       description: product.shortDescription,

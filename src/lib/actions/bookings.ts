@@ -6,9 +6,10 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
-import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
-import { fitsParallelWindow } from "@/lib/booking/parallel";
+import { getDaySlots, hasTimeOffConflict, hasActiveConflict, type DaySlot } from "@/lib/booking/slots";
+import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { formatServicePrice } from "@/lib/booking/price";
+import { resolveOffering } from "@/lib/booking/offering";
 import { sofiaWallToUtc, sofiaDateStr } from "@/lib/booking/time";
 import { isClosed } from "@/lib/booking/closures";
 import { upsertClientByPhone } from "@/lib/booking/clients";
@@ -72,9 +73,18 @@ export async function createBooking(input: BookingInput) {
     return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
   }
 
-  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
-  if (data.allowParallel && !(await fitsParallelWindow(data.resourceId, start, end))) {
+  // Офертата (собствена цена/време на изпълнителя) — за паралелната проверка и за оборота.
+  const offering = data.serviceItemId ? await resolveOffering(data.resourceId, data.serviceItemId) : null;
+  const effActive = offering && offering.activeMin > 0 ? offering.activeMin : data.durationMin;
+
+  // Паралелен час: симетрична проверка (както staff и графика) — не еднопосочния
+  // fitsParallelWindow, който отхвърляше reverse-паралели.
+  if (data.allowParallel && !(await fitsParallelSlot(data.resourceId, start, end, effActive, offering?.processingMin ?? 0))) {
     return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
+  }
+  // Непаралелен час: провери застъпване и с паралелни редове (частичният EXCLUDE не ги пази).
+  if (!data.allowParallel && (await hasActiveConflict(data.resourceId, start, end))) {
+    return { ok: false as const, error: "Този час се застъпва с друг запис. Избери друг слот." };
   }
 
   // upsert клиент (по имейл, иначе по телефон)
@@ -95,7 +105,7 @@ export async function createBooking(input: BookingInput) {
     });
   }
 
-  // Каталожна услуга (ако е посочена) - за снимка на цената (€) и за имейла.
+  // Каталожна услуга (ако е посочена) - само за имейла (цената/времето идват от offering).
   const item = data.serviceItemId
     ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
     : undefined;
@@ -111,11 +121,11 @@ export async function createBooking(input: BookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
-      activeMin: item?.activeMin ?? 0,
-      processingMin: item?.processingMin ?? 0,
+      activeMin: offering?.activeMin ?? 0,
+      processingMin: offering?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: data.source,
-      priceEur: item?.price ?? null,
+      priceEur: offering?.priceEur ?? null,
       notes: data.notes ?? null,
       createdBy: session.user.id,
       createdAt: new Date(),
@@ -186,15 +196,25 @@ export async function updateBooking(id: string, input: z.infer<typeof editSchema
   if (await hasTimeOffConflict(booking.resourceId, start, end)) {
     return { ok: false as const, error: "Изпълнителят е в отпуск/почивка в този период." };
   }
-  // Паралелен час: при местене пак трябва да се събира в свободен престой-прозорец.
-  if (booking.allowParallel && !(await fitsParallelWindow(booking.resourceId, start, end, id))) {
+  // Паралелен час: симетрична проверка (както staff/графика) → admin може да
+  // редактира и reverse-паралели (по-ранния от двойката), не само forward.
+  const activeMinU = d.activeMin ?? booking.activeMin;
+  const procMinU = d.processingMin ?? booking.processingMin;
+  if (booking.allowParallel && !(await fitsParallelSlot(booking.resourceId, start, end, activeMinU > 0 ? activeMinU : d.durationMin, procMinU, id))) {
     return { ok: false as const, error: "Паралелният час не се събира в свободен престой на това време." };
   }
+  if (!booking.allowParallel && (await hasActiveConflict(booking.resourceId, start, end, id))) {
+    return { ok: false as const, error: "Този час се застъпва с друг запис на това време." };
+  }
   const clientId = await upsertClientByPhone(d.clientName, d.clientPhone);
-  const item = d.serviceItemId
-    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, d.serviceItemId as string) })
-    : undefined;
-  const priceEur = d.serviceItemId ? item?.price ?? null : booking.priceEur;
+  // priceEur е СНИМКА към момента на записване — не го пипаме при редакция на време/бележка.
+  // Пре-снимаме (по собствената цена) само ако услугата реално е сменена.
+  const serviceChanged = (d.serviceItemId ?? null) !== (booking.serviceItemId ?? null);
+  const priceEur = serviceChanged
+    ? d.serviceItemId
+      ? (await resolveOffering(booking.resourceId, d.serviceItemId)).priceEur
+      : null
+    : booking.priceEur;
   try {
     await db
       .update(schema.bookings)

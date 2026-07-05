@@ -46,7 +46,13 @@ export function StaffShell({ children, kind }: { children: React.ReactNode; kind
   }, []);
 
   async function handleSignOut() {
-    await authClient.signOut();
+    // Мрежова грешка при signOut не бива да заклещва бутона — редиректваме винаги
+    // (cookie-то може вече да е изчистено; login иначе връща обратно при жива сесия).
+    try {
+      await authClient.signOut();
+    } catch {
+      /* продължаваме към login независимо */
+    }
     // Изчисти кешираните /staff страници (клиентски PII) от Cache Storage — GDPR.
     try {
       const reg = await navigator.serviceWorker?.ready;

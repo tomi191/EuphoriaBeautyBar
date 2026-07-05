@@ -77,6 +77,24 @@ export function BookingBoard({ days: initialDays }: { days: BoardDay[] }) {
   const [busyId, setBusyId] = React.useState<string | null>(null);
   // Тъч път: HTML5 drag-drop не работи от тъч → tap на карта отваря „Премести в ден".
   const [moveCard, setMoveCard] = React.useState<{ booking: BoardBooking; fromKey: string } | null>(null);
+  const moveDialogRef = React.useRef<HTMLDivElement>(null);
+  const moveTriggerRef = React.useRef<HTMLElement | null>(null);
+
+  // Достъпност на sheet-а „Премести в ден": Escape за затваряне, фокус в диалога при
+  // отваряне и връщане на фокуса към картата при затваряне (за клавиатура/четци).
+  React.useEffect(() => {
+    if (!moveCard) return;
+    moveTriggerRef.current = document.activeElement as HTMLElement | null;
+    moveDialogRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoveCard(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      moveTriggerRef.current?.focus?.();
+    };
+  }, [moveCard]);
 
   // Синхронизирай при нов server snapshot (router.refresh).
   React.useEffect(() => {
@@ -248,7 +266,7 @@ export function BookingBoard({ days: initialDays }: { days: BoardDay[] }) {
       {moveCard && (
         <>
           <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/35" onClick={() => setMoveCard(null)} />
-          <div role="dialog" aria-modal="true" aria-label="Премести часа в друг ден" className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl">
+          <div ref={moveDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Премести часа в друг ден" className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-lg rounded-t-3xl border-t border-border bg-background p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl outline-none">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
             <div className="mb-3 flex items-start justify-between gap-2">
               <div className="min-w-0">

@@ -136,8 +136,19 @@ self.addEventListener("notificationclick", (event) => {
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
+        const target = new URL(url, self.location.origin).href;
         const existing = clients.find((c) => c.url.includes("/staff"));
-        if (existing) return existing.focus();
+        if (existing) {
+          // Навигирай съществуващия прозорец към целевия url, не само focus — иначе
+          // кликът върху известие отваря /staff, но не конкретния изглед (график/дата).
+          if (existing.url !== target && typeof existing.navigate === "function") {
+            return existing
+              .navigate(target)
+              .then((c) => (c || existing).focus())
+              .catch(() => existing.focus());
+          }
+          return existing.focus();
+        }
         // openWindow може да върне null (някои Android WebAPK билдове отказват отваряне във
         // фон) — не сривай тихо, фокусирай съществуващ клиент ако има.
         return self.clients.openWindow(url).then((client) => {

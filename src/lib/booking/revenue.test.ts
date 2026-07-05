@@ -5,7 +5,7 @@ import { sofiaWallToUtc } from "./time";
 // Сряда, 17.06.2026, 14:00 Sofia (EEST). Понеделник тази седмица = 15.06; месец = юни.
 const NOW = sofiaWallToUtc("2026-06-17", "14:00");
 
-function row(dateStr: string, timeStr: string, status: string, price: number): RevenueRow {
+function row(dateStr: string, timeStr: string, status: string, price: number | null): RevenueRow {
   return { startMs: sofiaWallToUtc(dateStr, timeStr).getTime(), status, price };
 }
 
@@ -53,5 +53,19 @@ describe("summarizeRevenue", () => {
     const s = summarizeRevenue(rows, b);
     expect(s.today.earned).toEqual({ count: 1, total: 25 });
     expect(s.today.expected.count).toBe(0);
+  });
+
+  it("час без цена (null) се брои в count с 0 € и се маркира като unpriced", () => {
+    const rows: RevenueRow[] = [
+      row("2026-06-17", "09:00", "completed", null), // минал без цена → earned count+1, total+0, unpriced+1
+      row("2026-06-17", "18:00", "confirmed", 40), // бъдещ с цена
+      row("2026-06-18", "10:00", "pending", null), // бъдещ без цена → expected unpriced
+    ];
+    const s = summarizeRevenue(rows, b);
+    expect(s.today.earned).toEqual({ count: 1, total: 0 });
+    expect(s.today.unpriced).toBe(1);
+    expect(s.today.expected).toEqual({ count: 1, total: 40 });
+    expect(s.week.unpriced).toBe(2); // и миналият, и утрешният са тази седмица
+    expect(s.week.expected.total).toBe(40);
   });
 });

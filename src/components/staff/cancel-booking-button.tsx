@@ -26,12 +26,19 @@ export function StaffCancelButton({ id }: { id: string }) {
 
   if (confirming) {
     return (
-      <span className="inline-flex items-center gap-1.5">
-        <button onClick={cancel} disabled={busy} className="rounded-full bg-destructive px-2.5 py-1 text-[11px] font-semibold text-white">
+      <span className="inline-flex items-center gap-1">
+        <button
+          onClick={cancel}
+          disabled={busy}
+          className="inline-flex min-h-[44px] items-center rounded-full bg-destructive px-3.5 py-2 text-[11px] font-semibold text-white"
+        >
           {busy ? <Loader2 className="size-3 animate-spin" /> : "Потвърди"}
         </button>
         {!busy && (
-          <button onClick={() => setConfirming(false)} className="text-[11px] font-medium text-muted-foreground">
+          <button
+            onClick={() => setConfirming(false)}
+            className="inline-flex min-h-[44px] items-center px-2.5 py-2 text-[11px] font-medium text-muted-foreground"
+          >
             Не
           </button>
         )}
@@ -42,7 +49,7 @@ export function StaffCancelButton({ id }: { id: string }) {
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive"
+      className="inline-flex min-h-[44px] items-center gap-1 py-2 text-[11px] font-medium text-muted-foreground hover:text-destructive"
     >
       <X className="size-3.5" /> Отмени
     </button>

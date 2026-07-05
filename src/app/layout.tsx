@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter, Manrope, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -6,7 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MobileCallBar } from "@/components/layout/mobile-call-bar";
 import { JsonLd } from "@/components/seo/json-ld";
-import { localBusinessSchema, websiteSchema, organizationSchema, personSchema } from "@/lib/schema";
+import { websiteSchema, organizationSchema, personSchema } from "@/lib/schema";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -106,7 +107,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MobileCallBar />
           <Toaster richColors closeButton position="top-right" />
         </ThemeProvider>
-        <JsonLd data={[localBusinessSchema, websiteSchema, organizationSchema, personSchema]} />
+        {/* LocalBusiness (с AggregateRating) живее на homepage — там rating-ът се чете
+            от DB. Тук остават статичните entity schemas за всички страници. */}
+        <JsonLd data={[websiteSchema, organizationSchema, personSchema]} />
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="PRk1wC2y9uRqhuw3oQ1zFA"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

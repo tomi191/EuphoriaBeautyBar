@@ -13,6 +13,7 @@ export interface RevenueBucket {
 export interface RevenuePeriod {
   earned: RevenueBucket; // минали часове (не отменени/неявили се) — реализирано
   expected: RevenueBucket; // бъдещи потвърдени/чакащи — очаквано
+  unpriced: number; // брой часове в периода без резолюрна цена (влизат с 0 € — прозрачност)
 }
 export interface RevenueStats {
   today: RevenuePeriod;
@@ -20,11 +21,11 @@ export interface RevenueStats {
   month: RevenuePeriod;
 }
 
-/** Един час, сведен до нужното за оборота (цената вече е резолюрната — €). */
+/** Един час, сведен до нужното за оборота (цената вече е резолюрната — €; null = без цена). */
 export interface RevenueRow {
   startMs: number; // startAt в ms UTC
   status: string;
-  price: number;
+  price: number | null;
 }
 
 export interface PeriodBounds {
@@ -75,7 +76,7 @@ export function formatEur(v: number): string {
 }
 
 function emptyPeriod(): RevenuePeriod {
-  return { earned: { count: 0, total: 0 }, expected: { count: 0, total: 0 } };
+  return { earned: { count: 0, total: 0 }, expected: { count: 0, total: 0 }, unpriced: 0 };
 }
 
 /**
@@ -97,7 +98,8 @@ export function summarizeRevenue(rows: RevenueRow[], b: PeriodBounds): RevenueSt
     if (!kind) continue; // бъдещ arrived/completed (нелогично за бъдеще) — пропусни
     const apply = (p: RevenuePeriod) => {
       p[kind].count += 1;
-      p[kind].total += r.price;
+      p[kind].total += r.price ?? 0; // час без резолюрна цена влиза с 0 €, но се брои
+      if (r.price == null) p.unpriced += 1;
     };
     if (r.startMs >= b.todayStartMs && r.startMs < b.todayEndMs) apply(stats.today);
     if (r.startMs >= b.weekStartMs && r.startMs < b.weekEndMs) apply(stats.week);

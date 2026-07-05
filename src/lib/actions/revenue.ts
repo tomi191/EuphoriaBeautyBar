@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { requireAdmin, requireStaff } from "@/lib/actions/auth-guard";
 import { buildPeriodBounds, summarizeRevenue, type RevenueStats } from "@/lib/booking/revenue";
+import { toEur } from "@/lib/booking/offering";
 
 interface LoadedRow {
   resourceId: string;
   startMs: number;
   status: string;
-  price: number; // € — резолюрна (priceEur snapshot → собствена → каталожна → 0)
+  price: number | null; // € — резолюрна (priceEur snapshot → собствена → каталожна); null = без цена
 }
 
 /**
@@ -41,8 +42,9 @@ async function loadRevenueRows(opts: { resourceId?: string; fromMs: number; toMs
         db.query.serviceItems.findMany({ where: (s, { inArray }) => inArray(s.id, missingItemIds) }),
       ])
     : [[], []];
-  const ownByKey = new Map(own.map((o) => [`${o.resourceId}:${o.serviceItemId}`, o.price]));
-  const itemById = new Map(items.map((i) => [i.id, i.price]));
+  // Нормализирай към € (левова цена не бива да влезе числово като € в оборота).
+  const ownByKey = new Map(own.map((o) => [`${o.resourceId}:${o.serviceItemId}`, toEur(o.price, o.currency)]));
+  const itemById = new Map(items.map((i) => [i.id, toEur(i.price, i.currency)]));
 
   return rows.map((r) => ({
     resourceId: r.resourceId,
@@ -51,8 +53,8 @@ async function loadRevenueRows(opts: { resourceId?: string; fromMs: number; toMs
     price:
       r.priceEur ??
       (r.serviceItemId
-        ? ownByKey.get(`${r.resourceId}:${r.serviceItemId}`) ?? itemById.get(r.serviceItemId) ?? 0
-        : 0),
+        ? ownByKey.get(`${r.resourceId}:${r.serviceItemId}`) ?? itemById.get(r.serviceItemId) ?? null
+        : null),
   }));
 }
 

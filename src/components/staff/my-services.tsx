@@ -66,7 +66,12 @@ export function MyServices({ services, categories, phone }: { services: MyServic
     setPendingId(s.id);
     setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: !x.offered } : x)));
     try {
-      await toggleMyService(s.id);
+      const res = await toggleMyService(s.id);
+      if (!res.ok) {
+        // Сървърът отказа (напр. услугата не съществува) → върни оптимистичното състояние.
+        setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: s.offered } : x)));
+        toast.error("Услугата не можа да се обнови. Опресни и опитай пак.");
+      }
     } catch {
       setList((prev) => prev.map((x) => (x.id === s.id ? { ...x, offered: s.offered } : x)));
       toast.error("Грешка.");
@@ -291,7 +296,7 @@ function EditSheet({
   const [price, setPrice] = React.useState(service.price);
   const [priceMax, setPriceMax] = React.useState<number | "">(service.priceMax ?? "");
   const [priceFrom, setPriceFrom] = React.useState(service.priceFrom);
-  const [currency, setCurrency] = React.useState(service.currency);
+  const [currency] = React.useState(service.currency); // € — салонът е едновалутен
   const [durationMin, setDurationMin] = React.useState(service.durationMin);
   const [activeMin, setActiveMin] = React.useState(service.activeMin);
   const [processingMin, setProcessingMin] = React.useState(service.processingMin);
@@ -300,7 +305,7 @@ function EditSheet({
   async function save() {
     setSaving(true);
     try {
-      await updateMyService(service.id, {
+      const res = await updateMyService(service.id, {
         price,
         priceMax: priceMax === "" ? null : Number(priceMax),
         priceFrom,
@@ -310,6 +315,12 @@ function EditSheet({
         activeMin,
         processingMin,
       });
+      if (!res.ok) {
+        // Сървърна валидация (напр. активно+престой > блок) → покажи причината, не „Запазено".
+        toast.error(res.error ?? "Неуспешно запазване.");
+        setSaving(false);
+        return;
+      }
       toast.success("Запазено.");
       onSaved({ ...service, price, priceMax: priceMax === "" ? null : Number(priceMax), priceFrom, currency, durationMin, activeMin, processingMin });
     } catch {
@@ -341,10 +352,8 @@ function EditSheet({
           </div>
           <div className="space-y-1.5">
             <Label>Валута</Label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-base">
-              <option value="€">€</option>
-              <option value="лв">лв</option>
-            </select>
+            {/* Салонът работи в €; левова цена би влязла числово като € в оборота. */}
+            <div className="grid h-11 w-full place-items-center rounded-md border border-input bg-muted/40 px-3 text-base text-muted-foreground">€</div>
           </div>
         </div>
         <label className="mt-3 flex items-center justify-between rounded-xl border border-border p-3">

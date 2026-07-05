@@ -22,8 +22,10 @@ const HELP = "За да получаваш известия, свържи ака
  * Валидира secret header. Винаги връща 200, за да не кара Telegram да повтаря.
  */
 export async function POST(req: Request) {
+  // Fail-closed: без конфигуриран secret webhook-ът е ИЗКЛЮЧЕН (не отворен). Иначе
+  // липсващ env → всеки може да праща фалшиви ъпдейти (fake /start, изтичане на график).
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (secret && req.headers.get("x-telegram-bot-api-secret-token") !== secret) {
+  if (!secret || req.headers.get("x-telegram-bot-api-secret-token") !== secret) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 

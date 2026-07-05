@@ -12,8 +12,12 @@ export async function GET(req: Request) {
 
   const reviewUrl = process.env.GOOGLE_REVIEW_URL || undefined;
 
+  // Времеви прозорец: покана само за скорошни посещения (последните 14 дни). Иначе
+  // ретроактивно/импортирано „completed" от преди месеци би заляло стари клиенти.
+  const cutoff = new Date(Date.now() - 14 * 24 * 3600000);
   const rows = await db.query.bookings.findMany({
-    where: (b, { and, eq, isNull }) => and(eq(b.status, "completed"), isNull(b.reviewRequestedAt)),
+    where: (b, { and, eq, isNull, gte }) =>
+      and(eq(b.status, "completed"), isNull(b.reviewRequestedAt), gte(b.startAt, cutoff)),
   });
 
   let sent = 0;
@@ -23,7 +27,10 @@ export async function GET(req: Request) {
       db.query.clients.findFirst({ where: (c, { eq }) => eq(c.id, b.clientId as string) }),
       db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, b.resourceId) }),
     ]);
-    // Маркираме винаги, за да не опитваме безкрайно; имейл само ако има адрес.
+    // Маркираме ПРЕДИ изпращане (at-most-once): crash/timeout между двете иначе праща
+    // имейл без да маркира → hourly cron праща пак = дубликати. По-добре загубена
+    // покана, отколкото повторени.
+    await db.update(schema.bookings).set({ reviewRequestedAt: new Date() }).where(eq(schema.bookings.id, b.id));
     if (client?.email) {
       await sendReviewRequest(client.email, {
         clientName: client.name,
@@ -31,10 +38,9 @@ export async function GET(req: Request) {
         performerName: resource?.name ?? "екипа на Euphoria",
         start: b.startAt,
         reviewUrl,
-      });
+      }).catch(() => {}); // маркирано е; провалът не бива да спира партидата
       sent++;
     }
-    await db.update(schema.bookings).set({ reviewRequestedAt: new Date() }).where(eq(schema.bookings.id, b.id));
   }
 
   return NextResponse.json({ ok: true, sent });

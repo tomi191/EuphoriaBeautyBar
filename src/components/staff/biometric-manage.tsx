@@ -104,20 +104,35 @@ export function BiometricManage() {
           <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Зареждане…
         </div>
       ) : hasPasskey ? (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-              <Fingerprint className="size-5" strokeWidth={2} aria-hidden="true" />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+                <Fingerprint className="size-5" strokeWidth={2} aria-hidden="true" />
+              </div>
+              {/* Passkey-ите са за акаунта (не за конкретно устройство) → показваме брой. */}
+              <p className="text-sm font-medium">
+                Биометрия включена{passkeys.length > 1 ? ` · ${passkeys.length} устройства` : ""}
+              </p>
             </div>
-            <p className="text-sm font-medium">Включено на това устройство</p>
+            <button
+              type="button"
+              onClick={() => remove(passkeys[0].id)}
+              disabled={busy}
+              className="inline-flex h-11 shrink-0 items-center rounded-full border border-border bg-background px-4 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive disabled:pointer-events-none disabled:opacity-60"
+            >
+              Премахни
+            </button>
           </div>
+          {/* Всяко устройство има собствен отпечатък → позволи добавяне и на ново устройство. */}
           <button
             type="button"
-            onClick={() => remove(passkeys[0].id)}
+            onClick={add}
             disabled={busy}
-            className="inline-flex h-9 shrink-0 items-center rounded-full border border-border bg-background px-4 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/50 hover:text-destructive disabled:pointer-events-none disabled:opacity-60"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-border text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-60"
           >
-            Премахни
+            {busy ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Fingerprint className="size-4" aria-hidden="true" />}
+            Добави и това устройство
           </button>
         </div>
       ) : (

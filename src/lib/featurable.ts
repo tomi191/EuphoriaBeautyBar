@@ -59,19 +59,28 @@ export async function fetchFeaturableReviews(): Promise<PlaceSummary | null> {
     const json = (await res.json()) as FeaturableResponse;
     if (!json.success || !Array.isArray(json.reviews)) return null;
 
+    const reviews = json.reviews
+      .filter((r) => r.comment && r.reviewer?.displayName)
+      .map((r) => ({
+        authorName: r.reviewer.displayName,
+        authorPhoto: r.reviewer.profilePhotoUrl,
+        rating: r.starRating,
+        text: extractOriginalText(r.comment),
+        language: "bg" as const,
+        publishedAt: new Date(r.createTime),
+      }));
+
+    // Guard: празен резултат (widget hiccup / временен 0) НЕ бива да трие всички
+    // sync-отзиви и да презапише header-а с 0,0★/0. Третираме го като неуспешен sync.
+    if (reviews.length === 0) {
+      console.warn("[featurable] 0 отзива в отговора — пропускам sync (не презаписвам с празно)");
+      return null;
+    }
+
     return {
       rating: json.averageRating,
       totalReviews: json.totalReviewCount,
-      reviews: json.reviews
-        .filter((r) => r.comment && r.reviewer?.displayName)
-        .map((r) => ({
-          authorName: r.reviewer.displayName,
-          authorPhoto: r.reviewer.profilePhotoUrl,
-          rating: r.starRating,
-          text: extractOriginalText(r.comment),
-          language: "bg",
-          publishedAt: new Date(r.createTime),
-        })),
+      reviews,
     };
   } catch (err) {
     console.error("[featurable] fetch failed", err);

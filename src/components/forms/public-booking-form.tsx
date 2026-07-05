@@ -257,11 +257,12 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     setSubmitting(true);
     try {
       const single = selectedServices.length === 1 ? selectedServices[0] : null;
-      // priceEur вече се снима server-side (не от клиента) — тук подаваме само
-      // priceLabel за имейла. При няколко услуги оборотът пада на fallback в getMyStats.
+      // priceEur се снима server-side (не от клиента). При няколко услуги подаваме
+      // списъка с id-та → сървърът сумира собствените цени в оборота (иначе 0 €).
       const res = await createPublicBooking({
         resourceId: performerId,
         serviceItemId: single ? single.id : null,
+        serviceItemIds: single ? undefined : selectedServices.map((s) => s.id),
         serviceName: serviceNamesLabel,
         priceLabel: single ? formatPrice(resolveOffering(single, performer)) : null,
         durationMin: totalDuration,
@@ -626,7 +627,16 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4" />
           <span className="text-foreground/80">
-            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата.
+            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата. Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
+            <a
+              href="/politika-za-poveritelnost"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              Политиката за поверителност
+            </a>
+            .
           </span>
         </label>
 

@@ -4,11 +4,10 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { getDaySlots, hasTimeOffConflict, type DaySlot } from "@/lib/booking/slots";
-import { fitsParallelWindow } from "@/lib/booking/parallel";
+import { getDaySlots, isStartBookable, type DaySlot } from "@/lib/booking/slots";
 import { sofiaDateStr } from "@/lib/booking/time";
-import { isClosed } from "@/lib/booking/closures";
 import { formatServicePrice } from "@/lib/booking/price";
+import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
 import { notifyResource } from "@/lib/notify";
@@ -52,6 +51,7 @@ export async function verifyEmailToken(token: string): Promise<boolean> {
 const publicSchema = z.object({
   resourceId: z.string().min(1),
   serviceItemId: z.string().nullable().optional(), // null при няколко услуги (комбиниран запис)
+  serviceItemIds: z.array(z.string()).max(10).optional(), // при комбиниран запис — за сумарна цена в оборота
   serviceName: z.string().min(1).max(200),
   priceLabel: z.string().max(200).nullable().optional(), // показва се в имейла (особено при няколко услуги)
   // priceEur НЕ идва от клиента (можеше priceEur:0 → € 0 в оборота) — снима се server-side.
@@ -59,7 +59,11 @@ const publicSchema = z.object({
   bufferMin: z.number().int().min(0).max(120),
   startAt: z.string(),
   clientName: z.string().min(2).max(100),
-  clientPhone: z.string().min(5).max(30),
+  clientPhone: z
+    .string()
+    .min(5)
+    .max(30)
+    .refine((v) => (v.match(/\d/g)?.length ?? 0) >= 6, "Въведи валиден телефонен номер (само букви не се приемат)."),
   clientEmail: z.string().email(),
   consentLate: z.literal(true),
   allowParallel: z.boolean().optional(),
@@ -67,38 +71,83 @@ const publicSchema = z.object({
 
 export type PublicBookingInput = z.infer<typeof publicSchema>;
 
+// Anti-abuse: не повече от RL_MAX записа на един клиент (имейл/телефон) за RL_WINDOW_MIN
+// минути → спира email bombing / спам записи. DB-based (serverless няма обща памет).
+const RL_WINDOW_MIN = 10;
+const RL_MAX = 3;
+
 export async function createPublicBooking(input: PublicBookingInput) {
-  const data = publicSchema.parse(input);
-  const start = new Date(data.startAt);
-  const end = new Date(start.getTime() + (data.durationMin + data.bufferMin) * 60000);
-
-  if (await isClosed(sofiaDateStr(start))) {
-    return { ok: false as const, error: "Салонът е затворен на тази дата." };
+  // safeParse (не parse): невалидни данни връщат приятелско съобщение във формата,
+  // вместо ZodError → generic „Възникна грешка".
+  const parsed = publicSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Провери въведените данни." };
   }
-  // Не приемаме час в период на отпуск/почивка на изпълнителя.
-  if (await hasTimeOffConflict(data.resourceId, start, end)) {
-    return { ok: false as const, error: "Този час вече не е свободен. Избери друг." };
-  }
+  const data = parsed.data;
 
-  // Паралелен час: трябва да се събира в свободен престой на чужд (хост) запис.
-  if (data.allowParallel && !(await fitsParallelWindow(data.resourceId, start, end))) {
-    return { ok: false as const, error: "Този паралелен час не се събира в свободния престой." };
-  }
-
-  // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услугата.
-  if (data.serviceItemId) {
-    const offering = await db.query.resourceServices.findFirst({
-      where: (rs, { and, eq }) => and(eq(rs.resourceId, data.resourceId), eq(rs.serviceItemId, data.serviceItemId as string)),
+  const since = new Date(Date.now() - RL_WINDOW_MIN * 60000);
+  const rlClients = await db.query.clients.findMany({
+    where: (c, { or, eq }) => or(eq(c.email, data.clientEmail), eq(c.phone, data.clientPhone)),
+    columns: { id: true },
+  });
+  if (rlClients.length) {
+    const ids = rlClients.map((c) => c.id);
+    const recent = await db.query.bookings.findMany({
+      where: (b, { and, gte, inArray }) => and(gte(b.createdAt, since), inArray(b.clientId, ids)),
+      columns: { id: true },
     });
-    if (offering && !offering.onlineBookable) {
-      return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
+    if (recent.length >= RL_MAX) {
+      return { ok: false as const, error: "Твърде много заявки за кратко време. Опитай след малко или се обади." };
     }
   }
 
-  // Снимка на активното/престой времето от каталожната услуга (0/0 при няколко услуги).
-  const snapItem = data.serviceItemId
-    ? await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, data.serviceItemId as string) })
-    : undefined;
+  const start = new Date(data.startAt);
+
+  // Офертата се резолюрва СЪРВЪРНО (не се вярва на клиентски duration/buffer/price):
+  // собствената цена/време на изпълнителя печели пред каталожната. При комбиниран
+  // запис сумираме продължителностите на всички избрани услуги.
+  const single = data.serviceItemId ? await resolveOffering(data.resourceId, data.serviceItemId) : null;
+  const combined = !single && data.serviceItemIds?.length
+    ? await Promise.all(data.serviceItemIds.map((sid) => resolveOffering(data.resourceId, sid)))
+    : null;
+
+  const durationMin = single?.durationMin
+    ?? combined?.reduce((s, o) => s + o.durationMin, 0)
+    ?? data.durationMin;
+  const bufferMin = single?.bufferMin
+    ?? combined?.reduce((s, o) => s + o.bufferMin, 0)
+    ?? data.bufferMin;
+  const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
+
+  // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услуга
+  // (единична или коя да е от комбинираните).
+  if (single && !single.onlineBookable) {
+    return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
+  }
+  if (combined?.some((o) => !o.onlineBookable)) {
+    return { ok: false as const, error: "Една от услугите не се записва онлайн при този изпълнител. Обади се за час." };
+  }
+
+  // Авторитетна валидация: startAt трябва да е реален свободен/паралелен слот в
+  // работното време (не минал, не под предизвестие, не зает, не при затворен график).
+  // Една и съща логика като графика, който клиентът е видял → без несъгласуваност.
+  const check = await isStartBookable({
+    resourceId: data.resourceId,
+    startISO: data.startAt,
+    durationMin,
+    bufferMin,
+    allowParallel: data.allowParallel === true,
+    activeMin: single?.activeMin ?? 0,
+    processingMin: single?.processingMin ?? 0,
+  });
+  if (!check.ok) return { ok: false as const, error: check.reason };
+
+  // Снимка на цената (€): собствената цена печели; комбиниран запис → сбор.
+  const priceEurSnap = single
+    ? single.priceEur
+    : data.serviceItemIds?.length
+      ? await sumOfferingPrices(data.resourceId, data.serviceItemIds)
+      : null;
 
   // upsert клиент по имейл; генерира verify token за неверифицирани (онбординг)
   let clientId: string;
@@ -137,11 +186,11 @@ export async function createPublicBooking(input: PublicBookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
-      activeMin: snapItem?.activeMin ?? 0,
-      processingMin: snapItem?.processingMin ?? 0,
+      activeMin: single?.activeMin ?? 0,
+      processingMin: single?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: "online",
-      priceEur: snapItem?.price ?? null, // server authority — не от клиента
+      priceEur: priceEurSnap, // server authority (собствена цена > каталожна) — не от клиента
       consentLate: true,
       createdAt: new Date(),
       updatedAt: new Date(),

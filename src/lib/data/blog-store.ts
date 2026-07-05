@@ -47,3 +47,9 @@ export async function getPublishedPost(slug: string): Promise<BlogPost | undefin
   });
   return row ? toBlogPost(row) : undefined;
 }
+
+/** Една статия по slug НЕЗАВИСИМО от статуса — за admin преглед на чернова. */
+export async function getAnyPost(slug: string): Promise<(BlogPost & { status: string }) | undefined> {
+  const row = await db.query.blogPosts.findFirst({ where: (p, { eq }) => eq(p.slug, slug) });
+  return row ? { ...toBlogPost(row), status: row.status } : undefined;
+}

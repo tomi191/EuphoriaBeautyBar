@@ -26,12 +26,15 @@ export async function GET(req: Request) {
       db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, b.resourceId) }),
     ]);
     if (!client?.email) continue;
-    await sendReminder(client.email, {
+    const ok = await sendReminder(client.email, {
       clientName: client.name,
       serviceName: b.serviceName,
       performerName: resource?.name ?? "екипа на Euphoria",
       start: b.startAt,
     });
+    // Маркирай „изпратено" само при реален успех — иначе тиха загуба; следващият cron
+    // ще опита пак (по-добре повторен опит, отколкото никакво напомняне).
+    if (!ok) continue;
     await db.update(schema.bookings).set({ reminderSentAt: new Date() }).where(eq(schema.bookings.id, b.id));
     sent++;
   }
