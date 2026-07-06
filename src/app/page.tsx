@@ -20,9 +20,16 @@ import { db } from "@/lib/db";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
-  const googleReviews = await db.query.googleReviews.findMany({ columns: { rating: true } });
-  const rating =
-    googleReviews.length > 0
+  const [googleReviews, summaryRow] = await Promise.all([
+    db.query.googleReviews.findMany({ columns: { rating: true } }),
+    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") }),
+  ]);
+  // Реалните брой/рейтинг са от целия Google профил (вкл. отзивите само със
+  // звезди) — иначе Hero + AggregateRating показват 5,0/24 вместо реалните 4,8/43.
+  const summary = summaryRow?.value as { rating: number; total: number } | undefined;
+  const rating = summary?.rating
+    ? { value: summary.rating, count: summary.total }
+    : googleReviews.length > 0
       ? {
           value: googleReviews.reduce((s, r) => s + r.rating, 0) / googleReviews.length,
           count: googleReviews.length,
