@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { BookingForm } from "@/components/admin/booking-form";
 import { BookingRowActions } from "@/components/admin/booking-row-actions";
 import { sofiaWallToUtc, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Чака", cls: "bg-secondary text-muted-foreground" },
@@ -155,6 +156,7 @@ export default async function AdminBookingsPage({
               <TableHead>Услуга</TableHead>
               <TableHead>Клиент</TableHead>
               <TableHead>Изпълнител</TableHead>
+              <TableHead>Записан</TableHead>
               <TableHead>Статус</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -180,6 +182,14 @@ export default async function AdminBookingsPage({
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{resMap.get(b.resourceId)?.name ?? "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    <span className="tabular-nums">{createdAtLabel(b.createdAt)}</span>
+                    <span className="mt-0.5 block">
+                      <span className={"inline-flex rounded-full px-1.5 py-px text-[10px] font-medium " + (b.source === "online" ? "bg-mint/40 text-foreground" : "bg-secondary")}>
+                        {sourceLabel(b.source)}
+                      </span>
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <span className={"inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium " + st.cls}>{st.label}</span>
                   </TableCell>
@@ -208,7 +218,7 @@ export default async function AdminBookingsPage({
             })}
             {dayBookings.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground">
                   Няма записани часове за този ден.
                 </TableCell>
               </TableRow>

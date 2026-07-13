@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { sendTelegram, editMessageText, answerCallback, findResourceByChatId } from "@/lib/telegram";
+import { sendTelegram, editMessageText, answerCallback, findResourceByChatId, ADMIN_CHAT_KEY, ADMIN_LINK_TOKEN_KEY } from "@/lib/telegram";
 import { buildDaySchedule } from "@/lib/telegram-schedule";
 import { sofiaDateStr } from "@/lib/booking/time";
 
@@ -67,6 +67,23 @@ export async function POST(req: Request) {
       await sendTelegram(chatId, "Здравей! " + HELP);
       return NextResponse.json({ ok: true });
     }
+    // Админ токен (префикс "adm-") → свързва канала на собственика (siteSettings).
+    if (token.startsWith("adm-")) {
+      const row = await db.query.siteSettings.findFirst({ where: (s, { eq: e }) => e(s.key, ADMIN_LINK_TOKEN_KEY) });
+      const expected = (row?.value as { token?: string } | undefined)?.token;
+      if (!expected || expected !== token) {
+        await sendTelegram(chatId, "Невалиден или изтекъл код. Генерирай нов от Настройки в админ панела.");
+        return NextResponse.json({ ok: true });
+      }
+      await db
+        .insert(schema.siteSettings)
+        .values({ key: ADMIN_CHAT_KEY, value: { chatId }, updatedAt: new Date() })
+        .onConflictDoUpdate({ target: schema.siteSettings.key, set: { value: { chatId }, updatedAt: new Date() } });
+      await db.delete(schema.siteSettings).where(eq(schema.siteSettings.key, ADMIN_LINK_TOKEN_KEY));
+      await sendTelegram(chatId, "Админ каналът е свързан! Тук ще получаваш известие за всеки нов онлайн запис и отказ — при всички изпълнители.");
+      return NextResponse.json({ ok: true });
+    }
+
     const res = await db.query.resources.findFirst({ where: (r, { eq: e }) => e(r.telegramLinkToken, token) });
     if (!res) {
       await sendTelegram(chatId, "Невалиден или изтекъл код. Опитай пак от профила си в приложението.");

@@ -2,8 +2,9 @@
 
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { notifyResource } from "@/lib/notify";
+import { notifyResource, notifyAdmin } from "@/lib/notify";
 import { formatWhen } from "@/lib/email/booking";
+import { sofiaDateStr } from "@/lib/booking/time";
 
 /**
  * Отмяна на час от клиента по линка от имейла (token = booking id, негадаем
@@ -21,11 +22,23 @@ export async function cancelOwnBooking(id: string) {
     .update(schema.bookings)
     .set({ status: "cancelled", cancelledAt: new Date(), cancelReason: "отменен от клиента", updatedAt: new Date() })
     .where(eq(schema.bookings.id, id));
-  // Извести изпълнителя, че клиентът се е отказал.
-  await notifyResource(booking.resourceId, {
-    title: "Отменен час (от клиента)",
-    body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
-    url: "/staff",
-  }).catch(() => {});
+  // Извести изпълнителя + админ канала, че клиентът се е отказал.
+  const performer = await db.query.resources.findFirst({
+    where: (r, { eq: e }) => e(r.id, booking.resourceId),
+    columns: { name: true },
+  });
+  await Promise.allSettled([
+    notifyResource(booking.resourceId, {
+      title: "Отменен час (от клиента)",
+      body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
+      url: "/staff",
+    }),
+    notifyAdmin({
+      title: "Отменен час (от клиента)",
+      body: `${booking.serviceName} — ${formatWhen(booking.startAt)}`,
+      performerName: performer?.name,
+      dateKey: sofiaDateStr(booking.startAt),
+    }),
+  ]);
   return { ok: true as const };
 }

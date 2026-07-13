@@ -299,6 +299,8 @@ export const bookings = pgTable("bookings", {
   cancelReason: text("cancel_reason"),
   reminderSentAt: ts("reminder_sent_at"),
   reviewRequestedAt: ts("review_requested_at"),
+  // Резултат от известията при създаване (push/telegram/email) — видимост „защо не ме извести".
+  notifyLog: jsonb("notify_log"),
   createdBy: text("created_by"),
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),

@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { parallelWindowsFrom } from "@/lib/booking/parallel";
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -383,6 +384,9 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                       <BookingStatusActions id={b.id} status={b.status} />
                     )}
                     {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
+                    <p className="mt-1.5 text-[11px] text-muted-foreground/80">
+                      Записан {sourceLabel(b.source)} · {createdAtLabel(b.createdAt)}
+                    </p>
                   </div>
                 </div>
                 </React.Fragment>

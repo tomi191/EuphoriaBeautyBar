@@ -4,6 +4,7 @@ import { siteConfig } from "@/lib/site";
 import { getClosedDates } from "@/lib/booking/closures";
 import { ClosuresManager } from "@/components/admin/closures-manager";
 import { TestPushButton } from "@/components/admin/test-push-button";
+import { AdminTelegramConnect } from "@/components/admin/admin-telegram-connect";
 
 export const dynamic = "force-dynamic";
 
@@ -50,13 +51,21 @@ export default async function AdminSettingsPage() {
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-6">
-          <h2 className="font-display text-xl font-medium">Известия (push)</h2>
+          <h2 className="font-display text-xl font-medium">Известия</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Изпрати тестово push известие до всички абонирани устройства — в реалния формат на нов запис.
-            Ако устройството върне успех, но известие не дойде на телефона, причината е device-level
-            (battery optimization или изключени нотификации за инсталираното приложение), не в кода.
+            Telegram е основният надежден канал — свържи админ канала, за да получаваш всеки нов
+            онлайн запис и отказ. Push е допълнение: ако устройството върне успех, но известие не
+            дойде, причината е device-level (battery optimization / изключени нотификации), не в кода.
           </p>
+          <div className="mt-4">
+            <AdminTelegramConnect />
+          </div>
           <ul className="mt-4 space-y-3 text-sm">
+            <IntegrationRow
+              label="Telegram бот"
+              present={!!process.env.TELEGRAM_BOT_TOKEN && !!process.env.TELEGRAM_BOT_USERNAME}
+              env="TELEGRAM_BOT_TOKEN / TELEGRAM_BOT_USERNAME"
+            />
             <IntegrationRow
               label="Web Push (VAPID)"
               present={!!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY}
