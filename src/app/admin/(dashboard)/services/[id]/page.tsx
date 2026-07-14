@@ -13,6 +13,13 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+function durLabel(min: number): string {
+  if (min < 60) return `${min} мин`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} ч ${m} мин` : `${h} ч`;
+}
+
 export default async function CategoryEditPage({ params }: Params) {
   const { id } = await params;
   const category = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, id) });
@@ -54,6 +61,7 @@ export default async function CategoryEditPage({ params }: Params) {
               <TableHead>Група</TableHead>
               <TableHead>Услуга</TableHead>
               <TableHead>Цена</TableHead>
+              <TableHead>Времетраене</TableHead>
               <TableHead>Описание</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -70,6 +78,16 @@ export default async function CategoryEditPage({ params }: Params) {
                     {i.price}
                     {i.priceMax && <span className="text-muted-foreground">–{i.priceMax}</span>}
                     <span className="ml-1 text-xs text-muted-foreground">{i.currency}</span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">
+                    {durLabel(i.durationMin)}
+                    <span className="block text-[11px] text-muted-foreground">
+                      {i.processingMin > 0
+                        ? `${i.activeMin} акт. + ${i.processingMin} престой`
+                        : i.bufferMin > 0
+                          ? `+${i.bufferMin} мин буфер`
+                          : "без буфер"}
+                    </span>
                   </TableCell>
                   <TableCell className="max-w-xs">
                     <p className="line-clamp-1 text-xs text-muted-foreground">{i.description ?? "—"}</p>
@@ -90,7 +108,7 @@ export default async function CategoryEditPage({ params }: Params) {
             })}
             {items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
                   Все още няма услуги в тази категория.
                 </TableCell>
               </TableRow>
