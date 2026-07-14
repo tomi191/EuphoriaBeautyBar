@@ -1,9 +1,49 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarClock, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CalendarClock, CalendarPlus, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users, Wallet } from "lucide-react";
 import { db, schema } from "@/lib/db";
-import { sql } from "drizzle-orm";
+import { desc, sql } from "drizzle-orm";
 import { getSalonRevenue } from "@/lib/actions/revenue";
 import { formatEur } from "@/lib/booking/revenue";
+import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
+import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+
+/** Последните записвания по МОМЕНТ НА ЗАПИСВАНЕ (не по час на посещение). */
+async function recentBookings(limit = 8) {
+  const rows = await db.query.bookings.findMany({
+    orderBy: (b) => [desc(b.createdAt)],
+    limit,
+  });
+  const clientIds = [...new Set(rows.map((b) => b.clientId).filter(Boolean))] as string[];
+  const [clients, resources] = await Promise.all([
+    clientIds.length ? db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [],
+    db.query.resources.findMany({ columns: { id: true, name: true } }),
+  ]);
+  const clientMap = new Map(clients.map((c) => [c.id, c]));
+  const resMap = new Map(resources.map((r) => [r.id, r.name]));
+  return rows.map((b) => ({
+    id: b.id,
+    createdAt: b.createdAt,
+    source: b.source,
+    status: b.status,
+    serviceName: b.serviceName,
+    startAt: b.startAt,
+    clientName: (b.clientId && clientMap.get(b.clientId)?.name) || "—",
+    performer: resMap.get(b.resourceId) ?? "—",
+    notifyLog: b.notifyLog as { push?: { sent: number; failed: number }; telegram?: boolean; adminTelegram?: boolean; salonEmail?: boolean } | null,
+  }));
+}
+
+/** Компактен ред „кои известия минаха" за онлайн запис (null = стар запис без лог). */
+function notifySummary(log: NonNullable<Awaited<ReturnType<typeof recentBookings>>[number]["notifyLog"]>): string {
+  const parts: string[] = [];
+  if (log.push) parts.push(`push ${log.push.sent}/${log.push.sent + log.push.failed}`);
+  parts.push(`TG ${log.telegram ? "✓" : "✗"}`);
+  if (log.adminTelegram !== undefined) parts.push(`админ TG ${log.adminTelegram ? "✓" : "✗"}`);
+  if (log.salonEmail !== undefined) parts.push(`имейл ${log.salonEmail ? "✓" : "✗"}`);
+  return parts.join(" · ");
+}
+
+const whenFmt = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", day: "2-digit", month: "2-digit" });
 
 async function counts() {
   const [t, s, b, r, g, f, gr] = await Promise.all([
@@ -37,7 +77,7 @@ const stats = [
 ] as const;
 
 export default async function AdminDashboardPage() {
-  const [data, revenue] = await Promise.all([counts(), getSalonRevenue()]);
+  const [data, revenue, recent] = await Promise.all([counts(), getSalonRevenue(), recentBookings()]);
   const m = revenue.total.month;
 
   return (
@@ -72,6 +112,52 @@ export default async function AdminDashboardPage() {
           <ArrowUpRight className="size-5 shrink-0 text-background/40 transition-colors group-hover:text-background" />
         </div>
       </Link>
+
+      {/* Последни записвания — по момент на ЗАПИСВАНЕ (отговаря на „кой кога се записа") */}
+      <section className="mb-8 rounded-xl border border-border bg-background p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <CalendarPlus className="size-4" strokeWidth={1.8} /> Последни записвания
+          </h2>
+          <Link href="/admin/bookings" className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+            към графика
+          </Link>
+        </div>
+        <ul className="mt-4 divide-y divide-border/70">
+          {recent.map((b) => (
+            <li key={b.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5 text-sm">
+              <span className="w-28 shrink-0 font-mono text-xs tabular-nums text-muted-foreground" title="Кога е направен записът">
+                {createdAtLabel(b.createdAt)}
+              </span>
+              <span
+                className={
+                  "inline-flex shrink-0 rounded-full px-1.5 py-px text-[10px] font-medium " +
+                  (b.source === "online" ? "bg-mint/40 text-foreground" : "bg-secondary text-muted-foreground")
+                }
+              >
+                {sourceLabel(b.source)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="font-medium">{b.clientName}</span>
+                <span className="text-muted-foreground"> — {b.serviceName}</span>
+              </span>
+              <Link
+                href={`/admin/bookings?date=${sofiaDateStr(b.startAt)}`}
+                className={"shrink-0 text-xs tabular-nums text-muted-foreground underline-offset-2 hover:text-foreground hover:underline" + (b.status === "cancelled" ? " line-through" : "")}
+                title="Отвори деня в графика"
+              >
+                за {whenFmt.format(b.startAt)}, {sofiaTimeLabel(b.startAt)} · {b.performer}
+              </Link>
+              {b.notifyLog && (
+                <span className="w-full pl-[7.75rem] font-mono text-[10px] leading-tight text-muted-foreground/70" title="Резултат от известията при записването">
+                  известия: {notifySummary(b.notifyLog)}
+                </span>
+              )}
+            </li>
+          ))}
+          {recent.length === 0 && <li className="py-6 text-center text-sm text-muted-foreground">Още няма записвания.</li>}
+        </ul>
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ key, label, icon: Icon, href }) => (

@@ -71,3 +71,23 @@ export async function sendTelegramToResource(resourceId: string, text: string, k
 export async function findResourceByChatId(chatId: string | number) {
   return db.query.resources.findFirst({ where: (r, { eq: e }) => e(r.telegramChatId, String(chatId)) });
 }
+
+// ── Админ канал (собственикът получава ВСИЧКИ нови онлайн записи/откази) ──
+export const ADMIN_CHAT_KEY = "telegram_admin_chat_id";
+export const ADMIN_LINK_TOKEN_KEY = "telegram_admin_link_token";
+
+/** Chat ID на админ канала от siteSettings (null = несвързан). */
+export async function getAdminChatId(): Promise<string | null> {
+  const row = await db.query.siteSettings.findFirst({ where: (s, { eq: e }) => e(s.key, ADMIN_CHAT_KEY) });
+  return (row?.value as { chatId?: string } | undefined)?.chatId ?? null;
+}
+
+/**
+ * Изпраща до админ канала (ако е свързан). Не хвърля. При спрян бот (403) chat id-то
+ * остава в siteSettings — повторното свързване през deep link просто го пренаписва.
+ */
+export async function sendTelegramToAdmin(text: string, keyboard?: InlineKeyboard): Promise<boolean> {
+  const chatId = await getAdminChatId();
+  if (!chatId) return false;
+  return sendTelegram(chatId, text, keyboard);
+}

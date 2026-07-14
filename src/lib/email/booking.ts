@@ -107,7 +107,7 @@ export interface BookingEmailData {
 }
 
 /** Потвърждение към клиента, че часът е запазен. */
-export async function sendBookingConfirmation(to: string, data: BookingEmailData): Promise<void> {
+export async function sendBookingConfirmation(to: string, data: BookingEmailData): Promise<boolean> {
   const when = formatWhen(data.start);
   const verifyBlock = data.verifyUrl
     ? `<div style="margin-top:20px;padding:16px;background:#f4efe9;border-radius:12px;text-align:center">
@@ -116,7 +116,7 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
       </div>`
     : "";
 
-  await send({
+  return await send({
     to,
     subject: `Часът ти е запазен — ${formatWhen(data.start)}`,
     html: wrap(`
@@ -186,9 +186,9 @@ export async function sendReviewRequest(to: string, data: BookingEmailData & { r
 }
 
 /** Известие към салона за нов онлайн запис. */
-export async function sendSalonNotification(data: BookingEmailData & { clientPhone: string; clientEmail: string }): Promise<void> {
+export async function sendSalonNotification(data: BookingEmailData & { clientPhone: string; clientEmail: string }): Promise<boolean> {
   const to = process.env.CONTACT_TO_EMAIL ?? siteConfig.contact.email;
-  await send({
+  return await send({
     to,
     replyTo: data.clientEmail,
     subject: `Нов онлайн запис: ${data.serviceName} — ${formatWhen(data.start)}`,

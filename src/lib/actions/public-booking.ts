@@ -10,7 +10,7 @@ import { formatServicePrice } from "@/lib/booking/price";
 import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
-import { notifyResource } from "@/lib/notify";
+import { notifyResource, notifyAdmin } from "@/lib/notify";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -207,7 +207,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
     const priceLabel = data.priceLabel ?? (item ? formatServicePrice(item) : undefined);
     const base = process.env.NEXT_PUBLIC_SITE_URL ?? siteConfig.url;
     const verifyUrl = verifyToken ? `${base}/verify-email?token=${verifyToken}` : undefined;
-    await Promise.allSettled([
+    const [clientEmailRes, salonEmailRes, staffRes, adminTgRes] = await Promise.allSettled([
       sendBookingConfirmation(data.clientEmail, {
         clientName: data.clientName,
         serviceName: data.serviceName,
@@ -233,7 +233,34 @@ export async function createPublicBooking(input: PublicBookingInput) {
         clientPhone: data.clientPhone,
         dateKey: sofiaDateStr(start),
       }),
+      notifyAdmin({
+        title: "Нов онлайн запис",
+        body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})`,
+        performerName,
+        clientPhone: data.clientPhone,
+        dateKey: sofiaDateStr(start),
+      }),
     ]);
+
+    // Резултатът по канал → notify_log (диагностика „защо не ме извести"). Best-effort.
+    const staff = staffRes.status === "fulfilled" ? staffRes.value : { push: { sent: 0, failed: 0 }, telegram: false };
+    try {
+      await db
+        .update(schema.bookings)
+        .set({
+          notifyLog: {
+            at: new Date().toISOString(),
+            push: staff.push,
+            telegram: staff.telegram,
+            adminTelegram: adminTgRes.status === "fulfilled" ? adminTgRes.value : false,
+            clientEmail: clientEmailRes.status === "fulfilled" ? clientEmailRes.value : false,
+            salonEmail: salonEmailRes.status === "fulfilled" ? salonEmailRes.value : false,
+          },
+        })
+        .where(eq(schema.bookings.id, id));
+    } catch {
+      // логът е диагностика, не бива да проваля записа
+    }
 
     return { ok: true as const, id };
   } catch (err: unknown) {
