@@ -32,10 +32,13 @@ async function main() {
       console.log(JSON.stringify(await tg("getWebhookInfo"), null, 2));
       break;
     case "setWebhook":
-      console.log(JSON.stringify(await tg("setWebhook", { url: process.argv[3], secret_token: process.env.TELEGRAM_WEBHOOK_SECRET, allowed_updates: ["message"] }), null, 2));
+      console.log(JSON.stringify(await tg("setWebhook", { url: process.argv[3], secret_token: process.env.TELEGRAM_WEBHOOK_SECRET, allowed_updates: ["message", "callback_query"] }), null, 2));
       break;
     case "deleteWebhook":
       console.log(JSON.stringify(await tg("deleteWebhook"), null, 2));
+      break;
+    case "setCommands":
+      console.log(JSON.stringify(await tg("setMyCommands", { commands: [{ command: "today", description: "Днешен график" }] }), null, 2));
       break;
     case "send":
       console.log(JSON.stringify(await tg("sendMessage", { chat_id: process.argv[3], text: process.argv.slice(4).join(" "), parse_mode: "HTML" }), null, 2));
