@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authorizeCron } from "@/lib/cron-auth";
 import { notifyResource } from "@/lib/notify";
+import { sendTelegramToAdmin } from "@/lib/telegram";
+import { sendOpsAlert } from "@/lib/email/booking";
 import { sofiaDateStr, sofiaTimeLabel, sofiaWallToUtc } from "@/lib/booking/time";
 
 export const dynamic = "force-dynamic";
@@ -46,15 +48,37 @@ export async function GET(req: Request) {
       if (!starts || starts.length === 0) return null;
       const firstAt = sofiaTimeLabel(starts[0]);
       const body = starts.length === 1 ? `Утре: 1 час, в ${firstAt}` : `Утре: ${starts.length} часа, първият в ${firstAt}`;
-      return { id: r.id, body };
+      return { id: r.id, name: r.name, count: starts.length, body };
     })
-    .filter((t): t is { id: string; body: string } => t !== null);
+    .filter((t): t is { id: string; name: string; count: number; body: string } => t !== null);
 
   const results = await Promise.allSettled(
     targets.map((t) => notifyResource(t.id, { title: "Утрешен график", body: t.body, url: "/staff" })),
   );
-  const notified = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.length - notified;
 
-  return NextResponse.json({ ok: true, notified, failed });
+  // Watchdog: fulfilled ≠ доставено. notifyResource не хвърля дори когато изпълнителят
+  // няма НИТО ЕДИН работещ канал (0 push устройства + разкачен Telegram) — точно този
+  // тих режим остави изпълнител без известия за нови записи (юли 2026). Изпълнител с
+  // часове утре, до когото нищо не стигна → аларма до собственика още същата вечер.
+  const silent: string[] = [];
+  let notified = 0;
+  results.forEach((res, i) => {
+    const delivered = res.status === "fulfilled" && (res.value.push.sent > 0 || res.value.telegram);
+    if (delivered) notified++;
+    else silent.push(`${targets[i].name} — ${targets[i].count} ${targets[i].count === 1 ? "час" : "часа"} утре`);
+  });
+
+  if (silent.length > 0) {
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const advice = "Проверка: /staff/profile → Telegram връзка и известия на телефона.";
+    await sendTelegramToAdmin(
+      `⚠️ <b>Изпълнител без работещ канал за известия</b>\n${silent.map(esc).join("\n")}\n${esc(advice)}`,
+    ).catch(() => false);
+    await sendOpsAlert("Изпълнител без работещ канал за известия", [
+      ...silent.map((s) => `${s} — утрешният дайджест не стигна доникъде.`),
+      advice,
+    ]).catch(() => false);
+  }
+
+  return NextResponse.json({ ok: true, notified, silent });
 }

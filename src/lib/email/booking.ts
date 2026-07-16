@@ -185,6 +185,22 @@ export async function sendReviewRequest(to: string, data: BookingEmailData & { r
   });
 }
 
+/**
+ * Оперативен alert към салона (счупен канал за известия, разкачен Telegram и т.н.).
+ * Резервен път, когато Telegram каналите не могат да предупредят сами за себе си.
+ */
+export async function sendOpsAlert(subject: string, lines: string[]): Promise<boolean> {
+  const to = process.env.CONTACT_TO_EMAIL ?? siteConfig.contact.email;
+  return await send({
+    to,
+    subject: `⚠️ ${subject}`,
+    html: wrap(`
+      <h1 style="margin:0 0 6px;font-size:20px">${esc(subject)}</h1>
+      ${lines.map((l) => `<p style="margin:8px 0;font-size:14px;line-height:1.5">${esc(l)}</p>`).join("")}
+    `),
+  });
+}
+
 /** Известие към салона за нов онлайн запис. */
 export async function sendSalonNotification(data: BookingEmailData & { clientPhone: string; clientEmail: string }): Promise<boolean> {
   const to = process.env.CONTACT_TO_EMAIL ?? siteConfig.contact.email;

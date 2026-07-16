@@ -36,7 +36,16 @@ export async function sendTelegram(chatId: string | number, text: string, keyboa
     // 403 = ботът е спрян/блокиран → разсвържи, за да не пращаме напразно.
     if (r.status === 403) {
       try {
-        await db.update(schema.resources).set({ telegramChatId: null }).where(eq(schema.resources.telegramChatId, String(chatId)));
+        const unlinked = await db
+          .update(schema.resources)
+          .set({ telegramChatId: null })
+          .where(eq(schema.resources.telegramChatId, String(chatId)))
+          .returning({ name: schema.resources.name });
+        // Тихият auto-unlink вече остави изпълнител без известия незабелязано (юли 2026,
+        // ротация на бота) — затова разкачането вдига шум: admin канал + имейл до салона.
+        // Алармира се САМО когато реално е разкачен ресурс: 403 на самия админ чат не
+        // закача редове тук → няма рекурсия alert-върху-alert.
+        if (unlinked.length > 0) await alertUnlinked(unlinked.map((u) => u.name));
       } catch {
         /* best-effort */
       }
@@ -45,6 +54,24 @@ export async function sendTelegram(chatId: string | number, text: string, keyboa
     return false;
   }
   return true;
+}
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Разкачен изпълнителски Telegram → предупреди собственика по каналите, които още работят. */
+async function alertUnlinked(names: string[]): Promise<void> {
+  const who = names.join(", ");
+  const advice = "Известията към изпълнителя спряха. Нова връзка: /staff/profile → „Свържи Telegram“.";
+  const tgOk = await sendTelegramToAdmin(`⚠️ <b>Telegram връзката на ${escHtml(who)} се разкачи</b>\n(ботът е спрян, блокиран или сменен)\n${escHtml(advice)}`).catch(() => false);
+  try {
+    const { sendOpsAlert } = await import("@/lib/email/booking");
+    await sendOpsAlert(`Telegram връзката на ${who} се разкачи`, [
+      "Ботът е спрян, блокиран или сменен — известията към изпълнителя спряха.",
+      advice,
+    ]);
+  } catch (e) {
+    console.error("[telegram] alertUnlinked: и имейл fallback-ът се провали (tg=%s):", tgOk, e instanceof Error ? e.message : String(e));
+  }
 }
 
 /** Редактира съществуващо съобщение (за inline навигация по callback). Не хвърля. */
