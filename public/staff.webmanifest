@@ -3,7 +3,7 @@
   "short_name": "Euphoria Екип",
   "description": "Графикът, услугите и часовете ти в Euphoria Hair & Beauty Bar",
   "start_url": "/staff",
-  "scope": "/staff",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f4efe9",
