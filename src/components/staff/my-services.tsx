@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { formatServicePrice } from "@/lib/booking/price";
+import { parseDecimalInput } from "@/lib/decimal";
 import { toggleMyService, updateMyService, createMyService, deleteMyService, toggleMyServiceOnline } from "@/lib/actions/resource-services";
 
 export interface MyServiceOpt {
@@ -293,21 +294,37 @@ function EditSheet({
   service: MyServiceOpt;
   onSaved: (s: MyServiceOpt) => void;
 }) {
-  const [price, setPrice] = React.useState(service.price);
-  const [priceMax, setPriceMax] = React.useState<number | "">(service.priceMax ?? "");
+  // Цените са текст + parseDecimalInput — виж коментара в AddSheet (запетаята
+  // от БГ клавиатура се губи в type=number поле).
+  const [price, setPrice] = React.useState(String(service.price));
+  const [priceMax, setPriceMax] = React.useState(service.priceMax === null ? "" : String(service.priceMax));
   const [priceFrom, setPriceFrom] = React.useState(service.priceFrom);
   const [currency] = React.useState(service.currency); // € — салонът е едновалутен
   const [durationMin, setDurationMin] = React.useState(service.durationMin);
   const [activeMin, setActiveMin] = React.useState(service.activeMin);
   const [processingMin, setProcessingMin] = React.useState(service.processingMin);
   const [saving, setSaving] = React.useState(false);
+  const [errors, setErrors] = React.useState<{ price?: string; priceMax?: string }>({});
 
   async function save() {
+    const parsedPrice = parseDecimalInput(price);
+    const parsedMax = priceMax.trim() === "" ? null : parseDecimalInput(priceMax);
+    const nextErrors = {
+      price: parsedPrice !== null && parsedPrice > 0 ? undefined : "Въведи цена — само число, напр. 25 или 25,50.",
+      priceMax:
+        priceMax.trim() !== "" && parsedMax === null ? "Макс. цена — само число, или остави празно." : undefined,
+    };
+    if (nextErrors.price || nextErrors.priceMax) {
+      setErrors(nextErrors);
+      toast.error("Провери отбелязаните полета.");
+      return;
+    }
+    setErrors({});
     setSaving(true);
     try {
       const res = await updateMyService(service.id, {
-        price,
-        priceMax: priceMax === "" ? null : Number(priceMax),
+        price: parsedPrice!,
+        priceMax: parsedMax,
         priceFrom,
         currency,
         durationMin,
@@ -322,7 +339,7 @@ function EditSheet({
         return;
       }
       toast.success("Запазено.");
-      onSaved({ ...service, price, priceMax: priceMax === "" ? null : Number(priceMax), priceFrom, currency, durationMin, activeMin, processingMin });
+      onSaved({ ...service, price: parsedPrice!, priceMax: parsedMax, priceFrom, currency, durationMin, activeMin, processingMin });
     } catch {
       toast.error("Грешка при запазване.");
     } finally {
@@ -337,8 +354,20 @@ function EditSheet({
       <SheetDescription className="sr-only">Редакция на цена, продължителност и времена за паралелни часове.</SheetDescription>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
-            <Label>Цена</Label>
-            <Input type="number" step="0.5" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="h-11 text-base" />
+            <Label>Цена (€)</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                if (errors.price) setErrors((p) => ({ ...p, price: undefined }));
+              }}
+              placeholder="напр. 25 или 25,50"
+              aria-invalid={!!errors.price}
+              className={"h-11 text-base" + (errors.price ? " border-destructive" : "")}
+            />
+            {errors.price && <p role="alert" className="text-xs text-destructive">{errors.price}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Продължителност (мин)</Label>
@@ -348,7 +377,19 @@ function EditSheet({
         <div className="mt-2.5 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label>Макс. цена (опц.)</Label>
-            <Input type="number" step="0.5" value={priceMax} onChange={(e) => setPriceMax(e.target.value === "" ? "" : Number(e.target.value))} className="h-11 text-base" placeholder="—" />
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={priceMax}
+              onChange={(e) => {
+                setPriceMax(e.target.value);
+                if (errors.priceMax) setErrors((p) => ({ ...p, priceMax: undefined }));
+              }}
+              placeholder="—"
+              aria-invalid={!!errors.priceMax}
+              className={"h-11 text-base" + (errors.priceMax ? " border-destructive" : "")}
+            />
+            {errors.priceMax && <p role="alert" className="text-xs text-destructive">{errors.priceMax}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Валута</Label>
@@ -397,25 +438,39 @@ function AddSheet({
   // „pick" = избор от съществуващи групи (чипове); „new" = свободен текст за нова.
   const [groupMode, setGroupMode] = React.useState<"pick" | "new">(groups.length > 0 ? "pick" : "new");
   const [categorySlug, setCategorySlug] = React.useState(categories[0]?.slug ?? "");
-  const [price, setPrice] = React.useState<number | "">("");
+  // Цената е ТЕКСТ, не type=number: БГ клавиатурата пише „25,50", а number полето
+  // мълчаливо я губи (badInput → value "") — потребителят вижда попълнено поле,
+  // а формата го брои за празно. Парсва се при запис през parseDecimalInput.
+  const [price, setPrice] = React.useState("");
   const [priceFrom, setPriceFrom] = React.useState(false);
   const [durationMin, setDurationMin] = React.useState(30);
   const [saving, setSaving] = React.useState(false);
+  const [errors, setErrors] = React.useState<{ name?: string; group?: string; price?: string }>({});
 
   const isNewGroup = groupTitle.trim().length > 0 && !groups.includes(groupTitle.trim());
 
   async function save() {
-    if (!name.trim() || !groupTitle.trim() || price === "" || Number(price) <= 0) {
-      toast.error("Попълни име, група и цена.");
+    const parsedPrice = parseDecimalInput(price);
+    const nextErrors = {
+      name: name.trim() ? undefined : "Въведи име — така услугата ще се показва в ценоразписа.",
+      group:
+        groupTitle.trim() ? undefined : groupMode === "new" ? "Напиши име на новата група." : "Избери група от списъка.",
+      price:
+        parsedPrice !== null && parsedPrice > 0 ? undefined : "Въведи цена — само число, напр. 25 или 25,50.",
+    };
+    if (nextErrors.name || nextErrors.group || nextErrors.price) {
+      setErrors(nextErrors);
+      toast.error("Провери отбелязаните полета.");
       return;
     }
+    setErrors({});
     setSaving(true);
     try {
       const res = await createMyService({
         name: name.trim(),
         groupTitle: groupTitle.trim(),
         categorySlug: isNewGroup ? categorySlug : null,
-        price: Number(price),
+        price: parsedPrice!,
         priceFrom,
         durationMin,
         bufferMin: 10,
@@ -442,18 +497,39 @@ function AddSheet({
       </SheetDescription>
         <div className="mt-3 space-y-2.5">
           <div className="space-y-1.5">
-            <Label>Име на услугата</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="напр. Терапия с топли ножици" className="h-11 text-base" />
+            <Label>
+              Име на услугата <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+              }}
+              placeholder="напр. Терапия с топли ножици"
+              aria-invalid={!!errors.name}
+              className={"h-11 text-base" + (errors.name ? " border-destructive" : "")}
+            />
+            {errors.name ? (
+              <p role="alert" className="text-xs text-destructive">{errors.name}</p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Показва се в ценоразписа и при онлайн записване.</p>
+            )}
           </div>
           <div className="space-y-1.5">
-            <Label>Група (подкатегория)</Label>
+            <Label>
+              Група (подкатегория) <span className="text-destructive">*</span>
+            </Label>
             {groupMode === "pick" ? (
               <div className="flex flex-wrap gap-1.5">
                 {groups.map((g) => (
                   <button
                     key={g}
                     type="button"
-                    onClick={() => setGroupTitle(g)}
+                    onClick={() => {
+                      setGroupTitle(g);
+                      if (errors.group) setErrors((p) => ({ ...p, group: undefined }));
+                    }}
                     className={
                       "rounded-full border px-3 py-1.5 text-sm transition-colors " +
                       (groupTitle === g
@@ -479,9 +555,13 @@ function AddSheet({
               <div className="space-y-1.5">
                 <Input
                   value={groupTitle}
-                  onChange={(e) => setGroupTitle(e.target.value)}
-                  placeholder="име на нова група"
-                  className="h-11 text-base"
+                  onChange={(e) => {
+                    setGroupTitle(e.target.value);
+                    if (errors.group) setErrors((p) => ({ ...p, group: undefined }));
+                  }}
+                  placeholder="напр. Терапии за коса"
+                  aria-invalid={!!errors.group}
+                  className={"h-11 text-base" + (errors.group ? " border-destructive" : "")}
                   autoFocus
                 />
                 {groups.length > 0 && (
@@ -498,6 +578,11 @@ function AddSheet({
                 )}
               </div>
             )}
+            {errors.group ? (
+              <p role="alert" className="text-xs text-destructive">{errors.group}</p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Заглавието, под което услугата застава в ценоразписа.</p>
+            )}
           </div>
           {isNewGroup && categories.length > 1 && (
             <div className="space-y-1.5">
@@ -511,14 +596,30 @@ function AddSheet({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Цена (€)</Label>
-              <Input type="number" step="0.5" min={0.5} value={price} onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))} className="h-11 text-base" />
+              <Label>
+                Цена (€) <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={price}
+                onChange={(e) => {
+                  setPrice(e.target.value);
+                  if (errors.price) setErrors((p) => ({ ...p, price: undefined }));
+                }}
+                placeholder="напр. 25 или 25,50"
+                aria-invalid={!!errors.price}
+                className={"h-11 text-base" + (errors.price ? " border-destructive" : "")}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Продължителност (мин)</Label>
               <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
             </div>
           </div>
+          {errors.price && (
+            <p role="alert" className="text-xs text-destructive">{errors.price}</p>
+          )}
           <label className="flex items-center justify-between rounded-xl border border-border p-3">
             <span className="text-sm font-medium">&quot;от&quot; цена (ориентировъчна)</span>
             <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
