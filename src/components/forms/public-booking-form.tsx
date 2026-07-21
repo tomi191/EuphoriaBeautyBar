@@ -176,6 +176,26 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     setGroupTitle(g);
   }
 
+  // Услуга, която НИКОЙ активен изпълнител не приема онлайн (напр. козметикът е
+  // спрял онлайн записа) — предлага се, но само по телефон.
+  const isOnlineBookable = React.useCallback(
+    (s: PublicServiceOpt) =>
+      performers.some(
+        (p) => p.kind === s.kind && (!p.curated || p.offerings[s.id]) && resolveOffering(s, p).onlineBookable,
+      ),
+    [performers],
+  );
+
+  // Категория изцяло „по телефон" → chip-ът е неактивен още на първата стъпка,
+  // вместо клиентът да стига до козметиката и чак там да разбира.
+  const phoneOnlyCategories = React.useMemo(
+    () =>
+      new Set(
+        categories.filter((c) => services.filter((s) => s.category === c).every((s) => !isOnlineBookable(s))),
+      ),
+    [categories, services, isOnlineBookable],
+  );
+
   // Търсачка по име: пряк път за хора, които знаят какво искат („балаяж", „гел лак").
   const normalizedQuery = serviceQuery.trim().toLowerCase();
   const searchResults = React.useMemo(() => {
@@ -344,7 +364,8 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             <div className="space-y-1.5" role="listbox" aria-label="Намерени услуги">
               {searchResults.map((s) => {
                 const selected = selectedIds.includes(s.id);
-                const disabled = hasSelection && !selected && s.kind !== activeKind;
+                const phoneOnly = !isOnlineBookable(s);
+                const disabled = phoneOnly || (hasSelection && !selected && s.kind !== activeKind);
                 return (
                   <button
                     key={s.id}
@@ -369,7 +390,11 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                         <span className="block truncate text-sm font-medium">{s.name}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {s.category} · {s.groupTitle}
-                          {disabled && " · записва се отделно от вече избраните"}
+                          {phoneOnly
+                            ? ` · само по телефон: ${SALON_PHONE}`
+                            : disabled
+                              ? " · записва се отделно от вече избраните"
+                              : ""}
                         </span>
                       </span>
                     </span>
@@ -395,19 +420,34 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           <div className="flex flex-wrap gap-1.5">
             {categories.map((c) => {
               const Icon = CATEGORY_ICON[c];
+              const phoneOnly = phoneOnlyCategories.has(c);
               return (
                 <button
                   key={c}
                   type="button"
+                  disabled={phoneOnly}
                   onClick={() => chooseCategory(c)}
-                  className={chipCls(categoryName === c) + " inline-flex items-center gap-1.5"}
+                  className={
+                    phoneOnly
+                      ? "inline-flex cursor-not-allowed items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-muted-foreground opacity-60"
+                      : chipCls(categoryName === c) + " inline-flex items-center gap-1.5"
+                  }
                 >
                   {Icon && <Icon className="size-4" strokeWidth={1.6} />}
                   {c}
+                  {phoneOnly && <span className="text-xs font-normal">· по телефон</span>}
                 </button>
               );
             })}
           </div>
+          {phoneOnlyCategories.size > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {[...phoneOnlyCategories].join(", ")} се записва по телефона:{" "}
+              <a href={`tel:${SALON_PHONE.replace(/\s/g, "")}`} className="font-medium text-foreground underline underline-offset-2">
+                {SALON_PHONE}
+              </a>
+            </p>
+          )}
         </div>
 
         {/* Стъпка 2 — подкатегория (само ако има повече от една) */}
