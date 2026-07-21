@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Clock, Phone, type LucideIcon } from "lucide-react";
+import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Clock, Phone, Search, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,6 +139,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const [error, setError] = React.useState("");
   const [done, setDone] = React.useState<{ when: string; service: string; who: string } | null>(null);
   const [lightbox, setLightbox] = React.useState<PerformerOpt | null>(null);
+  const [serviceQuery, setServiceQuery] = React.useState("");
 
   // Избрани услуги (в реда на добавяне) — поддържа няколко последователни услуги в един визит.
   const selectedServices = React.useMemo(
@@ -173,6 +174,25 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
 
   function chooseGroup(g: string) {
     setGroupTitle(g);
+  }
+
+  // Търсачка по име: пряк път за хора, които знаят какво искат („балаяж", „гел лак").
+  const normalizedQuery = serviceQuery.trim().toLowerCase();
+  const searchResults = React.useMemo(() => {
+    if (normalizedQuery.length < 2) return [];
+    return services
+      .filter((s) => s.name.toLowerCase().includes(normalizedQuery) || s.groupTitle.toLowerCase().includes(normalizedQuery))
+      .slice(0, 8);
+  }, [services, normalizedQuery]);
+
+  /** Избор от търсачката: избира услугата И премества навигацията в нейната категория/вид. */
+  function pickFromSearch(s: PublicServiceOpt) {
+    toggleService(s);
+    if (!selectedIds.includes(s.id)) {
+      setCategoryName(s.category);
+      setGroupTitle(s.groupTitle);
+      setServiceQuery("");
+    }
   }
 
   // Добавя/маха услуга. Всички избрани трябва да са за един изпълнител (същия kind).
@@ -307,6 +327,68 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-6 md:p-8">
+        {/* Търсачка — пряк път през 70+ услуги, без да минаваш категория → вид */}
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={serviceQuery}
+              onChange={(e) => setServiceQuery(e.target.value)}
+              placeholder="Намери услуга — напр. балаяж, гел лак, педикюр…"
+              aria-label="Търси услуга по име"
+              className="h-11 pl-10 text-base"
+            />
+          </div>
+          {searchResults.length > 0 && (
+            <div className="space-y-1.5" role="listbox" aria-label="Намерени услуги">
+              {searchResults.map((s) => {
+                const selected = selectedIds.includes(s.id);
+                const disabled = hasSelection && !selected && s.kind !== activeKind;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => pickFromSearch(s)}
+                    className={
+                      "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors " +
+                      (selected
+                        ? "border-foreground bg-secondary"
+                        : disabled
+                          ? "cursor-not-allowed border-border opacity-40"
+                          : "border-border hover:border-foreground/50")
+                    }
+                  >
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      {serviceImageFor(s.name, s.groupTitle) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={serviceImageFor(s.name, s.groupTitle)!} alt={s.name} className="size-10 shrink-0 rounded-lg object-cover" />
+                      )}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">{s.name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {s.category} · {s.groupTitle}
+                          {disabled && " · записва се отделно от вече избраните"}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="whitespace-nowrap font-display text-sm font-medium text-primary">
+                      {s.priceFrom && <span className="font-normal text-muted-foreground">от </span>}
+                      {s.price} {s.currency}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {serviceQuery.trim().length >= 2 && searchResults.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              Няма услуга с това име — виж категориите долу или се обади на {SALON_PHONE}.
+            </p>
+          )}
+        </div>
+
         {/* Стъпка 1 — категория */}
         <div className="space-y-2">
           <Label>Категория</Label>
