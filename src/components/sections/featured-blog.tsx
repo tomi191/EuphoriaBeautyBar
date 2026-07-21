@@ -41,7 +41,7 @@ export async function FeaturedBlog() {
                 Журнал
               </span>
               <h2 className="mt-5 font-display text-5xl leading-[1] font-medium text-balance md:text-7xl">
-                Експертно за <em className="font-serif italic text-primary">косата и кожата</em>.
+                За косата и кожата — <em className="font-serif italic text-primary">от практиката</em>.
               </h2>
             </div>
             <div className="flex justify-start md:col-span-5 md:justify-end">

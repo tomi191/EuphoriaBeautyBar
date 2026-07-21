@@ -54,7 +54,7 @@ export default function ContactsPage() {
           <Reveal className="lg:col-span-5">
             <h2 className="font-display text-3xl font-medium md:text-4xl">Контактна информация</h2>
             <p className="mt-3 text-muted-foreground">
-              Открий ни лесно — обади се, пиши или ни посети директно в салона.
+              Намери ни лесно — обади се, пиши или ела на място.
             </p>
 
             <div className="mt-10 space-y-6">
@@ -124,7 +124,7 @@ export default function ContactsPage() {
       <section className="border-t border-border/40 bg-secondary/20 py-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <Reveal>
-            <h2 className="mb-8 font-display text-3xl font-medium md:text-4xl">Открий ни на картата</h2>
+            <h2 className="mb-8 font-display text-3xl font-medium md:text-4xl">Намери ни на картата</h2>
             <div className="aspect-[16/9] w-full overflow-hidden rounded-md border border-border/60 bg-secondary shadow-soft">
               <iframe
                 title="Euphoria Hair & Beauty Bar — карта"
