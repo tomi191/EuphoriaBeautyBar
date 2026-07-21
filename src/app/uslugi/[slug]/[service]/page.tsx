@@ -245,9 +245,19 @@ export default async function ServiceDetailPage({ params }: Params) {
                 <p className="mb-4 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Виж също</p>
                 <div className="flex flex-wrap justify-center gap-2">
                   <Link href={`/uslugi/${slug}`} className="rounded-full border border-border px-4 py-2 text-sm hover:border-foreground/50">Всички {category.title.toLowerCase()}</Link>
-                  {siblings.map((s) => (
-                    <span key={s.slug} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground">{s.name}</span>
-                  ))}
+                  {siblings.map((s) =>
+                    SERVICE_CONTENT[s.slug] ? (
+                      <Link
+                        key={s.slug}
+                        href={`/uslugi/${slug}/${s.slug}`}
+                        className="rounded-full border border-border px-4 py-2 text-sm hover:border-foreground/50 hover:text-foreground"
+                      >
+                        {s.name}
+                      </Link>
+                    ) : (
+                      <span key={s.slug} className="rounded-full border border-border px-4 py-2 text-sm text-muted-foreground">{s.name}</span>
+                    ),
+                  )}
                 </div>
               </div>
             </Reveal>

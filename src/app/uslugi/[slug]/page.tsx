@@ -175,7 +175,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                       {group.items.length} услуги
                     </span>
                   </header>
-                  <PricingTable groups={[{ title: group.label, items: [...group.items] }]} hideHeader />
+                  <PricingTable groups={[{ title: group.label, items: [...group.items] }]} hideHeader categorySlug={slug} />
                 </section>
               </Reveal>
             ))}

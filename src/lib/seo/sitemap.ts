@@ -15,6 +15,8 @@
  */
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
+import { SERVICE_CONTENT } from "@/lib/data/service-content";
+import { slugify } from "@/lib/utils";
 
 export type Changefreq = "weekly" | "monthly" | "yearly";
 
@@ -62,11 +64,24 @@ export const SECTIONS: SitemapSection[] = [
     id: "services",
     build: async () => {
       const categories = await getServiceCatalog();
-      return categories.map((c) => ({
+      const entries: SitemapEntry[] = categories.map((c) => ({
         path: `/uslugi/${c.slug}`,
         changefreq: "monthly" as const,
         priority: 0.7,
       }));
+      // Programmatic детайлни страници (само услуги със SERVICE_CONTENT) —
+      // без тях страниците са sitemap орфани (одит №6, P0).
+      for (const c of categories) {
+        for (const g of c.groups) {
+          for (const i of g.items) {
+            const s = slugify(i.name);
+            if (SERVICE_CONTENT[s]) {
+              entries.push({ path: `/uslugi/${c.slug}/${s}`, changefreq: "monthly" as const, priority: 0.6 });
+            }
+          }
+        }
+      }
+      return entries;
     },
   },
   // Montibello продуктовите страници са noindex (thin near-duplicate каталог) →
