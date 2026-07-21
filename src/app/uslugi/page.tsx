@@ -51,7 +51,7 @@ export default async function UslugiPage() {
               Всичко, от което <span className="gradient-text">красотата</span> ти има нужда.
             </h1>
             <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
-              Четири направления и над 60 услуги, с прозрачни цени и професионални марки.
+              Коса, нокти и лице — над 60 услуги с прозрачни цени и професионални марки.
             </p>
           </div>
         </div>

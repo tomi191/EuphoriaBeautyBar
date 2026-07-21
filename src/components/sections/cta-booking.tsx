@@ -47,7 +47,7 @@ export function CtaBooking() {
           </p>
           <h2 className="mt-5 max-w-3xl font-display text-5xl leading-[0.95] font-medium text-balance md:text-7xl lg:text-[6rem]">
             Един час за теб.{" "}
-            <em className="font-serif italic text-mint">Цял ден промяна.</em>
+            <em className="font-serif italic text-mint">Излизаш готова.</em>
           </h2>
 
           <div className="mt-10 flex flex-wrap items-center gap-5">

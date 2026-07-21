@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Галерия",
   alternates: { canonical: "/galeriya" },
   description:
-    "Преди и след трансформации, прически, маникюри и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
+    "Преди и после: боядисване, прически, маникюри и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
 };
 
 export default function GalleryPage() {
@@ -38,7 +38,7 @@ export default function GalleryPage() {
           </p>
           <BlurText
             as="h1"
-            text="Галерия с трансформации"
+            text="Преди и после"
             className="max-w-3xl font-display text-5xl font-medium text-balance md:text-6xl lg:text-7xl"
           />
           <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">

@@ -176,7 +176,7 @@ export default async function SalonVarnaLevskiPage() {
               <div>
                 <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Услугите ни</p>
                 <h2 className="font-display text-4xl leading-[1.05] font-medium md:text-5xl">
-                  Три направления, <span className="gradient-text">един салон</span> в Левски.
+                  Коса, нокти и лице — <span className="gradient-text">един салон</span> в Левски.
                 </h2>
               </div>
               <p className="max-w-md font-serif text-lg italic text-muted-foreground">
@@ -381,7 +381,7 @@ export default async function SalonVarnaLevskiPage() {
         <div className="mx-auto max-w-3xl px-4 text-center lg:px-8">
           <Reveal>
             <h2 className="font-display text-4xl font-medium md:text-5xl">
-              Готова за час в <em className="font-serif italic text-mint">кв. Левски</em>?
+              Запази си час в <em className="font-serif italic text-mint">кв. Левски</em>.
             </h2>
             <p className="mt-4 text-background/70">
               Виж свободните часове в реално време и запази онлайн за по-малко от минута — без обаждане.

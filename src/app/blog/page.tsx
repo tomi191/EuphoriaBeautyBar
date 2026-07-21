@@ -65,7 +65,7 @@ export default async function BlogPage() {
           <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/60">Журнал</p>
           <BlurText
             as="h1"
-            text="Експертно за косата, кожата и грижата за себе си"
+            text="Съвети от салона: коса, кожа, нокти"
             className="max-w-3xl font-display text-5xl font-medium text-balance md:text-6xl lg:text-7xl"
           />
         </div>

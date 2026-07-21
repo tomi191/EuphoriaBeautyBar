@@ -37,7 +37,7 @@ export function GiftCardBanner() {
                 Подари <em className="font-serif italic text-primary">красота</em>.
               </h2>
               <p className="mt-6 max-w-md font-serif text-lg italic text-foreground/75">
-                За рожден ден, годишнина или просто защото си заслужава. Избери стойност или конкретна процедура — ние я подготвяме за теб.
+                За рожден ден, годишнина — или без повод. Избери стойност или конкретна процедура — ние я подготвяме за теб.
               </p>
               <Button
                 asChild
