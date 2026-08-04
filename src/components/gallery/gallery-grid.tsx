@@ -10,16 +10,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { galleryCategories, type GalleryCategory, type GalleryImage } from "@/lib/data/gallery";
+import { galleryCategories, type GalleryCategory } from "@/lib/data/gallery";
 import { cn } from "@/lib/utils";
 
+/** Формата, в която grid-ът очаква снимка — покрива и DB реда, и статичния seed. */
+export interface GalleryDisplayImage {
+  id: string;
+  src: string;
+  alt: string;
+  category: string;
+  width: number;
+  height: number;
+  description?: string | null;
+}
+
 interface GalleryGridProps {
-  images: GalleryImage[];
+  images: GalleryDisplayImage[];
 }
 
 export function GalleryGrid({ images }: GalleryGridProps) {
   const [filter, setFilter] = React.useState<GalleryCategory>("all");
-  const [active, setActive] = React.useState<GalleryImage | null>(null);
+  const [active, setActive] = React.useState<GalleryDisplayImage | null>(null);
 
   const filtered = React.useMemo(() => {
     return filter === "all" ? images : images.filter((img) => img.category === filter);
@@ -96,6 +107,11 @@ export function GalleryGrid({ images }: GalleryGridProps) {
                 unoptimized
                 priority
               />
+              {active.description && (
+                <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 pt-10 pb-4 text-sm text-white">
+                  {active.description}
+                </p>
+              )}
               <Button
                 variant="ghost"
                 size="icon"

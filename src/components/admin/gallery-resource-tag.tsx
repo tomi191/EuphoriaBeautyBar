@@ -38,12 +38,12 @@ export function GalleryResourceTag({
       disabled={pending}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      className="w-full rounded border border-white/30 bg-foreground/70 px-1.5 py-1 text-[11px] text-background backdrop-blur focus-visible:outline-none disabled:opacity-60"
+      className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
       aria-label="Изпълнител (портфолио)"
     >
       <option value="">— без портфолио —</option>
       {resources.map((r) => (
-        <option key={r.id} value={r.id} className="text-foreground">
+        <option key={r.id} value={r.id}>
           {r.name}
         </option>
       ))}

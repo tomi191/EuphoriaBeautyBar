@@ -176,6 +176,8 @@ export const galleryImages = pgTable("gallery_images", {
   sortOrder: integer("sort_order").notNull().default(0),
   // FK към resources се налага на ниво БД (forward-reference в Drizzle би счупил подредбата на дефинициите тук).
   resourceId: text("resource_id"),
+  // Свободен текст от админа — показва се под снимката в lightbox-а на /galeriya.
+  description: text("description"),
 });
 
 export const googleReviews = pgTable("google_reviews", {
