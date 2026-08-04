@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { GalleryGrid } from "@/components/gallery/gallery-grid";
 import { BlurText } from "@/components/reactbits/blur-text";
-import { galleryImages } from "@/lib/data/gallery";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Галерия",
@@ -11,7 +11,11 @@ export const metadata: Metadata = {
     "Преди и после: боядисване, прически, маникюри и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  // Живее в БД (не в статичния seed файл) — админът качва/трие снимки от /admin/gallery
+  // и action-ът revalidate-ва тази страница.
+  const images = await db.query.galleryImages.findMany({ orderBy: (g, { asc }) => [asc(g.sortOrder)] });
+
   return (
     <>
       <section className="relative isolate min-h-[58svh] overflow-hidden bg-cream lg:min-h-[62svh]">
@@ -49,7 +53,7 @@ export default function GalleryPage() {
 
       <section className="pb-24 lg:pb-32">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
-          <GalleryGrid images={galleryImages} />
+          <GalleryGrid images={images} />
         </div>
       </section>
     </>

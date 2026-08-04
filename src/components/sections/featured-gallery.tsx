@@ -2,15 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
-import { galleryImages } from "@/lib/data/gallery";
+import { db } from "@/lib/db";
 
 /**
  * FeaturedGallery — секция „резултати" на началната страница. Изведена нагоре,
- * защото доказателството (реални работи) печели доверие рано. Подбрани 6 кадъра
- * в 100% качество; пълната галерия е на /galeriya.
+ * защото доказателството (реални работи) печели доверие рано. Първите 6 кадъра
+ * от БД (нови качвания от админа застават най-отпред); пълната галерия е на /galeriya.
  */
-export function FeaturedGallery() {
-  const shots = galleryImages.slice(0, 6);
+export async function FeaturedGallery() {
+  const shots = await db.query.galleryImages.findMany({
+    orderBy: (g, { asc }) => [asc(g.sortOrder)],
+    limit: 6,
+  });
 
   return (
     <section id="gallery" className="relative overflow-hidden bg-background py-20 lg:py-28">
