@@ -95,7 +95,7 @@ export const serviceCategories: ServiceCategory[] = [
     icon: "sparkles",
     heroImage: "/images/services/unique/keratinova-terapiya-kerasilk-goldwell.webp",
     seoTitle: "Фризьорски терапии във Варна — възстановяване, хидратация и блясък",
-    popular: ["Kerasilk кератин", "Nashi Argan", "Ламеларна вода", "Минерални ампули"],
+    popular: ["Кератинова терапия (Kerasilk)", "Ботокс за коса", "Nashi Argan", "Ламеларна вода"],
     groups: [
       {
         title: "Терапии за коса",
@@ -187,9 +187,9 @@ export const serviceCategories: ServiceCategory[] = [
     longDescription:
       "Козметичният кабинет работи с GIGI, Esthemax, Montibello и SAN MARINE. Протоколът се избира според типа кожа, възрастта и желания резултат — от почистване и хидратация до anti-age процедури.",
     icon: "flower",
-    heroImage: "/images/services/unique/hydra-facial-pochistvane.webp",
+    heroImage: "/images/services/unique/hydrafacial-pochistvane.webp",
     seoTitle: "Козметични услуги във Варна — грижа за кожата и лицето ти",
-    popular: ["Hydra Facial", "Микронидлинг", "BIOREPEELCL3 пилинг", "GOYUKI японски лифтинг", "Ламиниране мигли"],
+    popular: ["Hydrafacial", "Микронидлинг", "Химичен пилинг (BioRePeel)", "Японски лифтинг масаж", "Кола маска"],
     groups: [
       {
         title: "Почистване на лице",
@@ -197,7 +197,7 @@ export const serviceCategories: ServiceCategory[] = [
           { name: "Ултразвуково почистване", price: 70, currency: "лв", description: "Дълбоко почистване чрез ултразвук, премахва замърсявания" },
           { name: "Стандартно почистване", price: 70, currency: "лв", description: "Нежно почистване, възстановява естествения блясък" },
           { name: "Комбинирано (GIGI, Esthemax, Montibello)", price: 70, currency: "лв" },
-          { name: "Hydra facial почистване", price: 100, currency: "лв", description: "Модерно почистване, хидратира и ексфолира" },
+          { name: "Hydrafacial почистване", price: 100, currency: "лв", description: "Модерно почистване, хидратира и ексфолира" },
           { name: "Водно дермаабразио", price: 100, currency: "лв" },
           { name: "Аква пилинг", price: 100, currency: "лв" },
         ],
@@ -205,13 +205,13 @@ export const serviceCategories: ServiceCategory[] = [
       {
         title: "Терапии за лице",
         items: [
-          { name: "BIOREPEELCL3 биостимулиращ пилинг", price: 120, currency: "лв", description: "Подмладяващ пилинг, възстановява кожата" },
+          { name: "Химичен пилинг BioRePeel (биостимулиращ)", price: 120, currency: "лв", description: "Подмладяващ пилинг, възстановява кожата" },
           { name: "Тотална хидратация с пептиди GIGI", price: 90, currency: "лв" },
           { name: "ALUDE тотален лифтинг Montibello", price: 110, currency: "лв" },
           { name: "Detox City Nap GIGI", price: 100, currency: "лв" },
           { name: "OXYGEN инфузия Montibello", price: 90, currency: "лв" },
           { name: "Bioplasma с азелаинова киселина GIGI", price: 90, currency: "лв" },
-          { name: "HYALOFUUL Montibello", price: 90, currency: "лв" },
+          { name: "Хиалуронова терапия за лице Montibello", price: 90, currency: "лв" },
           { name: "RETIDERM ретинол + Вит. C Montibello", price: 100, currency: "лв" },
           { name: "Acnon анти акне GIGI", price: 90, currency: "лв" },
           { name: "Ester C анти пигмент", price: 100, currency: "лв" },
@@ -227,7 +227,7 @@ export const serviceCategories: ServiceCategory[] = [
       {
         title: "Японски масаж на лице",
         items: [
-          { name: "GOYUKI лифтинг (90 мин)", price: 60, currency: "лв", duration: "90 мин", description: "Релаксиращ масаж с подмладяващ и стягащ ефект" },
+          { name: "Японски лифтинг масаж Goyuki (90 мин)", price: 60, currency: "лв", duration: "90 мин", description: "Релаксиращ масаж с подмладяващ и стягащ ефект" },
         ],
       },
       {
@@ -238,23 +238,23 @@ export const serviceCategories: ServiceCategory[] = [
         ],
       },
       {
-        title: "Епилация и оформяне",
+        title: "Кола маска и оформяне на вежди",
         items: [
-          { name: "½ ръце", price: 15, currency: "лв" },
-          { name: "Цели ръце", price: 20, currency: "лв" },
-          { name: "Горна устна", price: 5, currency: "лв" },
-          { name: "Подмишници", price: 15, currency: "лв" },
-          { name: "½ крака", price: 20, currency: "лв" },
-          { name: "Цели крака", price: 35, currency: "лв" },
+          { name: "Кола маска — ½ ръце", price: 15, currency: "лв" },
+          { name: "Кола маска — цели ръце", price: 20, currency: "лв" },
+          { name: "Кола маска — горна устна", price: 5, currency: "лв" },
+          { name: "Кола маска — подмишници", price: 15, currency: "лв" },
+          { name: "Кола маска — ½ крака", price: 20, currency: "лв" },
+          { name: "Кола маска — цели крака", price: 35, currency: "лв" },
           { name: "Оформяне вежди", price: 8, priceFrom: true, priceMax: 10, currency: "лв" },
           { name: "Боядисване вежди", price: 5, currency: "лв" },
         ],
       },
     ],
     featured: [
-      { name: "BIOREPEELCL3 пилинг", price: 120, currency: "лв" },
+      { name: "Химичен пилинг (BioRePeel)", price: 120, currency: "лв" },
       { name: "Микронидлинг", price: 120, currency: "лв" },
-      { name: "Hydra facial", price: 100, currency: "лв" },
+      { name: "Hydrafacial", price: 100, currency: "лв" },
     ],
   },
 ];

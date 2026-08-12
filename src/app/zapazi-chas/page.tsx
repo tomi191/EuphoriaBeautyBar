@@ -62,8 +62,6 @@ export default async function BookingPage() {
     offeringsByResource.set(o.resourceId, m);
   }
 
-  const kindsWithPerformer = new Set(resources.map((r) => r.kind));
-
   const performers: PerformerOpt[] = resources.map((r) => ({
     id: r.id,
     name: r.name,
@@ -76,10 +74,14 @@ export default async function BookingPage() {
     offerings: offeringsByResource.get(r.id) ?? {},
   }));
 
+  // Услугите НЕ се филтрират по наличен изпълнител: kind без активен изпълнител
+  // (напр. маникюр между двама наематели) остава видим и формата го показва като
+  // „· по телефон" (както козметика със спрян онлайн запис), вместо категорията
+  // да изчезва мълчаливо, докато FAQ/CTA другаде обещават запис.
   const services: PublicServiceOpt[] = items.flatMap((i) => {
     const cat = catById.get(i.categoryId);
     const kind = cat ? KIND_BY_SLUG[cat.slug] : undefined;
-    if (!kind || !kindsWithPerformer.has(kind)) return [];
+    if (!kind) return [];
     return [
       {
         id: i.id,
