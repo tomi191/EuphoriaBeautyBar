@@ -78,6 +78,18 @@ const nextConfig: NextConfig = {
       { source: "/montibello-hop-:slug(.*)", destination: "/montibello", permanent: true },
       // Стар URL на услуга (преди /uslugi/ префикса) → новата категория.
       { source: "/frizorski-terapii", destination: "/uslugi/frizorski-terapii", permanent: true },
+
+      // ─── Преименувани услуги (08.2026): URL slug = slugify(име) → нов адрес ───
+      {
+        source: "/uslugi/frizorski-terapii/botoks-terapiya-xtreme-hydra",
+        destination: "/uslugi/frizorski-terapii/botoks-terapiya-za-kosa-xtreme-hydra",
+        permanent: true,
+      },
+      {
+        source: "/uslugi/kozmetika/osteoestetika-lifting-masazh-na-litse-shiya-i-dekolte",
+        destination: "/uslugi/kozmetika/lifting-masazh-s-limfen-drenazh-osteoestetika",
+        permanent: true,
+      },
     ];
   },
 };
