@@ -39,6 +39,7 @@ function businessBlock(): string {
     `- **Телефон / Viber:** ${siteConfig.contact.phoneFormatted}`,
     `- **Имейл:** ${siteConfig.contact.email}`,
     `- **Работно време:** ${hours}`,
+    `- **Плащане:** в брой, с карта или през Revolut, на място в салона (няма онлайн плащане и депозит при запазване)`,
     `- **Основател:** ${siteConfig.founder} (главен фризьор, зад стола от 2000 г.); салонът е основан ${siteConfig.founded} г.`,
     `- **Онлайн записване (24/7, реално време):** ${BOOKING_URL}`,
   ].join("\n");

@@ -1,5 +1,5 @@
 import { siteConfig } from "@/lib/site";
-import { faqItems } from "@/lib/data/faq";
+import { faqItems, HOME_FAQ_COUNT } from "@/lib/data/faq";
 
 /**
  * LocalBusiness schema. Приема опционален `rating` (от Google reviews в DB) →
@@ -63,7 +63,9 @@ export const localBusinessSchema = (rating?: { value: number; count: number }) =
   ],
   sameAs: [siteConfig.social.facebook, siteConfig.social.instagram],
   hasMap: siteConfig.address.mapsUrl,
-  paymentAccepted: ["Cash", "Credit Card", "Debit Card"],
+  // Плащане само на място (без онлайн плащане и депозит). Revolut е изписан и
+  // като „Revolut Pay" — двете форми, с които го разпознават асистентите.
+  paymentAccepted: ["Cash", "Credit Card", "Debit Card", "Revolut", "Revolut Pay"],
   currenciesAccepted: "BGN, EUR",
   knowsAbout: [
     "Балаяж",
@@ -147,7 +149,7 @@ export const organizationSchema = {
 export const faqPageSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqItems.slice(0, 6).map((item) => ({
+  mainEntity: faqItems.slice(0, HOME_FAQ_COUNT).map((item) => ({
     "@type": "Question",
     name: item.question,
     acceptedAnswer: { "@type": "Answer", text: item.answer },
