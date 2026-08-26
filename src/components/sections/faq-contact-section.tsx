@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/accordion";
 import { Reveal } from "@/components/reactbits/reveal";
 import { Button } from "@/components/ui/button";
-import { faqItems } from "@/lib/data/faq";
+import { HOME_FAQ_COUNT, type FAQItem } from "@/lib/data/faq";
 import { siteConfig } from "@/lib/site";
 
-export function FaqContactSection() {
+/** Въпросите идват отгоре (page.tsx чете базата веднъж и ги дава и на schema-та). */
+export function FaqContactSection({ items }: { items: FAQItem[] }) {
   return (
     <section id="faq" className="relative overflow-hidden border-y border-foreground/10 bg-cream py-24 lg:py-32">
       <Image
@@ -47,7 +48,7 @@ export function FaqContactSection() {
 
           <Reveal delay={0.1}>
             <Accordion type="single" collapsible className="mt-10 w-full">
-              {faqItems.slice(0, 6).map((item, idx) => (
+              {items.slice(0, HOME_FAQ_COUNT).map((item, idx) => (
                 <AccordionItem key={idx} value={`faq-${idx}`} className="border-foreground/10">
                   <AccordionTrigger className="text-left text-base font-medium hover:no-underline data-[state=open]:text-primary">
                     {item.question}

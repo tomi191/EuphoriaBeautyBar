@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Clock, Facebook, Instagram, Mail, MapPin, Phone, MessageCircle } from "lucide-react";
+import { Clock, CreditCard, Facebook, Instagram, Mail, MapPin, Phone, MessageCircle } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
@@ -83,6 +83,9 @@ export default function ContactsPage() {
                     </li>
                   ))}
                 </ul>
+              </ContactItem>
+              <ContactItem icon={CreditCard} title="Плащане">
+                На място в салона: в брой, с карта или през Revolut.
               </ContactItem>
               <div className="flex gap-3 pt-4">
                 <a

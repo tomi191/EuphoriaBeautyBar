@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { FaqForm } from "@/components/admin/faq-form";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { deleteFaq } from "@/lib/actions/faq";
+import { HOME_FAQ_COUNT } from "@/lib/data/faq";
 
 export default async function AdminFaqPage() {
   const items = await db.query.faqItems.findMany({
@@ -16,7 +17,7 @@ export default async function AdminFaqPage() {
     <>
       <PageHeader
         title="Често задавани въпроси"
-        subtitle="Видими на началната страница и индексирани като FAQPage в Google."
+        subtitle={`Първите ${HOME_FAQ_COUNT} по ред излизат на началната страница и се индексират като FAQPage в Google. Останалите остават в /llms-full.txt за AI асистентите.`}
         action={
           <FaqForm
             trigger={

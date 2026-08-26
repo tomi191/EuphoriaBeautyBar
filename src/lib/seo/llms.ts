@@ -1,5 +1,5 @@
 import { siteConfig } from "@/lib/site";
-import { faqItems } from "@/lib/data/faq";
+import { getFaqItems } from "@/lib/data/faq-db";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
@@ -39,6 +39,7 @@ function businessBlock(): string {
     `- **Телефон / Viber:** ${siteConfig.contact.phoneFormatted}`,
     `- **Имейл:** ${siteConfig.contact.email}`,
     `- **Работно време:** ${hours}`,
+    `- **Плащане:** в брой, с карта или през Revolut, на място в салона (няма онлайн плащане и депозит при запазване)`,
     `- **Основател:** ${siteConfig.founder} (главен фризьор, зад стола от 2000 г.); салонът е основан ${siteConfig.founded} г.`,
     `- **Онлайн записване (24/7, реално време):** ${BOOKING_URL}`,
   ].join("\n");
@@ -135,7 +136,7 @@ export async function renderLlmsFullTxt(): Promise<string> {
   });
 
   const serviceFaq = catalog.flatMap((c) => SERVICE_FAQ[c.slug] ?? []);
-  const allFaq = [...faqItems, ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
+  const allFaq = [...(await getFaqItems()), ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
 
   return [
     `# ${siteConfig.name} — пълна информация`,
