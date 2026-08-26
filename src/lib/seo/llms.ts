@@ -1,5 +1,5 @@
 import { siteConfig } from "@/lib/site";
-import { faqItems } from "@/lib/data/faq";
+import { getFaqItems } from "@/lib/data/faq-db";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
@@ -136,7 +136,7 @@ export async function renderLlmsFullTxt(): Promise<string> {
   });
 
   const serviceFaq = catalog.flatMap((c) => SERVICE_FAQ[c.slug] ?? []);
-  const allFaq = [...faqItems, ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
+  const allFaq = [...(await getFaqItems()), ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
 
   return [
     `# ${siteConfig.name} — пълна информация`,
