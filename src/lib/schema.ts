@@ -172,6 +172,8 @@ export const serviceSchema = (service: {
   url: string;
   category: string;
   offers?: { lowPrice: number; highPrice: number; priceCurrency: string };
+  /** Per-услуга цени (P2-3) — машинно четим ценоразпис за rich results и AI parsing. */
+  catalog?: { name: string; price: number; priceCurrency: string }[];
 }) => ({
   "@context": "https://schema.org",
   "@type": "Service",
@@ -199,6 +201,19 @@ export const serviceSchema = (service: {
       priceCurrency: service.offers.priceCurrency,
     },
   }),
+  ...(service.catalog &&
+    service.catalog.length > 0 && {
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: `${service.name} — ценоразпис`,
+        itemListElement: service.catalog.map((c) => ({
+          "@type": "Offer",
+          itemOffered: { "@type": "Service", name: c.name },
+          price: c.price,
+          priceCurrency: c.priceCurrency,
+        })),
+      },
+    }),
 });
 
 export const aggregateRatingSchema = (rating: number, count: number) => ({

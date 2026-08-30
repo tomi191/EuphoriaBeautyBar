@@ -296,6 +296,13 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             url: `${siteConfig.url}/uslugi/${category.slug}`,
             category: category.shortTitle,
             offers: { lowPrice, highPrice, priceCurrency },
+            catalog: category.groups.flatMap((g) =>
+              g.items.map((i) => ({
+                name: i.name,
+                price: i.price,
+                priceCurrency: i.currency === "€" ? "EUR" : "BGN",
+              })),
+            ),
           }),
           ...(faq.length > 0 ? [faqSchema(faq)] : []),
         ]}
