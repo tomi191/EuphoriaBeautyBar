@@ -210,7 +210,7 @@ export default async function VezhdiIMigliVarnaPage() {
               Погледът започва от <em className="font-serif italic text-mint">веждите</em>.
             </h2>
             <p className="mt-4 text-background/70">
-              Запази час онлайн — виждаш свободните часове в реално време, без обаждане.
+              Запази час онлайн: виждаш свободните часове в реално време, без обаждане.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-full bg-mint px-8 text-foreground hover:bg-mint/80">
@@ -234,7 +234,7 @@ export default async function VezhdiIMigliVarnaPage() {
           serviceSchema({
             name: "Вежди и мигли",
             description:
-              "Оформяне и боядисване на вежди, ламиниране на вежди и мигли във Варна, кв. Левски — с реални цени от каталога на салон Euphoria.",
+              "Оформяне и боядисване на вежди, ламиниране на вежди и мигли във Варна, кв. Левски, с реални цени от каталога на салон Euphoria.",
             url: `${siteConfig.url}/uslugi/vezhdi-i-migli-varna`,
             category: "Козметични услуги",
             catalog: groups.flatMap((g) =>
