@@ -60,6 +60,8 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: siteConfig.founder }],
   creator: siteConfig.name,
+  // Само types (не canonical — виж коментара по-горе): RSS автодискавъри.
+  alternates: { types: { "application/rss+xml": "/feed.xml" } },
   openGraph: {
     type: "website",
     locale: siteConfig.locale,

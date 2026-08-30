@@ -235,6 +235,9 @@ export default async function KichuriVarnaPage() {
               "Кичури на фолио във Варна, кв. Левски — равномерно изсветляване от корена при Снежана, с грижа Goldwell Kerasilk след процедурата.",
             url: `${siteConfig.url}/uslugi/kichuri-varna`,
             category: "Фризьорски услуги",
+            catalog: groups.flatMap((g) =>
+              g.items.map((i) => ({ name: i.name, price: i.price, priceCurrency: i.currency === "€" ? "EUR" : "BGN" })),
+            ),
           }),
           faqSchema(faq),
         ]}

@@ -235,6 +235,9 @@ export default async function KolaMaskaVarnaPage() {
               "Кола маска (епилация с восък) във Варна, кв. Левски — по зони: крака, ръце, подмишници, горна устна. Реални цени за всяка зона.",
             url: `${siteConfig.url}/uslugi/kola-maska-varna`,
             category: "Козметични услуги",
+            catalog: groups.flatMap((g) =>
+              g.items.map((i) => ({ name: i.name, price: i.price, priceCurrency: i.currency === "€" ? "EUR" : "BGN" })),
+            ),
           }),
           faqSchema(faq),
         ]}

@@ -233,6 +233,9 @@ export default async function PochistvaneNaLitseVarnaPage() {
               "Почистване на лице във Варна, кв. Левски: ултразвуково, комбинирано с ръчна екстракция, Hydrafacial и медицинско със серия Acnon на GIGI.",
             url: `${siteConfig.url}/uslugi/pochistvane-na-litse-varna`,
             category: "Козметични услуги",
+            catalog: groups.flatMap((g) =>
+              g.items.map((i) => ({ name: i.name, price: i.price, priceCurrency: i.currency === "€" ? "EUR" : "BGN" })),
+            ),
           }),
           faqSchema(faq),
         ]}

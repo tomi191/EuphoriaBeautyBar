@@ -237,6 +237,9 @@ export default async function VezhdiIMigliVarnaPage() {
               "Оформяне и боядисване на вежди, ламиниране на вежди и мигли във Варна, кв. Левски — с реални цени от каталога на салон Euphoria.",
             url: `${siteConfig.url}/uslugi/vezhdi-i-migli-varna`,
             category: "Козметични услуги",
+            catalog: groups.flatMap((g) =>
+              g.items.map((i) => ({ name: i.name, price: i.price, priceCurrency: i.currency === "€" ? "EUR" : "BGN" })),
+            ),
           }),
           faqSchema(faq),
         ]}

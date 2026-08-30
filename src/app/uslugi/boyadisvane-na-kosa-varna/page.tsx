@@ -236,6 +236,9 @@ export default async function BoyadisvaneNaKosaVarnaPage() {
               "Боядисване на коса и корекция на цвят във Варна, кв. Левски — при Снежана, с професионални бои Montibello.",
             url: `${siteConfig.url}/uslugi/boyadisvane-na-kosa-varna`,
             category: "Фризьорски услуги",
+            catalog: groups.flatMap((g) =>
+              g.items.map((i) => ({ name: i.name, price: i.price, priceCurrency: i.currency === "€" ? "EUR" : "BGN" })),
+            ),
           }),
           faqSchema(faq),
         ]}
