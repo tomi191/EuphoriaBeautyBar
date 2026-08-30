@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteBot } from "@/components/bot/site-bot";
 import { MobileCallBar } from "@/components/layout/mobile-call-bar";
 import { JsonLd } from "@/components/seo/json-ld";
 import { websiteSchema, organizationSchema, personSchema } from "@/lib/schema";
@@ -107,6 +108,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SiteFooter />
           </div>
           <MobileCallBar />
+          <SiteBot />
           <Toaster richColors closeButton position="top-right" />
         </ThemeProvider>
         {/* LocalBusiness (с AggregateRating) живее на homepage — там rating-ът се чете
