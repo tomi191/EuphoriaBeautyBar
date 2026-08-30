@@ -84,13 +84,13 @@ function formatPrice(s: BotService): string {
 
 /** Специализирани страници — при съвпадение линкваме тях, не само хъба. */
 const LANDINGS: { re: RegExp; link: BotLink }[] = [
-  { re: /балаяж/, link: { label: "Балаяж във Варна — детайли и цени", href: "/uslugi/balayazh-varna" } },
-  { re: /боядисван|боя за коса|цвят на коса|корекция/, link: { label: "Боядисване на коса — цени", href: "/uslugi/boyadisvane-na-kosa-varna" } },
-  { re: /кичури/, link: { label: "Кичури — цени по дължина", href: "/uslugi/kichuri-varna" } },
-  { re: /почистване на лице|хидрафейш|hydrafacial|акне/, link: { label: "Почистване на лице — видове и цени", href: "/uslugi/pochistvane-na-litse-varna" } },
-  { re: /кола маска/, link: { label: "Кола маска — цени по зони", href: "/uslugi/kola-maska-varna" } },
-  { re: /вежди|мигли|ламиниране/, link: { label: "Вежди и мигли — цени", href: "/uslugi/vezhdi-i-migli-varna" } },
-  { re: /медицински педикюр|врастнал/, link: { label: "Медицински педикюр — детайли", href: "/uslugi/manikyur-i-pedikyur/meditsinski-pedikyur" } },
+  { re: /балаяж/, link: { label: "Балаяж във Варна: детайли и цени", href: "/uslugi/balayazh-varna" } },
+  { re: /боядисван|боя за коса|цвят на коса|корекция/, link: { label: "Боядисване на коса: цени", href: "/uslugi/boyadisvane-na-kosa-varna" } },
+  { re: /кичури/, link: { label: "Кичури: цени по дължина", href: "/uslugi/kichuri-varna" } },
+  { re: /почистване на лице|хидрафейш|hydrafacial|акне/, link: { label: "Почистване на лице: видове и цени", href: "/uslugi/pochistvane-na-litse-varna" } },
+  { re: /кола маска/, link: { label: "Кола маска: цени по зони", href: "/uslugi/kola-maska-varna" } },
+  { re: /вежди|мигли|ламиниране/, link: { label: "Вежди и мигли: цени", href: "/uslugi/vezhdi-i-migli-varna" } },
+  { re: /медицински педикюр|врастнал/, link: { label: "Медицински педикюр: детайли", href: "/uslugi/manikyur-i-pedikyur/meditsinski-pedikyur" } },
 ];
 
 function searchServices(q: string, ctx: BotContext): { list: BotService[]; score: number } {
@@ -124,7 +124,7 @@ function matchFaq(q: string, ctx: BotContext): { question: string; answer: strin
 
 const ESCALATION: BotReply = {
   intent: "fallback",
-  text: "Не съм сигурен, че разбрах точно. Най-бързо ще ти помогнат на телефона или във Viber — а ако търсиш услуга и цена, пробвай да я напишеш с една-две думи (например „балаяж“ или „педикюр“).",
+  text: "Не съм сигурен, че разбрах точно. Най-бързо ще ти помогнат на телефона или във Viber. Ако търсиш услуга и цена, напиши я с една-две думи (например „балаяж“ или „педикюр“).",
   links: [PHONE_LINK, VIBER_LINK],
   suggestions: MENU,
 };
@@ -145,7 +145,10 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
   // 2. Работно време (преди „работа", за да не се засичат).
   if (/(работно време|отворен|затворен|кога работ|до колко|от колко часа|неделя|събота|почивен)/.test(q)) {
     const hours = siteConfig.hours
-      .map((h) => (h.close ? `${h.day}: ${h.open}–${h.close}` : `${h.day}: ${h.open.toLowerCase()} ден`))
+      .map((h) => {
+        const day = h.day.replace(" – ", " до ");
+        return h.close ? `${day}: ${h.open}–${h.close}` : `${day}: ${h.open.toLowerCase()} ден`;
+      })
       .join(" · ");
     return {
       intent: "hours",
@@ -159,7 +162,7 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
   if (/(къде|адрес|локация|паркинг|паркирам|намира|как да стигна|квартал)/.test(q)) {
     return {
       intent: "location",
-      text: `Намираме се на ${siteConfig.address.full} — кв. Левски, близо до центъра на Варна. В района има улично паркиране; в натоварените часове ела няколко минути по-рано.`,
+      text: `Намираме се на ${siteConfig.address.full}, близо до центъра. В района има улично паркиране; в натоварените часове ела няколко минути по-рано.`,
       links: [
         { label: "Отвори в Google Maps", href: siteConfig.address.mapsUrl },
         BOOK_LINK,
@@ -172,7 +175,7 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
   if (/(плаща|плащане|карта|в брой|кеш|револют|revolut|депозит|капаро)/.test(q)) {
     return {
       intent: "payment",
-      text: "Плаща се на място в салона: в брой, с карта или през Revolut. Онлайн записването е без депозит — не дължиш нищо предварително.",
+      text: "Плаща се на място в салона: в брой, с карта или през Revolut. Онлайн записването е без депозит, нищо не дължиш предварително.",
       links: [BOOK_LINK],
       suggestions: MENU,
     };
@@ -184,14 +187,14 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
       const list = ctx.positions.map((p) => p.title).join(", ");
       return {
         intent: "careers",
-        text: `Работим на модел „място под наем" — със свой график и готова клиентска база. В момента свободни са: ${list}. Детайлите и условията са на страницата за кариери.`,
+        text: `Работим на модел „място под наем“, със свой график и готова клиентска база. В момента свободни са: ${list}. Детайлите и условията са на страницата за кариери.`,
         links: [{ label: "Виж свободните места", href: "/karieri" }, PHONE_LINK],
         suggestions: MENU,
       };
     }
     return {
       intent: "careers",
-      text: "Работим на модел „място под наем“. В момента няма обявени свободни места, но условията и формата за контакт са на страницата за кариери — обявите се появяват първо там.",
+      text: "Работим на модел „място под наем“. В момента няма обявени свободни места, но условията и формата за контакт са на страницата за кариери; обявите се появяват първо там.",
       links: [{ label: "Страница Кариери", href: "/karieri" }, PHONE_LINK],
       suggestions: MENU,
     };
@@ -201,7 +204,7 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
   if (/(телефон|обади|обаждане|говоря с|човек|вайбер|viber|контакт|имейл|мейл|email)/.test(q)) {
     return {
       intent: "contact",
-      text: `Разбира се — на телефона и във Viber отговаря човек от салона: ${siteConfig.contact.phoneFormatted}. Имейлът ни е ${siteConfig.contact.email}.`,
+      text: `На телефона и във Viber отговаря човек от салона: ${siteConfig.contact.phoneFormatted}. Имейлът ни е ${siteConfig.contact.email}.`,
       links: [PHONE_LINK, VIBER_LINK],
       suggestions: MENU,
     };
@@ -226,7 +229,8 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
   const { list, score } = searchServices(q, ctx);
   const landing = LANDINGS.find((l) => l.re.test(q));
   if (list.length > 0 && score >= 2) {
-    const lines = list.map((s) => `• ${s.name} — ${formatPrice(s)}`).join("\n");
+    // Имената в каталога ползват „—" като разделител; в чат реплика го сменяме с „·".
+    const lines = list.map((s) => `• ${s.name.replace(/\s+—\s+/g, " · ")}: ${formatPrice(s)}`).join("\n");
     const links: BotLink[] = [];
     if (landing) links.push(landing.link);
     links.push({ label: "Пълен ценоразпис", href: `/uslugi/${list[0].categorySlug}` }, BOOK_LINK);

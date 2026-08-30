@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     // Ботът никога не „виси": ескалация към каналите с човек.
     return NextResponse.json({
       intent: "error",
-      text: "В момента нещо се обърка при мен. Обади се или пиши във Viber — там отговаря човек от салона.",
+      text: "В момента нещо се обърка при мен. Обади се или пиши във Viber: там отговаря човек от салона.",
       links: [
         { label: "+359 898 66 33 15", href: "tel:+359898663315" },
         { label: "Пиши във Viber", href: "viber://chat?number=%2B359898663315" },

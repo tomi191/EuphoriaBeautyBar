@@ -76,8 +76,26 @@ async function main() {
     console.log(`${ok ? "✅" : "❌"} „${c.q}" → ${r.intent}${okLink ? "" : ` (липсва линк ${c.linkIncludes})`}${okText ? "" : ` (липсва текст ${c.textIncludes})`}`);
     if (!ok) console.log(`   ↳ ${r.text.slice(0, 120)} | links: ${(r.links ?? []).map((l) => l.href).join(", ")}`);
   }
+  // Anti-slop гард (строгите правила): нито една реплика/етикет на бота не бива
+  // да съдържа дълго/средно тире или AI-tell лексика (bg-anti-robot канона).
+  // „–" между цифри (09:00–18:00, 77–97 €) е легитимна типография; спейснато или
+  // между букви е тире-в-проза → забранено, както и „—" навсякъде.
+  const SLOP = /—|\s–\s|[а-яa-z]–[а-яa-z]|ключов|иновативн|революционн|уникалн|свидетелство|не просто|в днешния/i;
+  let slopFail = 0;
+  for (const c of CASES) {
+    const r = answerQuestion(c.q, ctx);
+    const texts = [r.text, ...(r.links ?? []).map((l) => l.label), ...(r.suggestions ?? [])];
+    for (const t of texts) {
+      if (SLOP.test(t)) {
+        slopFail++;
+        console.log(`🚫 SLOP при „${c.q}": ${t.slice(0, 100)}`);
+      }
+    }
+  }
+  console.log(slopFail === 0 ? "✅ Anti-slop гард: чисто" : `🚫 Anti-slop гард: ${slopFail} нарушения`);
+
   console.log(`\n${pass}/${CASES.length} минаха`);
-  process.exit(fail === 0 ? 0 : 1);
+  process.exit(fail === 0 && slopFail === 0 ? 0 : 1);
 }
 
 main().catch((e) => {

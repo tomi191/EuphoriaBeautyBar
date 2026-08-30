@@ -206,7 +206,7 @@ export default async function PochistvaneNaLitseVarnaPage() {
               Кожата ти има нужда от <em className="font-serif italic text-mint">почистване</em>?
             </h2>
             <p className="mt-4 text-background/70">
-              Запази час онлайн — виждаш свободните часове в реално време, без обаждане.
+              Запази час онлайн: виждаш свободните часове в реално време, без обаждане.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-full bg-mint px-8 text-foreground hover:bg-mint/80">

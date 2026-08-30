@@ -32,7 +32,7 @@ const GREETING: BotMessage = {
 
 const ERROR_MESSAGE: BotMessage = {
   role: "bot",
-  text: "Нещо се обърка при мен. Обади се или пиши във Viber — там отговаря човек от салона.",
+  text: "Нещо се обърка при мен. Обади се или пиши във Viber: там отговаря човек от салона.",
   links: [
     { label: "+359 898 66 33 15", href: "tel:+359898663315" },
     { label: "Пиши във Viber", href: "viber://chat?number=%2B359898663315" },
