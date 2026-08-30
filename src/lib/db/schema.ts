@@ -348,6 +348,17 @@ export const siteSettings = pgTable("site_settings", {
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
 });
 
+// Лог на бот въпросите (site bot, без LLM). Неотговорените (matched=false) са
+// суров keyword research + кандидати за нови FAQ. Създава се от
+// scripts/create-bot-queries-table.ts (db:push е счупен — виж памет).
+export const botQueries = pgTable("bot_queries", {
+  id: text("id").primaryKey(),
+  message: text("message").notNull(),
+  intent: text("intent").notNull(),
+  matched: boolean("matched").notNull(),
+  createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+});
+
 export type User = typeof user.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
 export type NewTeamMember = typeof teamMembers.$inferInsert;
