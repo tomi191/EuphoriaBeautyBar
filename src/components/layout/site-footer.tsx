@@ -95,9 +95,14 @@ export function SiteFooter() {
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/uslugi/frizorski-uslugi" className="text-muted-foreground hover:text-primary">Фризьорски услуги</Link></li>
               <li><Link href="/uslugi/balayazh-varna" className="text-muted-foreground hover:text-primary">Балаяж във Варна</Link></li>
+              <li><Link href="/uslugi/boyadisvane-na-kosa-varna" className="text-muted-foreground hover:text-primary">Боядисване на коса</Link></li>
+              <li><Link href="/uslugi/kichuri-varna" className="text-muted-foreground hover:text-primary">Кичури във Варна</Link></li>
               <li><Link href="/uslugi/frizorski-terapii" className="text-muted-foreground hover:text-primary">Фризьорски терапии</Link></li>
               <li><Link href="/uslugi/manikyur-i-pedikyur" className="text-muted-foreground hover:text-primary">Маникюр и педикюр</Link></li>
               <li><Link href="/uslugi/kozmetika" className="text-muted-foreground hover:text-primary">Козметика</Link></li>
+              <li><Link href="/uslugi/pochistvane-na-litse-varna" className="text-muted-foreground hover:text-primary">Почистване на лице</Link></li>
+              <li><Link href="/uslugi/kola-maska-varna" className="text-muted-foreground hover:text-primary">Кола маска</Link></li>
+              <li><Link href="/uslugi/vezhdi-i-migli-varna" className="text-muted-foreground hover:text-primary">Вежди и мигли</Link></li>
               <li><Link href="/montibello" className="text-muted-foreground hover:text-primary">Montibello</Link></li>
             </ul>
           </div>
