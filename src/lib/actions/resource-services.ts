@@ -13,6 +13,9 @@ function revalidate() {
   revalidatePath("/zapazi-chas");
   revalidatePath("/uslugi");
   revalidatePath("/uslugi/[slug]", "page");
+  // Статичните hair landing-и рендират цени от каталога — иначе замръзват до deploy.
+  revalidatePath("/uslugi/boyadisvane-na-kosa-varna");
+  revalidatePath("/uslugi/kichuri-varna");
   revalidatePath("/");
 }
 

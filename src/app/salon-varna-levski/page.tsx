@@ -17,15 +17,16 @@ import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   // Хипер-локална landing — таргетира „салон за красота кв. Левски Варна" +
-  // „маникюр варна левски" (90 vol), заявка, която конкурентите (Чайка/център) не покриват.
-  title: "Салон за красота кв. Левски, Варна",
+  // „фризьорски салон варна левски" (90) + „маникюр варна левски" (90) —
+  // заявки, които конкурентите (Чайка/център) не покриват.
+  title: "Салон за красота и фризьор в кв. Левски, Варна",
   description:
-    "Коса, нокти и лице на едно място в кв. Левски, Варна — ул. Петър Райчев 18. Снежана: 25+ г. опит. Лесно паркиране наоколо. Запази час онлайн за минута.",
+    "Фризьорски салон, маникюр и козметика на едно място в кв. Левски, Варна — ул. Петър Райчев 18. Снежана: 25+ г. опит с косата. Лесно паркиране наоколо. Запази час онлайн за минута.",
   alternates: { canonical: "/salon-varna-levski" },
   openGraph: {
-    title: "Салон за красота в кв. Левски, Варна — Euphoria",
+    title: "Салон за красота и фризьор в кв. Левски, Варна — Euphoria",
     description:
-      "Коса, нокти и лице на едно място в кв. Левски, Варна. Снежана с 25+ години опит. Онлайн записване на час.",
+      "Фризьорски салон, маникюр и козметика на едно място в кв. Левски, Варна. Снежана с 25+ години опит. Онлайн записване на час.",
     images: ["/og-image.png"],
   },
 };
@@ -46,6 +47,11 @@ const localFaq = [
     question: "Какви услуги предлагате на едно място?",
     answer:
       "Коса, нокти и лице под един покрив — фризьорски услуги и терапии, маникюр и педикюр, и козметични процедури за лице. Може да комбинираш няколко услуги в едно посещение.",
+  },
+  {
+    question: "Има ли фризьорски салон в кв. Левски?",
+    answer:
+      "Да — в Euphoria косата е при Снежана, главен фризьор с над 25 години опит: подстригване, боядисване, кичури, балаяж, официални прически и възстановяващи терапии с Goldwell Kerasilk и Montibello. Не е нужно да пътуваш до центъра на Варна.",
   },
   {
     question: "Как да запазя час?",
@@ -285,6 +291,43 @@ export default async function SalonVarnaLevskiPage() {
                 Запознай се с екипа <ArrowRight className="size-4" />
               </Link>
             </Button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───── ФРИЗЬОРСКИ САЛОН В ЛЕВСКИ — hair-first ъгъл („фризьорски салон варна левски") ───── */}
+      <section className="py-20 lg:py-28">
+        <div className="mx-auto max-w-3xl px-4 lg:px-8">
+          <Reveal>
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Косата — на първо място</p>
+            <h2 className="font-display text-3xl leading-[1.1] font-medium md:text-4xl">
+              Фризьорски салон в <span className="gradient-text">кв. Левски</span> — без път до центъра.
+            </h2>
+            <div className="mt-6 space-y-4 text-foreground/80 md:text-lg">
+              <p>
+                Сърцето на Euphoria е фризьорството. Снежана работи с коса от 2000 г. — подстригване,{" "}
+                <Link href="/uslugi/boyadisvane-na-kosa-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                  боядисване
+                </Link>
+                ,{" "}
+                <Link href="/uslugi/kichuri-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                  кичури на фолио
+                </Link>
+                ,{" "}
+                <Link href="/uslugi/balayazh-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                  балаяж
+                </Link>{" "}
+                и официални прически, плюс възстановяващи терапии с Goldwell Kerasilk и Nashi Argan.
+              </p>
+              <p>
+                Ако си от Левски, Чаталджа, Чайка или Възраждане — салонът е на ул. Петър Райчев 18, с улично
+                паркиране наоколо. Пълните цени са в{" "}
+                <Link href="/uslugi/frizorski-uslugi" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                  ценоразписа на фризьорските услуги
+                </Link>
+                .
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>

@@ -13,10 +13,10 @@ import { team } from "@/lib/data/team";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
-  // Signature локална страница — „балаяж варна" + национален чадър „балаяж" (6K).
+  // Signature локална страница — „балаяж варна" + национален чадър „балаяж"/„балеаж" (5–6K).
   title: "Балаяж във Варна, кв. Левски",
   description:
-    "Балаяж във Варна при Снежана (25+ г. опит), кв. Левски. Мек преход, който расте красиво, с грижа Goldwell Kerasilk. Реални цени, онлайн записване на час.",
+    "Балаяж (балеаж) във Варна при Снежана (25+ г. опит), кв. Левски. Мек преход, който расте красиво, с грижа Goldwell Kerasilk. Реални цени, онлайн записване на час.",
   alternates: { canonical: "/uslugi/balayazh-varna" },
   openGraph: {
     title: "Балаяж във Варна — салон Euphoria, кв. Левски",
@@ -27,6 +27,11 @@ export const metadata: Metadata = {
 };
 
 const faq = [
+  {
+    question: "Балаяж или балеаж — кое е правилното?",
+    answer:
+      "Думата идва от френското balayage („метене“ — заради движението, с което се нанася боята). На български се пише „балаяж“, но много хора я търсят и като „балеаж“ — процедурата е една и съща: ръчно изсветляване с мек преход, без рязка граница на корена.",
+  },
   {
     question: "Колко издържа балаяж?",
     answer:
@@ -126,9 +131,9 @@ export default function BalayazhVarnaPage() {
             </h2>
             <div className="mt-6 space-y-4 text-foreground/80 md:text-lg">
               <p>
-                При балаяжа боята се нанася ръчно по дължината, а не от корен до връх. Така изсветляването е меко и
-                наподобява естественото избеляване от слънцето — преходът е плавен, а израстването не оставя видима
-                линия на корена.
+                При балаяжа (среща се и изписан „балеаж") боята се нанася ръчно по дължината, а не от корен до връх.
+                Така изсветляването е меко и наподобява естественото избеляване от слънцето — преходът е плавен, а
+                израстването не оставя видима линия на корена.
               </p>
               <p>
                 Точно затова балаяжът иска по-малко поддръжка от класическите кичури: между процедурите обикновено
@@ -210,7 +215,15 @@ export default function BalayazhVarnaPage() {
           </div>
           <Reveal delay={0.1}>
             <p className="mt-8 text-foreground/75">
-              Цените на балаяж, кичури и терапиите са в{" "}
+              За кичурите има отделна страница —{" "}
+              <Link href="/uslugi/kichuri-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                кичури на фолио във Варна
+              </Link>
+              , а класическото{" "}
+              <Link href="/uslugi/boyadisvane-na-kosa-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
+                боядисване на коса
+              </Link>{" "}
+              — своя. Пълните цени са в{" "}
               <Link href="/uslugi/frizorski-uslugi" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
                 ценоразписа на фризьорските услуги
               </Link>{" "}
