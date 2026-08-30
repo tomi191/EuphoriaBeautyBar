@@ -39,6 +39,8 @@ const STATIC_PATHS = [
   "",
   "/uslugi",
   "/uslugi/balayazh-varna",
+  "/uslugi/boyadisvane-na-kosa-varna",
+  "/uslugi/kichuri-varna",
   "/salon-varna-levski",
   "/zapazi-chas",
   "/galeriya",
