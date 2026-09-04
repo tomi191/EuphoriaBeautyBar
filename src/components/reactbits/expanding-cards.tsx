@@ -98,8 +98,10 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
                 />
               )}
 
-              {/* Title — винаги визуално, в долен ляв ъгъл */}
-              <div className="absolute inset-x-0 bottom-0 z-10 p-6 md:p-7">
+              {/* Title + hover съдържание — само от lg нагоре. На тесен екран
+                  този блок и блокът отдолу са и двата absolute bottom-0, тоест
+                  се застъпваха; там показваме единствено обединения долен блок. */}
+              <div className="absolute inset-x-0 bottom-0 z-10 hidden p-6 md:p-7 lg:block">
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mint">
                   {card.shortTitle}
                 </p>
@@ -137,9 +139,13 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
                 </motion.div>
               </div>
 
-              {/* Default mobile визия — винаги visible details */}
-              <div className="absolute inset-x-0 bottom-0 z-0 p-6 lg:hidden">
-                <p className="mt-2 max-w-md text-sm text-background/80">{card.description}</p>
+              {/* Мобилна визия — заглавието и детайлите са в един блок, без hover */}
+              <div className="absolute inset-x-0 bottom-0 z-10 p-6 lg:hidden">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mint">{card.shortTitle}</p>
+                <h3 className="mt-1.5 font-display text-2xl leading-tight font-medium text-background">
+                  {card.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 max-w-md text-sm text-background/80">{card.description}</p>
                 <ul className="mt-3 flex flex-wrap gap-1.5">
                   {card.popular.slice(0, 3).map((p) => (
                     <li
