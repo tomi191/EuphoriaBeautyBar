@@ -52,6 +52,10 @@ const STATIC_PATHS = [
   "/contacts",
   "/karieri",
   "/blog",
+  // Правните страници са indexable и линкнати от footer-а, но липсваха от
+  // sitemap-а (одит №7).
+  "/politika-za-poveritelnost",
+  "/obshti-usloviya",
 ] as const;
 
 export const SECTIONS: SitemapSection[] = [

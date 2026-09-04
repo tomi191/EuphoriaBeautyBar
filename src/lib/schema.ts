@@ -1,5 +1,16 @@
 import { siteConfig } from "@/lib/site";
 
+/** JS getDay() → името на деня, което schema.org очаква. */
+const SCHEMA_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
 /**
  * LocalBusiness schema. Приема опционален `rating` (от Google reviews в DB) →
  * inject-ва AggregateRating за звезди в SERP rich result (CTR ливър при поз ~9.6).
@@ -46,20 +57,17 @@ export const localBusinessSchema = (rating?: { value: number; count: number }) =
     { "@type": "Place", name: `${siteConfig.address.district}, Варна` },
     { "@type": "AdministrativeArea", name: "Варненска област" },
   ],
-  openingHoursSpecification: [
-    {
+  // Изведено от siteConfig.hours, за да не разминава с видимото на сайта.
+  // Работното време е сред най-силните сигнали за локално класиране, а до одит №7
+  // тук стоеше преписан вариант, който твърдеше, че салонът работи в понеделник.
+  openingHoursSpecification: siteConfig.hours
+    .filter((h) => h.close)
+    .map((h) => ({
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      opens: "09:00",
-      closes: "18:00",
-    },
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: "Saturday",
-      opens: "09:00",
-      closes: "17:00",
-    },
-  ],
+      dayOfWeek: h.weekdays.map((d) => SCHEMA_DAYS[d]),
+      opens: h.open,
+      closes: h.close,
+    })),
   sameAs: [siteConfig.social.facebook, siteConfig.social.instagram],
   hasMap: siteConfig.address.mapsUrl,
   // Плащане само на място (без онлайн плащане и депозит). Revolut е изписан и
