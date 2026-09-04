@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     title: "Балаяж във Варна — салон Euphoria, кв. Левски",
     description:
       "Балаяж при Снежана, 25+ г. опит, в кв. Левски, Варна. Мек преход и грижа Goldwell Kerasilk. Запази час онлайн.",
-    images: ["/og-image.png"],
   },
 };
 

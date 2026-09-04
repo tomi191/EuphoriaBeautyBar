@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     title: "Кичури във Варна — салон Euphoria, кв. Левски",
     description:
       "Кичури на фолио при Снежана, 25+ г. опит, в кв. Левски, Варна. Цени по дължина. Запази час онлайн.",
-    images: ["/og-image.png"],
   },
 };
 

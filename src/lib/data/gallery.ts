@@ -48,3 +48,27 @@ export const galleryCategories: Array<{ value: GalleryCategory; label: string }>
   { value: "svatbeni", label: "Сватбени" },
   { value: "manikyur", label: "Маникюр" },
 ];
+
+/** Какво се вижда на снимка от дадена категория — в един израз, за alt текста. */
+const CATEGORY_ALT: Record<string, string> = {
+  boyadisvane: "Боядисана коса",
+  podstrigvane: "Подстригване",
+  pricheski: "Прическа",
+  svatbeni: "Сватбена прическа",
+  manikyur: "Маникюр",
+};
+
+/**
+ * Alt текст за снимка от галерията. Описанието на човека печели; ако липсва,
+ * пада на КАТЕГОРИЯТА (реален избор при качването), а не на един и същ низ за
+ * всички снимки. Одит №7: 20 снимки делят дословно еднакъв alt = нула стойност
+ * за екранен четец и за Google Images.
+ */
+export function galleryAlt(category: string, description?: string | null): string {
+  const d = description?.trim();
+  if (d) return d;
+  const what = CATEGORY_ALT[category];
+  return what
+    ? `${what} — реална работа от салон Euphoria, кв. Левски, Варна`
+    : "Реална работа от салон Euphoria, кв. Левски, Варна";
+}

@@ -51,7 +51,10 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
             onFocus={() => setActive(i)}
             onBlur={() => setActive(null)}
             className={cn(
-              "group relative overflow-hidden rounded-md border border-foreground/10 transition-[flex-grow] duration-700 ease-out lg:flex-1",
+              // h-[22rem] на тесен екран: съдържанието на картата е позиционирано
+              // абсолютно, а височина идваше само от lg:h-[640px] на родителя →
+              // на телефон картите се рендираха с 0px и цялата секция изчезваше.
+              "group relative h-[22rem] overflow-hidden rounded-md border border-foreground/10 transition-[flex-grow] duration-700 ease-out sm:h-[26rem] lg:h-auto lg:flex-1",
               isActive && "lg:flex-[3]",
               isCompressed && "lg:flex-[0.85]",
               card.bgClass,

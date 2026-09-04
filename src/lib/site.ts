@@ -7,7 +7,8 @@ export const siteConfig = {
   // Production живее на www (Vercel прави apex → 308 → www). Canonical, sitemap,
   // OG, schema и robots деривират оттук — трябва да сочат НЕ-redirect-ващия host.
   url: "https://www.euphoriabeauty.eu",
-  ogImage: "/og-image.png",
+  // OG картите се генерират от opengraph-image.tsx route-овете (per страница).
+  // Статичен /og-image.png НЯМА — не го реферирай в metadata.
   locale: "bg_BG",
   founded: 2023,
   founder: "Снежана Саблева",

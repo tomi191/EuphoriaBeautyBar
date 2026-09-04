@@ -209,11 +209,15 @@
     background: linear-gradient(135deg, var(--purple-deep), var(--purple), var(--mint));
   }
 
+  /**
+   * Акцентната дума в заглавие. Беше градиент, който завършваше в --mint:
+   * върху светлия фон това дава контраст 1,5:1 при изискване 3:1, тоест краят на
+   * всяка къса фраза ставаше нечетим — включително името „Снежана“ (одит №7).
+   * Сега е плътният брандов сейдж: 6,1:1, същият акцент като в hero-то, и без
+   * най-разпознаваемата следа от машинно генериран дизайн.
+   */
   .gradient-text {
-    background: linear-gradient(110deg, var(--purple-deep) 0%, var(--purple) 35%, var(--mint) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--primary);
   }
 
   .handwritten {

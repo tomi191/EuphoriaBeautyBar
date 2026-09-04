@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Calendar, ChevronRight, Clock, MapPin, MessageCircle, Phone, Scissors, Sparkles, HandHeart } from "lucide-react";
+import { ArrowRight, Calendar, ChevronRight, Clock, MapPin, MessageCircle, Phone, Scissors, Sparkles, Star, HandHeart } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
 import { TiltedCard } from "@/components/reactbits/tilted-card";
@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     title: "Салон за красота и фризьор в кв. Левски, Варна — Euphoria",
     description:
       "Фризьорски салон, маникюр и козметика на едно място в кв. Левски, Варна. Снежана с 25+ години опит. Онлайн записване на час.",
-    images: ["/og-image.png"],
   },
 };
 
@@ -90,17 +89,16 @@ const DIRECTION_META: Record<string, { icon: typeof Scissors; blurb: string }> =
 };
 
 export default async function SalonVarnaLevskiPage() {
-  const [categories, googleReviews] = await Promise.all([
+  const [categories, summaryRow] = await Promise.all([
     getServiceCatalog(),
-    db.query.googleReviews.findMany({ columns: { rating: true } }),
+    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") }),
   ]);
-  const rating =
-    googleReviews.length > 0
-      ? {
-          value: googleReviews.reduce((s, r) => s + r.rating, 0) / googleReviews.length,
-          count: googleReviews.length,
-        }
-      : undefined;
+  // Рейтингът идва от обобщението на ЦЕЛИЯ Google профил — същия източник като
+  // началната страница. Осредняването на текстовите отзиви даваше 5,0 от 25,
+  // защото синхронизираме само петзвездните, докато реалното е 4,8 от 44.
+  // Два различни рейтинга за един и същ @id са невярно твърдение към Google.
+  const summary = summaryRow?.value as { rating: number; total: number } | undefined;
+  const rating = summary?.rating ? { value: summary.rating, count: summary.total } : undefined;
   const founder = team[0];
 
   return (
@@ -169,10 +167,34 @@ export default async function SalonVarnaLevskiPage() {
                 <p className="mt-1 text-sm text-foreground/70">Открит салон</p>
               </div>
               <div>
-                <p className="font-display text-3xl font-medium text-primary md:text-4xl">3</p>
+                {/* Броят идва от каталога, който се рендира по-долу — иначе числото
+                    си противоречи със секцията под него (одит №7: писаше 3 над 4 карти). */}
+                <p className="font-display text-3xl font-medium text-primary md:text-4xl">{categories.length}</p>
                 <p className="mt-1 text-sm text-foreground/70">Направления, един адрес</p>
               </div>
             </div>
+
+            {/* Рейтингът е видим на страницата, защото го обявяваме и в schema —
+                AggregateRating без видимо съответствие е нарушение на правилата на Google. */}
+            {rating && (
+              <a
+                href={siteConfig.address.mapsUrl}
+                target="_blank"
+                rel="noopener"
+                className="mt-6 inline-flex items-center gap-2 text-sm text-foreground/80 transition-colors hover:text-foreground"
+              >
+                <span className="flex">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`size-3.5 ${i < Math.round(rating.value) ? "fill-foreground text-foreground" : "text-foreground/25"}`}
+                    />
+                  ))}
+                </span>
+                <span className="font-medium">{rating.value.toFixed(1)}</span>
+                <span className="text-muted-foreground">· {rating.count} отзива в Google</span>
+              </a>
+            )}
           </div>
         </div>
       </section>

@@ -44,7 +44,10 @@ export function GiftCardBanner() {
                 size="lg"
                 className="group mt-8 h-14 rounded-full bg-foreground px-8 text-base text-background hover:bg-primary"
               >
-                <Link href="/contacts#gift">
+                {/* #gift не съществува в /contacts — кликът водеше до върха на
+                    страницата без секция за ваучери. Ваучерът се взима на място или
+                    по телефон, затова пращаме към контактите. */}
+                <Link href="/contacts#booking">
                   Поръчай ваучер
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </Link>
