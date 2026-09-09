@@ -51,7 +51,10 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
             onFocus={() => setActive(i)}
             onBlur={() => setActive(null)}
             className={cn(
-              "group relative overflow-hidden rounded-md border border-foreground/10 transition-[flex-grow] duration-700 ease-out lg:flex-1",
+              // h-[22rem] на тесен екран: съдържанието на картата е позиционирано
+              // абсолютно, а височина идваше само от lg:h-[640px] на родителя →
+              // на телефон картите се рендираха с 0px и цялата секция изчезваше.
+              "group relative h-[22rem] overflow-hidden rounded-md border border-foreground/10 transition-[flex-grow] duration-700 ease-out sm:h-[26rem] lg:h-auto lg:flex-1",
               isActive && "lg:flex-[3]",
               isCompressed && "lg:flex-[0.85]",
               card.bgClass,
@@ -95,8 +98,10 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
                 />
               )}
 
-              {/* Title — винаги визуално, в долен ляв ъгъл */}
-              <div className="absolute inset-x-0 bottom-0 z-10 p-6 md:p-7">
+              {/* Title + hover съдържание — само от lg нагоре. На тесен екран
+                  този блок и блокът отдолу са и двата absolute bottom-0, тоест
+                  се застъпваха; там показваме единствено обединения долен блок. */}
+              <div className="absolute inset-x-0 bottom-0 z-10 hidden p-6 md:p-7 lg:block">
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mint">
                   {card.shortTitle}
                 </p>
@@ -134,9 +139,13 @@ export function ExpandingCards({ cards, className }: ExpandingCardsProps) {
                 </motion.div>
               </div>
 
-              {/* Default mobile визия — винаги visible details */}
-              <div className="absolute inset-x-0 bottom-0 z-0 p-6 lg:hidden">
-                <p className="mt-2 max-w-md text-sm text-background/80">{card.description}</p>
+              {/* Мобилна визия — заглавието и детайлите са в един блок, без hover */}
+              <div className="absolute inset-x-0 bottom-0 z-10 p-6 lg:hidden">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-mint">{card.shortTitle}</p>
+                <h3 className="mt-1.5 font-display text-2xl leading-tight font-medium text-background">
+                  {card.title}
+                </h3>
+                <p className="mt-2 line-clamp-2 max-w-md text-sm text-background/80">{card.description}</p>
                 <ul className="mt-3 flex flex-wrap gap-1.5">
                   {card.popular.slice(0, 3).map((p) => (
                     <li

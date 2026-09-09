@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     title: "Почистване на лице във Варна — салон Euphoria, кв. Левски",
     description:
       "Ултразвуково, комбинирано и Hydrafacial почистване на лице в кв. Левски, Варна. Реални цени, онлайн записване.",
-    images: ["/og-image.png"],
   },
 };
 

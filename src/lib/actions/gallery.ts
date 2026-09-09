@@ -5,6 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { createClient } from "@supabase/supabase-js";
 import { nanoid } from "nanoid";
 import { db, schema } from "@/lib/db";
+import { galleryAlt } from "@/lib/data/gallery";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { galleryCategories } from "@/lib/data/gallery";
 
@@ -84,7 +85,7 @@ export async function uploadGalleryImage(formData: FormData) {
   await db.insert(schema.galleryImages).values({
     id,
     src,
-    alt: description ?? "Euphoria Hair & Beauty Bar — работа от салона",
+    alt: galleryAlt(category, description),
     category,
     width,
     height,
@@ -111,7 +112,13 @@ export async function updateGalleryImageMeta(
   if (meta.description !== undefined) {
     const description = (meta.description ?? "").trim().slice(0, 500) || null;
     patch.description = description;
-    patch.alt = description ?? "Euphoria Hair & Beauty Bar — работа от салона";
+    // alt-ът пада на категорията, затова ни трябва действащата: или новата от
+    // този patch, или записаната в реда (когато се сменя само описанието).
+    const current = await db.query.galleryImages.findFirst({
+      where: (g, { eq: e }) => e(g.id, imageId),
+      columns: { category: true },
+    });
+    patch.alt = galleryAlt(patch.category ?? current?.category ?? "", description);
   }
   if (Object.keys(patch).length === 0) return { ok: true as const };
 

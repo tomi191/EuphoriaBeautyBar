@@ -108,10 +108,16 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
     db.query.resources.findMany({ where: (r, { eq }) => eq(r.active, true), columns: { id: true, kind: true } }),
   ]);
 
+  // Оферта на ДЕАКТИВИРАН изпълнител не е публична цена: човекът вече не работи в
+  // салона, а редовете му остават (за да не се губят при връщане). Без този филтър
+  // ценоразписът показваше цените на напуснала маникюристка (одит №7).
+  const activeResourceIds = new Set(resources.map((r) => r.id));
+  const liveOffers = offers.filter((o) => activeResourceIds.has(o.resourceId));
+
   // Оферти по услуга + брой оферти на изпълнител (за curation статуса).
   const offersByItem = new Map<string, PriceParts[]>();
   const offerCount = new Map<string, number>();
-  for (const o of offers) {
+  for (const o of liveOffers) {
     const arr = offersByItem.get(o.serviceItemId);
     const parts: PriceParts = { price: o.price, priceMax: o.priceMax, priceFrom: o.priceFrom };
     if (arr) arr.push(parts);

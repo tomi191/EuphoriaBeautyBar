@@ -4,7 +4,7 @@ import { Clock, CreditCard, Facebook, Instagram, Mail, MapPin, Phone, MessageCir
 import { ContactForm } from "@/components/forms/contact-form";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
-import { siteConfig } from "@/lib/site";
+import { siteConfig , cancellationPolicy } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Контакти и резервации",
@@ -157,19 +157,19 @@ export default function ContactsPage() {
           <div className="mt-12 grid gap-3 md:grid-cols-2">
             <PolicyCard
               num="01"
-              title="Резервации"
-              text="Ако си запазил час и решиш да откажеш, обади ни се поне 24 часа предварително."
+              title="Отказ и преместване"
+              text={`Кажи ни най-късно ${cancellationPolicy.hours} часа преди часа. Най-бързо от линка в имейла с потвърждението или по телефон.`}
             />
             <PolicyCard
               num="02"
-              title="Такси при отказ"
-              text="Отказ по-късно от 24 часа преди часа може да се таксува с 50% от стойността на услугата."
+              title="Закъснял отказ и неявяване"
+              text={`При по-късен отказ или неявяване се начисляват ${cancellationPolicy.feePercent}% от стойността на услугата.`}
               accent
             />
             <PolicyCard
               num="03"
-              title="Неявяване"
-              text="Ако не се появиш за час без предупреждение, може да те таксуваме с пълната стойност на услугата."
+              title="Закъснение"
+              text="Ако закъснееш, правим каквото се събира в останалото време. При голямо закъснение може да се наложи да преместим часа."
               accent
             />
             <PolicyCard
@@ -179,8 +179,8 @@ export default function ContactsPage() {
             />
             <PolicyCard
               num="05"
-              title="Потвърждение"
-              text="Препоръчваме да потвърдиш часа си 24 часа предварително, за да избегнем недоразумения."
+              title="Първо посещение"
+              text="За боя, изсветляване или терапия отделяме време за кратка консултация преди процедурата. Кажи го при записването."
               full
             />
           </div>

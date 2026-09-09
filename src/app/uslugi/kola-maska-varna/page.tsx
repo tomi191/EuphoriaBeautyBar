@@ -22,7 +22,6 @@ export const metadata: Metadata = {
     title: "Кола маска във Варна — салон Euphoria, кв. Левски",
     description:
       "Кола маска по зони в кв. Левски, Варна. Реални цени за всяка зона, онлайн записване.",
-    images: ["/og-image.png"],
   },
 };
 

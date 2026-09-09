@@ -1,4 +1,3 @@
-import { Star } from "lucide-react";
 import { db } from "@/lib/db";
 import { Reveal } from "@/components/reactbits/reveal";
 import { Marquee } from "@/components/reactbits/marquee";
@@ -42,12 +41,26 @@ function Stars({ count = 5 }: { count?: number }) {
   return (
     <div className="flex">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={i < count ? "size-3 fill-amber-400 text-amber-400" : "size-3 fill-transparent text-amber-400/40"}
-        />
+        <svg key={i} viewBox="0 0 24 24" className={i < count ? "size-3 fill-amber-400" : "size-3 fill-amber-400/25"} aria-hidden>
+          <use href="#eu-star" />
+        </svg>
       ))}
     </div>
+  );
+}
+
+/**
+ * Формата на звездата се дефинира ВЕДНЪЖ на страницата; всяка звезда е <use>.
+ * Преди тук се рендираха 505 пълни lucide икони (по 5 на карта × 100 карти),
+ * което само по себе си тежеше над 300 KB HTML (одит №7).
+ */
+function StarSymbol() {
+  return (
+    <svg width="0" height="0" className="absolute" aria-hidden focusable="false">
+      <symbol id="eu-star" viewBox="0 0 24 24">
+        <path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4-5.8-3-5.8 3 1.1-6.4L2.6 9.4l6.5-.9z" />
+      </symbol>
+    </svg>
   );
 }
 
@@ -102,6 +115,7 @@ export async function ReviewsSplit() {
 
   return (
     <section id="reviews" className="relative overflow-hidden bg-background py-20 lg:py-28">
+      <StarSymbol />
       <div className="mx-auto max-w-7xl px-4 lg:px-10">
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">

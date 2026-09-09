@@ -10,12 +10,20 @@ interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
   repeat?: number;
 }
 
+/**
+ * Безкрайна лента. Анимацията транслира едно копие с точно -100% минус разстоянието,
+ * затова ДВЕ копия дават безшевен цикъл: докато първото излиза, второто влиза.
+ * Четирите копия бяха трикратно излишен DOM — на началната страница това правеше
+ * 100 карти с отзиви и 606 вградени икони, тоест ~0,5 MB HTML (одит №7).
+ * Копията след първото са декоративни и се скриват от екранните четци,
+ * иначе четецът прочита целия списък с отзиви два пъти.
+ */
 export function Marquee({
   className,
   reverse,
   pauseOnHover = false,
   vertical = false,
-  repeat = 4,
+  repeat = 2,
   children,
   ...props
 }: MarqueeProps) {
@@ -31,6 +39,7 @@ export function Marquee({
       {Array.from({ length: repeat }).map((_, i) => (
         <div
           key={i}
+          aria-hidden={i > 0 || undefined}
           className={cn(
             "flex shrink-0 justify-around [gap:var(--gap)]",
             vertical ? "animate-marquee-vertical flex-col" : "animate-marquee flex-row",

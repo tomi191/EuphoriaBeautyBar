@@ -6,22 +6,15 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { ArrowDown, ArrowRight, Calendar, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { hoursForDay } from "@/lib/site";
 
 interface HeroProps {
   /** Реален Google рейтинг — подава се от сървъра. Badge се показва само при реални данни. */
   rating?: { value: number; count: number } | null;
 }
 
-/** Днешното работно време по график: Пон-Пет 09-18, Съб 09-17, Нед почивен. */
-function todayHours(): { open: boolean; label: string } {
-  const wd = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Sofia", weekday: "short" }).format(new Date());
-  if (wd === "Sun") return { open: false, label: "Почивен ден" };
-  if (wd === "Sat") return { open: true, label: "09:00 – 17:00" };
-  return { open: true, label: "09:00 – 18:00" };
-}
-
 export function Hero({ rating }: HeroProps) {
-  const today = todayHours();
+  const today = hoursForDay();
   return (
     <section className="relative isolate min-h-[88svh] overflow-hidden bg-cream">
       {/* Фон — реалната снимка на салона */}

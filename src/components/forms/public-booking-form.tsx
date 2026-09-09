@@ -336,7 +336,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           {done.who ? ` при ${done.who}` : ""} — {done.when}
         </p>
         <p className="mt-4 text-sm text-muted-foreground">
-          Изпратихме потвърждение на имейла ти. Отказ само по телефон, минимум 5 часа преди часа.
+          Изпратихме потвърждение на имейла ти. В него има линк, с който можеш да откажеш часа сам.
         </p>
       </div>
     );
@@ -749,7 +749,16 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4" />
           <span className="text-foreground/80">
-            Приемам условията: отказ само по телефон, минимум 5 часа предварително. При закъснение или неявяване се начислява 50% от стойността на услугата. Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
+            Приемам{" "}
+            <a
+              href="/obshti-usloviya"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              Общите условия
+            </a>
+            : отказ или преместване най-късно 5 часа преди часа, онлайн от линка в имейла или по телефон. При по-късен отказ или неявяване се начисляват 50% от стойността на услугата. Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
             <a
               href="/politika-za-poveritelnost"
               target="_blank"

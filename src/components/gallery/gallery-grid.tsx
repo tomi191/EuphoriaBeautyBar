@@ -94,7 +94,13 @@ export function GalleryGrid({ images }: GalleryGridProps) {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-4xl overflow-hidden border-0 bg-background/95 p-0 backdrop-blur-xl">
+        {/* showCloseButton={false}: DialogContent рендира собствен X горе вдясно, а
+            lightbox-ът има свой със стъклен фон (четим върху снимка). Без този флаг
+            се показваха ДВА бутона за затваряне един върху друг. */}
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-4xl overflow-hidden border-0 bg-background/95 p-0 backdrop-blur-xl"
+        >
           <DialogTitle className="sr-only">{active?.alt}</DialogTitle>
           {active && (
             <div className="relative aspect-[4/5] w-full md:aspect-[16/10]">

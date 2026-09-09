@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Галерия",
   alternates: { canonical: "/galeriya" },
   description:
-    "Преди и после: боядисване, прически, маникюри и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
+    "Преди и после: боядисване, прически, маникюр, грим и сватбени стилове от Euphoria Hair & Beauty Bar във Варна.",
 };
 
 export default async function GalleryPage() {
@@ -46,7 +46,7 @@ export default async function GalleryPage() {
             className="max-w-3xl font-display text-5xl font-medium text-balance md:text-6xl lg:text-7xl"
           />
           <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
-            Реални работи от салона: боядисване, прически и маникюр.
+            Реални работи от салона: боядисване, прически, маникюр и грим.
           </p>
         </div>
       </section>

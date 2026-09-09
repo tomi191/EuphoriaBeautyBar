@@ -41,10 +41,6 @@ export default function PrivacyPolicyPage() {
           <li>Имейл за връзка по въпроси за лични данни: <a className="text-primary underline underline-offset-4" href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a></li>
           <li>Телефон: <a className="text-primary underline underline-offset-4" href={`tel:${siteConfig.contact.phone}`}>{siteConfig.contact.phoneFormatted}</a></li>
         </ul>
-        <p className="rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900">
-          Забележка за собственика: попълнете точното юридическо лице (фирма/ЕТ), ЕИК и седалище на администратора
-          преди публикуване — това е задължителен реквизит по GDPR.
-        </p>
       </Section>
 
       <Section id="dannite" title="2. Какви данни събираме">
@@ -52,7 +48,9 @@ export default function PrivacyPolicyPage() {
           <li><strong>При онлайн запис на час:</strong> име, телефонен номер и имейл адрес.</li>
           <li><strong>Бележки от специалиста:</strong> предпочитания и данни за услугата (напр. използвана формула за боя), видими само за вашия специалист.</li>
           <li><strong>История на посещенията:</strong> запазените услуги, дата, час и статус.</li>
-          <li><strong>Технически данни:</strong> минимални данни, нужни за функционирането на сайта (напр. сесия). Не използваме рекламни или проследяващи бисквитки.</li>
+          <li><strong>Технически данни:</strong> минимални данни, нужни за функционирането на сайта (напр. сесия).</li>
+          <li><strong>Анонимна статистика:</strong> броим посещенията на страниците с Ahrefs Analytics. Услугата не поставя бисквитки и не проследява отделни хора между сайтове.</li>
+          <li><strong>Вградена карта:</strong> страниците с адреса ни зареждат карта на Google. При отваряне Google може да постави свои бисквитки. Ако не желаете това, не отваряйте страниците с карта или блокирайте бисквитките на трети страни в браузъра си.</li>
         </ul>
       </Section>
 
@@ -68,9 +66,10 @@ export default function PrivacyPolicyPage() {
       <Section id="poluchateli" title="4. С кого споделяме данните (обработващи)">
         <p>Не продаваме личните ви данни. Споделяме ги само с доставчици, които ни помагат да работим, при строги договорни гаранции:</p>
         <ul className="ml-5 list-disc space-y-1">
-          <li><strong>Хостинг и база данни</strong> — сървъри в Европейския съюз.</li>
-          <li><strong>Изпращане на имейли</strong> — за потвърждения и напомняния.</li>
-          <li><strong>Известия към екипа</strong> — само служебна информация за часа (без вашия имейл) до вашия специалист.</li>
+          <li><strong>Хостинг на сайта</strong> — Vercel Inc., сървъри във Франкфурт и Дъблин.</li>
+          <li><strong>База данни</strong> — Supabase, сървъри в Ирландия (Европейски съюз).</li>
+          <li><strong>Изпращане на имейли</strong> — Resend, за потвърждения и напомняния за часа.</li>
+          <li><strong>Известия към екипа</strong> — Telegram, само служебна информация за часа (без вашия имейл) до вашия специалист.</li>
         </ul>
       </Section>
 

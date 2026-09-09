@@ -137,7 +137,7 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
       <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
         ${data.cancelUrl
           ? `Ако се налага да отмениш — <a href="${data.cancelUrl}" style="color:#6f9e85;text-decoration:underline">откажи онлайн</a> или се обади на`
-          : "Ако се налага да отмениш, обади се на"} <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> минимум 5 часа преди часа. При закъснение или неявяване се начислява 50% от стойността на услугата.
+          : "Ако се налага да отмениш, обади се на"} <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа. При по-късен отказ или неявяване се начисляват 50% от стойността на услугата.
       </p>
       ${verifyBlock}
     `),
@@ -159,7 +159,7 @@ export async function sendReminder(to: string, data: BookingEmailData): Promise<
         addressCell(),
       ])}
       <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
-        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> минимум 5 часа преди часа.
+        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа.
       </p>
     `),
   });

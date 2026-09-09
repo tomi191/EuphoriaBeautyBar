@@ -7,7 +7,8 @@ export const siteConfig = {
   // Production живее на www (Vercel прави apex → 308 → www). Canonical, sitemap,
   // OG, schema и robots деривират оттук — трябва да сочат НЕ-redirect-ващия host.
   url: "https://www.euphoriabeauty.eu",
-  ogImage: "/og-image.png",
+  // OG картите се генерират от opengraph-image.tsx route-овете (per страница).
+  // Статичен /og-image.png НЯМА — не го реферирай в metadata.
   locale: "bg_BG",
   founded: 2023,
   founder: "Снежана Саблева",
@@ -33,10 +34,15 @@ export const siteConfig = {
     supportEmail: "support@euphoriabeauty.eu",
     viber: "+359898663315",
   },
+  // ЕДИНСТВЕНИЯТ източник за работното време: footer, контакти, картата, hero-то,
+  // schema.org, llms.txt и ботът четат оттук. `weekdays` е по JS getDay()
+  // (0 = неделя) — нужно е, за да смятат hero-то и schema-та машинно, вместо да
+  // преписват часовете (одит №7: сайтът обявяваше понеделник 09:00, а Снежана
+  // не работи в понеделник и започва в 10:00 — 0 записа за три месеца).
   hours: [
-    { day: "Понеделник – Петък", short: "Пон-Пет", open: "09:00", close: "18:00" },
-    { day: "Събота", short: "Съб", open: "09:00", close: "17:00" },
-    { day: "Неделя", short: "Нед", open: "Почивен", close: "" },
+    { day: "Вторник – Петък", short: "Вто-Пет", weekdays: [2, 3, 4, 5], open: "10:00", close: "19:00" },
+    { day: "Събота", short: "Съб", weekdays: [6], open: "10:00", close: "17:00" },
+    { day: "Неделя и понеделник", short: "Нед, Пон", weekdays: [0, 1], open: "Почивен", close: "" },
   ],
   social: {
     facebook: "https://facebook.com/EuphoriaHairBeautyBar",
@@ -78,3 +84,31 @@ export const navigation: NavItem[] = [
   { label: "Журнал", href: "/blog" },
   { label: "Контакти", href: "/contacts" },
 ];
+
+const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/**
+ * Работното време за даден ден, изведено от `siteConfig.hours`.
+ * Денят се смята в часовата зона на салона, не в тази на посетителя — иначе
+ * човек в друг часови пояс вижда грешния ден.
+ */
+export function hoursForDay(date: Date = new Date()): { open: boolean; label: string } {
+  const short = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Sofia", weekday: "short" }).format(date);
+  const day = WEEKDAY_INDEX[short] ?? date.getDay();
+  const row = siteConfig.hours.find((h) => (h.weekdays as readonly number[]).includes(day));
+  if (!row || !row.close) return { open: false, label: "Почивен ден" };
+  return { open: true, label: `${row.open} – ${row.close}` };
+}
+
+/**
+ * Политиката за отказ живее на ЕДНО място. Одит №7 намери три несъвместими
+ * версии (24 ч. в ЧЗВ и контактите, 5 ч. във формата и имейла, „пълната стойност"
+ * при неявяване срещу 50%), плюс твърдение „само по телефон" при работещ онлайн
+ * линк за отказ. Всяко копи чете оттук, вместо да преписва.
+ */
+export const cancellationPolicy = {
+  hours: 5,
+  feePercent: 50,
+  /** Едно изречение за форма, имейл и ЧЗВ. */
+  short: "Отказ или преместване — най-късно 5 часа преди часа, онлайн от линка в имейла или по телефон. При по-късен отказ или неявяване се начисляват 50% от стойността на услугата.",
+} as const;

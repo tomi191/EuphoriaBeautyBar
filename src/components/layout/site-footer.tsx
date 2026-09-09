@@ -138,6 +138,9 @@ export function SiteFooter() {
             <Link href="/politika-za-poveritelnost" className="underline decoration-dotted underline-offset-4 transition-colors hover:text-primary">
               Политика за поверителност
             </Link>
+            <Link href="/obshti-usloviya" className="underline decoration-dotted underline-offset-4 transition-colors hover:text-primary">
+              Общи условия
+            </Link>
           </p>
           <p>
             Дизайн и разработка от{" "}
