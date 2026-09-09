@@ -1,4 +1,4 @@
-export type GalleryCategory = "all" | "boyadisvane" | "podstrigvane" | "pricheski" | "svatbeni" | "manikyur";
+export type GalleryCategory = "all" | "boyadisvane" | "podstrigvane" | "pricheski" | "svatbeni" | "manikyur" | "grim";
 
 export interface GalleryImage {
   id: string;
@@ -47,6 +47,8 @@ export const galleryCategories: Array<{ value: GalleryCategory; label: string }>
   { value: "pricheski", label: "Прически" },
   { value: "svatbeni", label: "Сватбени" },
   { value: "manikyur", label: "Маникюр" },
+  // От 09.2026 салонът има гримьорски кът (Evagarden) → отделен филтър, не се крие под „Прически“.
+  { value: "grim", label: "Грим" },
 ];
 
 /** Какво се вижда на снимка от дадена категория — в един израз, за alt текста. */
@@ -56,6 +58,7 @@ const CATEGORY_ALT: Record<string, string> = {
   pricheski: "Прическа",
   svatbeni: "Сватбена прическа",
   manikyur: "Маникюр",
+  grim: "Грим",
 };
 
 /**
