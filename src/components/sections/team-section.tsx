@@ -5,9 +5,10 @@ import { Reveal } from "@/components/reactbits/reveal";
 import { GooeyBlobs } from "@/components/reactbits/gooey-blobs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { team } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/team-db";
 
-export function TeamSection() {
+export async function TeamSection() {
+  const team = await getTeam();
   const founder = team[0];
 
   return (

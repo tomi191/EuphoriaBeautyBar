@@ -16,7 +16,7 @@ export default async function AdminTestimonialsPage() {
     <>
       <PageHeader
         title="Отзиви"
-        subtitle="Ръчни отзиви, видими в секцията на началната страница. Google ревютата се управляват отделно."
+        subtitle="Одобрените отзиви се показват на страница „За нас“. Google ревютата на началната се управляват отделно."
         action={
           <TestimonialForm
             trigger={
