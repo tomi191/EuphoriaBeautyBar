@@ -14,7 +14,7 @@ import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { JournalPosts } from "@/components/seo/journal-posts";
-import { hubAnswer, haircutPriceFaq } from "@/lib/seo/hub-answer";
+import { hubAnswer, haircutPriceFaq, keratinPriceFaq } from "@/lib/seo/hub-answer";
 
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
@@ -71,7 +71,12 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
 
   // Хъбът на фризьорските услуги: жива цена за подстригване като първи въпрос (AEO).
   const isHairHub = category.slug === "frizorski-uslugi";
-  const priceFaq = isHairHub ? haircutPriceFaq(category) : null;
+  // Ценови FAQ с живи цени: хъбът (подстригване) и терапиите (кератин) — заявките „... цена".
+  const priceFaq = isHairHub
+    ? haircutPriceFaq(category)
+    : category.slug === "frizorski-terapii"
+      ? keratinPriceFaq(category)
+      : null;
   const faq = [...(priceFaq ? [priceFaq] : []), ...(SERVICE_FAQ[category.slug] ?? [])];
   const intro = SERVICE_INTRO[category.slug] ?? [];
 
