@@ -2,6 +2,7 @@ import { siteConfig } from "@/lib/site";
 import { getFaqItems } from "@/lib/data/faq-db";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
+import { getPublishedPosts } from "@/lib/data/blog-store";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
 import { db } from "@/lib/db";
 
@@ -68,6 +69,8 @@ const AI_NOTE =
 
 /** Компактен /llms.txt — индекс с категории „от X" + линк към llms-full.txt. */
 export async function renderLlmsTxt(): Promise<string> {
+  // Блогът е от БД; при грешка llms.txt не трябва да пада → празен списък.
+  const posts = await getPublishedPosts().catch(() => []);
   let catalog: ServiceCategory[] = [];
   try {
     catalog = await getServiceCatalog();
@@ -106,6 +109,16 @@ export async function renderLlmsTxt(): Promise<string> {
     `- [Вежди и мигли във Варна](${siteConfig.url}/uslugi/vezhdi-i-migli-varna): оформяне, боядисване и ламиниране`,
     `- [Салон в кв. Левски](${siteConfig.url}/salon-varna-levski): локация, паркиране, работно време, FAQ за квартала`,
     "",
+    // Журналът е единственото, което реално ранкира (статията за балеаж е #1), а AI
+    // търсачките цитират страници, които виждат в llms.txt → изброяваме публикуваните.
+    ...(posts.length
+      ? [
+          "## Журнал (статии от салона)",
+          "",
+          ...posts.map((p) => `- [${p.title}](${siteConfig.url}/blog/${p.slug})${p.excerpt ? `: ${p.excerpt}` : ""}`),
+          "",
+        ]
+      : []),
     "## Ресурси",
     "",
     `- [Пълен ценоразпис, FAQ и детайли](${siteConfig.url}/llms-full.txt): актуален, генериран от каталога`,

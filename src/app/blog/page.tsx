@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Журнал — грижа за коса, кожа и нокти",
   alternates: { canonical: "/blog" },
   description:
-    "Статии за грижа за коса, козметика и маникюр от Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
+    "Статии за грижа за косата, цвят, балаяж и терапии от салон Euphoria във Варна, кв. Левски. Практични съвети от фризьор с над 25 г. опит.",
   openGraph: {
     title: "Журнал — грижа за коса, кожа и нокти",
     description: "Статии за грижа за коса, козметика и маникюр от Euphoria, Варна.",
@@ -44,10 +44,10 @@ export default async function BlogPage() {
   return (
     <>
       <section className="relative isolate min-h-[56svh] overflow-hidden bg-cream lg:min-h-[60svh]">
-        {/* Фон — beauty детайл (грим/грижа) */}
+        {/* Фон — коса (журналът е hair-first). Старият /images/services/makeup.jpg не съществуваше → 400 от оптимизатора. */}
         <Image
-          src="/images/services/makeup.jpg"
-          alt="Грижа за красотата — Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+          src="/images/gallery/g-1.webp"
+          alt="Балаяж: мек преход на руса коса, изработен в салон Euphoria, кв. Левски, Варна"
           fill
           priority
           fetchPriority="high"

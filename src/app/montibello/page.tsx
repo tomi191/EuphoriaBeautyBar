@@ -14,7 +14,7 @@ import { montibelloCategories, montibelloProducts } from "@/lib/data/montibello"
 export const metadata: Metadata = {
   title: "Montibello — каталог по категории",
   description:
-    "Montibello е партньорската марка, с която работим в Euphoria, Варна — грижа за коса, цвят и стайлинг. Каталог по категории; покупка на място в салона след консултация.",
+    "Montibello в Euphoria, Варна: професионална гама за коса, цвят и стайлинг. Каталог по категории, покупка на място в салона след консултация.",
   alternates: { canonical: "/montibello" },
   openGraph: {
     title: "Montibello — каталог по категории",
@@ -25,7 +25,8 @@ export const metadata: Metadata = {
 };
 
 export default function MontibelloPage() {
-  // ItemList schema БЕЗ Offer/price/AggregateOffer — представяме каталог, не онлайн магазин.
+  // ItemList БЕЗ вложен Product: Product без offers/review/aggregateRating е грешка в
+  // Google Rich Results, а цени нарочно не показваме. Само име + url на позицията.
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -34,15 +35,8 @@ export default function MontibelloPage() {
     itemListElement: montibelloProducts.map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      item: {
-        "@type": "Product",
-        name: p.name,
-        category: montibelloCategories.find((c) => c.slug === p.categorySlug)?.title,
-        brand: { "@type": "Brand", name: "Montibello" },
-        ...(p.description && { description: p.description }),
-        ...(p.officialImage && { image: `${siteConfig.url}${p.officialImage}` }),
-        url: `${siteConfig.url}/montibello/${p.slug}`,
-      },
+      name: p.name,
+      url: `${siteConfig.url}/montibello/${p.slug}`,
     })),
   };
 

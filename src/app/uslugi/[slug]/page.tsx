@@ -13,6 +13,8 @@ import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
+import { JournalPosts } from "@/components/seo/journal-posts";
+import { hubAnswer, haircutPriceFaq } from "@/lib/seo/hub-answer";
 
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
@@ -67,7 +69,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   const highPrice = Math.max(...prices);
   const priceCurrency = category.groups[0]?.items[0]?.currency === "€" ? "EUR" : "BGN";
 
-  const faq = SERVICE_FAQ[category.slug] ?? [];
+  // Хъбът на фризьорските услуги: жива цена за подстригване като първи въпрос (AEO).
+  const isHairHub = category.slug === "frizorski-uslugi";
+  const priceFaq = isHairHub ? haircutPriceFaq(category) : null;
+  const faq = [...(priceFaq ? [priceFaq] : []), ...(SERVICE_FAQ[category.slug] ?? [])];
   const intro = SERVICE_INTRO[category.slug] ?? [];
 
   return (
@@ -111,7 +116,10 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl"
                 stagger={0.025}
               />
-              <p className="mt-6 max-w-xl font-serif text-xl italic text-foreground/80">
+              {isHairHub && (
+                <p className="mt-6 max-w-xl text-lg leading-relaxed text-foreground/85">{hubAnswer(category)}</p>
+              )}
+              <p className={`${isHairHub ? "mt-4" : "mt-6"} max-w-xl font-serif text-xl italic text-foreground/80`}>
                 {category.tagline}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -258,6 +266,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
           </div>
         </div>
       </section>
+
+      {isHairHub && <JournalPosts landingHref="/uslugi/frizorski-uslugi" fallbackLatest />}
 
       {/* CTA */}
       <section id="kontakt" className="scroll-mt-24 bg-foreground py-20 text-background">

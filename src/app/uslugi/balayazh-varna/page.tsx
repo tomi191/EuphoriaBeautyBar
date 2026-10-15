@@ -8,6 +8,7 @@ import { LineDivider } from "@/components/brand/line-divider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
+import { JournalPosts } from "@/components/seo/journal-posts";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { getTeam } from "@/lib/data/team-db";
 import { siteConfig } from "@/lib/site";
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   // Signature локална страница — „балаяж варна" + национален чадър „балаяж"/„балеаж" (5–6K).
   title: "Балаяж във Варна, кв. Левски",
   description:
-    "Балаяж (балеаж) във Варна при Снежана (25+ г. опит), кв. Левски. Мек преход, който расте красиво, с грижа Goldwell Kerasilk. Реални цени, онлайн записване на час.",
+    "Балаяж (балеаж) във Варна при Снежана с 25+ г. опит, кв. Левски. Мек преход, грижа Goldwell Kerasilk, реални цени и онлайн записване.",
   alternates: { canonical: "/uslugi/balayazh-varna" },
   openGraph: {
     title: "Балаяж във Варна — салон Euphoria, кв. Левски",
@@ -260,6 +261,9 @@ export default async function BalayazhVarnaPage() {
           </div>
         </div>
       </section>
+
+      {/* От журнала: вътрешни линкове от статиите по темата */}
+      <JournalPosts landingHref="/uslugi/balayazh-varna" />
 
       {/* CTA */}
       <section className="bg-foreground py-20 text-background lg:py-28">

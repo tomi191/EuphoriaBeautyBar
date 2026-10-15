@@ -117,7 +117,10 @@ export const personSchema = {
   description:
     "Снежана Саблева — стилист с над 25 години опит, основател на Euphoria Hair & Beauty Bar във Варна. Експерт по балаяж, кератинови терапии и корекция на цвят.",
   knowsAbout: ["Балаяж", "Goldwell Kerasilk", "Montibello", "Корекция на цвят", "Официални прически", "Сватбени стилове"],
-  alumniOf: ["Goldwell Academy", "Montibello Academy"],
+  alumniOf: ["Goldwell Academy", "Montibello Academy"].map((name) => ({
+    "@type": "EducationalOrganization",
+    name,
+  })),
   nationality: { "@type": "Country", name: "България" },
 };
 
@@ -127,7 +130,7 @@ export const websiteSchema = {
   "@id": `${siteConfig.url}#website`,
   url: siteConfig.url,
   name: siteConfig.name,
-  publisher: { "@type": "Organization", name: siteConfig.name },
+  publisher: { "@id": `${siteConfig.url}#organization` },
   inLanguage: "bg-BG",
   // Без SearchAction: сайтът няма търсачка (/blog?q= не съществува), а
   // Sitelinks Search Box е пенсиониран от Google (2024).
@@ -139,7 +142,7 @@ export const organizationSchema = {
   "@id": `${siteConfig.url}#organization`,
   name: siteConfig.name,
   url: siteConfig.url,
-  logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.png`, width: 600, height: 200 },
+  logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.png` },
   contactPoint: {
     "@type": "ContactPoint",
     telephone: siteConfig.contact.phone,

@@ -8,6 +8,7 @@ import { LineDivider } from "@/components/brand/line-divider";
 import { Button } from "@/components/ui/button";
 import { PricingTable } from "@/components/service/pricing-table";
 import { JsonLd } from "@/components/seo/json-ld";
+import { JournalPosts } from "@/components/seo/journal-posts";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { getCatalogCategory } from "@/lib/data/service-catalog";
 import { siteConfig } from "@/lib/site";
@@ -199,6 +200,9 @@ export default async function BoyadisvaneNaKosaVarnaPage() {
           </div>
         </div>
       </section>
+
+      {/* От журнала: вътрешни линкове от статиите по темата */}
+      <JournalPosts landingHref="/uslugi/boyadisvane-na-kosa-varna" />
 
       {/* CTA */}
       <section className="bg-foreground py-20 text-background lg:py-28">
