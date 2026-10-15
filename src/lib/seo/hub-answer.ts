@@ -38,3 +38,22 @@ export function haircutPriceFaq(category: ServiceCategory): { question: string; 
     answer: `В Euphoria подстригването започва от ${items[0].price} ${items[0].currency}. Според вида и дължината на косата: ${list}. Целият ценоразпис е на тази страница, а час запазваш онлайн.`,
   };
 }
+
+/** Позициите с кератин в „Фризьорски терапии", най-евтината първа (заявка „кератинова терапия цена"). */
+export function keratinItems(category: ServiceCategory): ServiceItem[] {
+  return category.groups
+    .flatMap((g) => g.items)
+    .filter((i) => /кератин/i.test(i.name))
+    .sort((a, b) => a.price - b.price);
+}
+
+/** FAQ с жива цена за кератин; null без позиция (не измисляме цена). */
+export function keratinPriceFaq(category: ServiceCategory): { question: string; answer: string } | null {
+  const items = keratinItems(category);
+  if (items.length === 0) return null;
+  const list = items.map((i) => `${i.name}: ${fmt(i)}`).join("; ");
+  return {
+    question: "Колко струва кератинова терапия във Варна?",
+    answer: `В Euphoria кератиновата терапия започва от ${items[0].price} ${items[0].currency}. Процедурите и цените: ${list}. Кое подхожда на твоята коса, Снежана преценява на консултацията, а час запазваш онлайн.`,
+  };
+}
