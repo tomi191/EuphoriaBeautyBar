@@ -10,7 +10,6 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { siteConfig } from "@/lib/site";
 import {
   montibelloProducts,
-  montibelloCategories,
   getMontibelloProduct,
   accentColor,
 } from "@/lib/data/montibello";
@@ -48,7 +47,6 @@ export default async function MontibelloProductPage({ params }: Params) {
   const product = getMontibelloProduct(slug);
   if (!product) notFound();
 
-  const category = montibelloCategories.find((c) => c.slug === product.categorySlug);
   const paragraphs = product.description.split("\n\n").filter(Boolean);
 
   // „Други от линията" — до 3 продукта от същата линия; ако линията няма
@@ -61,16 +59,9 @@ export default async function MontibelloProductPage({ params }: Params) {
   );
   const others = (sameLine.length >= 1 ? sameLine : sameCategory).slice(0, 3);
 
-  // Product schema БЕЗ Offer/price — не се продава онлайн, само се представя.
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    description: product.description,
-    brand: { "@type": "Brand", name: "Montibello" },
-    ...(category?.title && { category: category.title }),
-    ...(product.officialImage && { image: `${siteConfig.url}${product.officialImage}` }),
-  };
+  // Нарочно НЕ излъчваме Product JSON-LD: продуктът не се продава онлайн (няма цена),
+  // а Google изисква offers/review/aggregateRating за Product → грешка в Rich Results.
+  // Страницата е и noindex, така че няма какво да печелим от schema тук.
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -83,7 +74,7 @@ export default async function MontibelloProductPage({ params }: Params) {
 
   return (
     <>
-      <JsonLd data={[productSchema, breadcrumbSchema]} />
+      <JsonLd data={[breadcrumbSchema]} />
 
       <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">

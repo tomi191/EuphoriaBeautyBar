@@ -13,7 +13,8 @@ const SEP = new RegExp("[\\u2028\\u2029]", "g");
  * от ld+json блока → stored XSS.
  */
 function safeJsonLd(obj: unknown): string {
-  return JSON.stringify(obj)
+  // null е невалидна стойност в JSON-LD → replacer го изпуска (като undefined).
+  return JSON.stringify(obj, (_k, v) => (v === null ? undefined : v))
     .replace(/[<>&]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"))
     .replace(SEP, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 }

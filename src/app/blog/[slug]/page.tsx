@@ -14,6 +14,7 @@ import { AuthorBio } from "@/components/blog/author-bio";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { getPublishedPosts, getPublishedPost } from "@/lib/data/blog-store";
 import { siteConfig } from "@/lib/site";
+import { RelatedServices } from "@/components/seo/related-services";
 import { breadcrumbSchema } from "@/lib/schema";
 
 interface Params {
@@ -138,6 +139,8 @@ export default async function BlogPostPage({ params }: Params) {
             <div className="mt-12 border-t border-border/40 pt-8">
               <ShareButtons title={post.title} />
             </div>
+
+            <RelatedServices post={post} />
 
             <AuthorBio />
           </div>

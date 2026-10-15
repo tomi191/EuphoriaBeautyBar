@@ -9,6 +9,7 @@ import { LineDivider } from "@/components/brand/line-divider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
+import { JournalPosts } from "@/components/seo/journal-posts";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { localBusinessSchema, breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { getTeam } from "@/lib/data/team-db";
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   // заявки, които конкурентите (Чайка/център) не покриват.
   title: "Салон за красота и фризьор в кв. Левски, Варна",
   description:
-    "Фризьорски салон, маникюр и козметика на едно място в кв. Левски, Варна, ул. Петър Райчев 18. Снежана: 25+ г. опит с косата. Лесно паркиране наоколо. Запази час онлайн за минута.",
+    "Фризьор, маникюр и козметика на едно място в кв. Левски, Варна, ул. Петър Райчев 18. Снежана: 25+ г. опит. Запази час онлайн.",
   alternates: { canonical: "/salon-varna-levski" },
   openGraph: {
     title: "Салон за красота и фризьор в кв. Левски, Варна — Euphoria",
@@ -446,6 +447,9 @@ export default async function SalonVarnaLevskiPage() {
           </div>
         </div>
       </section>
+
+      {/* От журнала: общата страница няма тясна тема → при липса на съвпадение най-новите статии */}
+      <JournalPosts landingHref="/uslugi/frizorski-uslugi" fallbackLatest />
 
       {/* ───── CTA ───── */}
       <section className="bg-foreground py-20 text-background lg:py-28">
