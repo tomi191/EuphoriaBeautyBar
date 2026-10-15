@@ -39,7 +39,7 @@ export function BookingRowActions({
   const done = status === "completed" || status === "cancelled" || status === "no_show";
 
   return (
-    <div className="flex justify-end gap-1">
+    <div className="flex flex-nowrap justify-end gap-1">
       {status === "confirmed" && (
         <Button size="sm" variant="outline" disabled={busy} onClick={() => run(() => markArrived(id))}>
           Дойде

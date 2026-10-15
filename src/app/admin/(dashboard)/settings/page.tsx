@@ -12,13 +12,13 @@ export default async function AdminSettingsPage() {
   const closed = await getClosedDates();
   return (
     <>
-      <PageHeader title="Настройки" subtitle="Глобални параметри на сайта и интеграции." />
+      <PageHeader title="Настройки" subtitle="Данни на салона, затворени дни и известия." />
 
       <div className="grid gap-6">
         <section className="rounded-2xl border border-border bg-background p-6">
           <h2 className="font-display text-xl font-medium">Бизнес информация</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Адрес, телефон и работно време. Текущо се поддържат в кода (<code>src/lib/site.ts</code>) — за inline редакция от админа е добавено в roadmap-а.
+            Адрес, телефон и работно време. Промяна по тях прави екипът на Level 8: пиши ни и ги сменяме.
           </p>
           <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
             <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Име</dt><dd>{siteConfig.name}</dd></div>
@@ -53,9 +53,7 @@ export default async function AdminSettingsPage() {
         <section className="rounded-2xl border border-border bg-background p-6">
           <h2 className="font-display text-xl font-medium">Известия</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Telegram е основният надежден канал — свържи админ канала, за да получаваш всеки нов
-            онлайн запис и отказ. Push е допълнение: ако устройството върне успех, но известие не
-            дойде, причината е device-level (battery optimization / изключени нотификации), не в кода.
+            Telegram е основният канал: свържи админ канала и получаваш съобщение при всеки нов онлайн запис и отказ, за всички изпълнители. Push известията на телефона са допълнение. Ако тестът мине, а известие не идва, причината е в настройките на телефона (пестене на батерия или изключени известия).
           </p>
           <div className="mt-4">
             <AdminTelegramConnect />
@@ -80,8 +78,7 @@ export default async function AdminSettingsPage() {
         <Alert>
           <AlertTitle>За парола и потребители</AlertTitle>
           <AlertDescription>
-            Управлението на администратори (нови потребители, нулиране на парола) се добавя във втора фаза.
-            Текущо паролата на admin акаунта се сменя през Better Auth API или директно в DB (хеширана).
+            Паролата на админа и нови администратори се добавят от екипа на Level 8. Пиши ни, когато трябва промяна.
           </AlertDescription>
         </Alert>
       </div>

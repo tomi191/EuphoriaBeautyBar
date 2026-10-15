@@ -95,10 +95,7 @@ export default async function AdminReviewsPage({
               и го въведи с „Добави ръчно“.
             </p>
             <p className="mt-3">
-              <strong>Автоматично (безплатно, като WP плъгин):</strong> Google Business Profile API — еднократно:
-              GCP проект (без billing) + одобрение на достъпа от Google + OAuth client. После env
-              <code className="mx-1">GOOGLE_OAUTH_CLIENT_ID</code>+<code className="mx-1">GOOGLE_OAUTH_CLIENT_SECRET</code>
-              и тук се появява бутон „Свържи с Google“ — логваш се с акаунта-собственик и теглим всички отзиви.
+              <strong>Автоматично:</strong> веднъж дневно теглим новите отзиви от Google профила. Бутонът „Синхронизирай“ го прави веднага.
             </p>
           </AlertDescription>
         </Alert>

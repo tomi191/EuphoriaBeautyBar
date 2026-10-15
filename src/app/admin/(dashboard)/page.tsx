@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarClock, CalendarPlus, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, CalendarPlus, HelpCircle, Image as ImageIcon, MessageSquare, Newspaper, Scissors, Star, Users, Wallet } from "lucide-react";
 import { db, schema } from "@/lib/db";
 import { desc, sql } from "drizzle-orm";
 import { getSalonRevenue } from "@/lib/actions/revenue";
@@ -197,18 +197,6 @@ export default async function AdminDashboardPage() {
             <li className="flex items-center justify-between border-b border-background/10 pb-2"><span>llms.txt</span><a href="/llms.txt" target="_blank" className="text-mint hover:underline">отвори</a></li>
             <li className="flex items-center justify-between"><span>JSON-LD</span><span className="text-mint">активна</span></li>
           </ul>
-        </div>
-      </section>
-
-      <section className="mt-8 rounded-xl border border-border bg-background p-6">
-        <div className="flex items-start gap-3">
-          <CalendarClock className="mt-0.5 size-4 text-muted-foreground" strokeWidth={1.6} />
-          <div className="text-sm">
-            <p className="font-medium">Pipeline на админа</p>
-            <p className="mt-1 text-muted-foreground">
-              Workflow-ът е оптимизиран за beauty салон: най-честите промени (цени, екип, отзиви) са на първо ниво. Блогът, галерията и настройките — на второ. Google ревютата се синхронизират ръчно или по cron.
-            </p>
-          </div>
         </div>
       </section>
     </>

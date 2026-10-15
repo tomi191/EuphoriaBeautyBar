@@ -19,7 +19,7 @@ export default async function AdminPositionsPage() {
     <>
       <PageHeader
         title="Места под наем"
-        subtitle="Свободни работни места в салона, видими на /karieri."
+        subtitle="Свободни работни места в салона, видими на страницата Кариери (/karieri)."
         action={
           <PositionForm
             trigger={
@@ -43,14 +43,14 @@ export default async function AdminPositionsPage() {
               <TableHead>Тип</TableHead>
               <TableHead>Умения</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {positions.map((p) => {
               const deleteAction = deletePosition.bind(null, p.id);
               return (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className="group">
                   <TableCell className="font-medium">{p.title}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.type}</TableCell>
                   <TableCell className="max-w-xs">
@@ -76,7 +76,7 @@ export default async function AdminPositionsPage() {
                       {p.active ? "Активна" : "Скрита"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <PositionForm
                         initial={p}

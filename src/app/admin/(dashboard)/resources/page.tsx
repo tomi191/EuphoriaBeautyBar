@@ -44,14 +44,14 @@ export default async function AdminResourcesPage() {
               <TableHead>Цвят</TableHead>
               <TableHead>Вход</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {resources.map((r) => {
               const deleteAction = deleteResource.bind(null, r.id);
               return (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className="group">
                   <TableCell className="font-medium">{r.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{KIND_LABEL[r.kind] ?? r.kind}</TableCell>
                   <TableCell>
@@ -71,7 +71,7 @@ export default async function AdminResourcesPage() {
                       {r.active ? "Активен" : "Скрит"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <ResourceForm
                         initial={r}

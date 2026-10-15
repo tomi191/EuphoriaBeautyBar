@@ -153,12 +153,12 @@ export default async function AdminBookingsPage({
           <TableHeader>
             <TableRow>
               <TableHead className="w-28">Час</TableHead>
-              <TableHead>Услуга</TableHead>
-              <TableHead>Клиент</TableHead>
+              <TableHead className="min-w-40 whitespace-normal">Услуга</TableHead>
+              <TableHead className="whitespace-normal">Клиент</TableHead>
               <TableHead>Изпълнител</TableHead>
               <TableHead>Записан</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -166,12 +166,12 @@ export default async function AdminBookingsPage({
               const c = b.clientId ? clientMap.get(b.clientId) : null;
               const st = STATUS[b.status] ?? STATUS.pending;
               return (
-                <TableRow key={b.id}>
+                <TableRow key={b.id} className="group">
                   <TableCell className="font-mono text-sm">
                     {sofiaTimeLabel(b.startAt)}–{sofiaTimeLabel(b.endAt)}
                   </TableCell>
-                  <TableCell className="text-sm font-medium">{b.serviceName}</TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="whitespace-normal text-sm font-medium">{b.serviceName}</TableCell>
+                  <TableCell className="whitespace-normal text-sm">
                     {c ? (
                       <>
                         {c.name}
@@ -193,7 +193,7 @@ export default async function AdminBookingsPage({
                   <TableCell>
                     <span className={"inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium " + st.cls}>{st.label}</span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <BookingRowActions
                       id={b.id}
                       status={b.status}

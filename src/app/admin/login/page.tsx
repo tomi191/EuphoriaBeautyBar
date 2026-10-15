@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
     <div className="grid min-h-screen place-items-center bg-secondary/40 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <Logo width={140} height={48} href={null} />
+          <Logo width={140} height={140} className="h-36 w-auto" href={null} />
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Admin panel</p>
           <p className="mt-1 text-sm text-muted-foreground">Управление на съдържанието на euphoriabeauty.eu</p>
         </div>
