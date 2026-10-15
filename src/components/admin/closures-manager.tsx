@@ -5,6 +5,8 @@ import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { Button } from "@/components/ui/button";
+import { FieldHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { addClosedDate, removeClosedDate } from "@/lib/actions/closures";
 
 const fmt = new Intl.DateTimeFormat("bg-BG", {
@@ -34,7 +36,21 @@ export function ClosuresManager({ initial }: { initial: string[] }) {
     const prev = dates;
     setDates([...dates, pick].sort());
     try {
-      await addClosedDate(pick);
+      let res = await addClosedDate(pick);
+      // Записани часове в този ден (при всички изпълнители): потвърждение, после force.
+      if (!res.ok && "conflicts" in res) {
+        if (window.confirm(`${res.error}\n\nДа затворя деня въпреки това?`)) {
+          res = await addClosedDate(pick, true);
+        } else {
+          setDates(prev);
+          return;
+        }
+      }
+      if (!res.ok) {
+        setDates(prev);
+        toast.error(res.error);
+        return;
+      }
       setPick("");
       toast.success("Затворен ден добавен.");
     } catch {
@@ -46,6 +62,7 @@ export function ClosuresManager({ initial }: { initial: string[] }) {
   }
 
   async function remove(d: string) {
+    if (!window.confirm(`Да отворя ли отново ${label(d)}?`)) return;
     const prev = dates;
     setDates(dates.filter((x) => x !== d));
     try {
@@ -66,7 +83,10 @@ export function ClosuresManager({ initial }: { initial: string[] }) {
       </div>
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Затворени дни ({dates.length})
+          <span className="inline-flex items-center normal-case tracking-normal">
+            Затворени дни ({dates.length})
+            <FieldHint hint={FIELD_HINTS.closedDate} />
+          </span>
         </p>
         {dates.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">

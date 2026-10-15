@@ -2,11 +2,12 @@
 /**
  * АВТОМАТИЧНО генерира снимки за услуги БЕЗ такава: чете каталога от DB, намира
  * липсващите public/images/services/unique/<slug>.webp, строи сцена по категорията
- * и я генерира през KIE (gpt-image-2), после конвертира до WebP 768px (sharp).
+ * и я генерира през KIE (GPT Image 2.5), после конвертира до WebP 768px (sharp).
  * Idempotent — пускай след всяка нова услуга; съществуващите се прескачат.
- * Пускане: npx tsx --env-file=.env.local scripts/gen-missing-service-images.ts
+ * Пускане: npx tsx scripts/gen-missing-service-images.ts
  * (снимките влизат в repo-то → git add + commit + deploy, за да стигнат до сайта)
  */
+import "./load-env"; // .env.local (KIE_AI_API_KEY, DATABASE_URL) — както останалите скриптове
 import { writeFile, mkdir, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
@@ -16,6 +17,8 @@ import { slugify } from "../src/lib/utils";
 
 const KIE_CREATE_URL = "https://api.kie.ai/api/v1/jobs/createTask";
 const KIE_POLL_URL = "https://api.kie.ai/api/v1/jobs/recordInfo";
+// GPT Image 2.5 (15.10.2026): 6 кредита / 1K. Ключовете на input са по schema-та на модела (snake_case).
+const KIE_MODEL = "gpt-image-2-5-flare-text-to-image";
 
 // Същият anti-slop стил като gen-unique-images.ts — консистентност с 88-те съществуващи.
 const STYLE =
@@ -41,7 +44,7 @@ async function kieCreate(apiKey: string, prompt: string): Promise<string> {
   const res = await fetch(KIE_CREATE_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "gpt-image-2-text-to-image", input: { prompt, aspectRatio: "1:1", resolution: "1K" } }),
+    body: JSON.stringify({ model: KIE_MODEL, input: { prompt, aspect_ratio: "1:1", resolution: "1K", background: "opaque" } }),
   });
   const json = await res.json();
   if (json.code !== 200 || !json.data?.taskId) throw new Error(`createTask: ${json.msg ?? json.code}`);

@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBooking } from "@/lib/actions/bookings";
@@ -163,7 +165,7 @@ export function BookingEditDialog({
                 <Input id="bed-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bed-duration">Минути</Label>
+                <LabelWithHint htmlFor="bed-duration" label="Минути" hint={FIELD_HINTS.bookingMinutes} />
                 <Input
                   id="bed-duration"
                   type="number"
@@ -179,7 +181,7 @@ export function BookingEditDialog({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="bed-active">Активни минути</Label>
+                <LabelWithHint htmlFor="bed-active" label="Активни минути" hint={FIELD_HINTS.bookingActive} />
                 <Input
                   id="bed-active"
                   type="number"
@@ -191,7 +193,7 @@ export function BookingEditDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bed-processing">Минути престой</Label>
+                <LabelWithHint htmlFor="bed-processing" label="Минути престой" hint={FIELD_HINTS.bookingProcessing} />
                 <Input
                   id="bed-processing"
                   type="number"

@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { setMyWorkingHours, addMyTimeOff, deleteMyTimeOff } from "@/lib/actions/resource-hours";
 
 export interface DayHours {
@@ -53,13 +55,42 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
       const toSave = rows.filter((r) => r.custom);
       // allSettled (не all): частичен провал не бива да оставя графика полузаписан без
       // да се знае кои дни са минали → отчитаме поименно неуспелите.
-      const results = await Promise.allSettled(
-        toSave.map((r) =>
-          setMyWorkingHours({ weekday: r.weekday, openTime: r.closed ? null : r.openTime, closeTime: r.closed ? null : r.closeTime, closed: r.closed }),
-        ),
+      const payload = (r: DayHours, force: boolean) => ({
+        weekday: r.weekday,
+        openTime: r.closed ? null : r.openTime,
+        closeTime: r.closed ? null : r.closeTime,
+        closed: r.closed,
+        force,
+      });
+      const results = await Promise.allSettled(toSave.map((r) => setMyWorkingHours(payload(r, false))));
+      // Дни със записани часове извън новия график: едно общо потвърждение, после
+      // само тези дни се пращат пак с force (останалите вече са записани).
+      const conflictIdx: number[] = [];
+      results.forEach((res, i) => {
+        if (res.status === "fulfilled" && !res.value.ok && "conflicts" in res.value) conflictIdx.push(i);
+      });
+      if (conflictIdx.length > 0) {
+        const lines = conflictIdx.map((i) => {
+          const v = results[i] as PromiseFulfilledResult<{ ok: false; error: string }>;
+          return `${DAY_LABEL[toSave[i].weekday]}: ${v.value.error}`;
+        });
+        if (window.confirm(`${lines.join("\n")}\n\nДа запазя ли промяната въпреки това?`)) {
+          const forced = await Promise.allSettled(conflictIdx.map((i) => setMyWorkingHours(payload(toSave[i], true))));
+          forced.forEach((f, k) => {
+            results[conflictIdx[k]] = f;
+          });
+        } else {
+          toast.info("Дните със записани часове не са променени.");
+        }
+      }
+      const failed = results.flatMap((res, i) =>
+        res.status === "rejected" || (res.status === "fulfilled" && !res.value.ok && !conflictIdx.includes(i))
+          ? [DAY_LABEL[toSave[i].weekday]]
+          : [],
       );
-      const failed = results.flatMap((res, i) => (res.status === "rejected" ? [DAY_LABEL[toSave[i].weekday]] : []));
-      if (failed.length === 0) {
+      if (failed.length === 0 && conflictIdx.some((i) => results[i].status === "fulfilled" && !(results[i] as PromiseFulfilledResult<{ ok: boolean }>).value.ok)) {
+        // отказано потвърждение: вече има информативен toast, не обявяваме пълен успех
+      } else if (failed.length === 0) {
         toast.success("Работното време е запазено.");
       } else {
         toast.error(`Не се запазиха: ${failed.join(", ")}. Опитай пак.`);
@@ -75,7 +106,11 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
     <div className="space-y-6">
       {/* Работно време по дни */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold">Работно време</h2>
+        <h2 className="mb-1 text-sm font-semibold">Работно време</h2>
+        <div className="mb-2 flex flex-wrap items-center gap-x-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center">Работен ден (превключвателят) <FieldHint hint={FIELD_HINTS.workDay} /></span>
+          <span className="inline-flex items-center">Начало и край <FieldHint hint={FIELD_HINTS.workHours} /></span>
+        </div>
         <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-background">
           {rows.map((r) => (
             <div key={r.weekday} className="flex items-center gap-3 p-3.5">
@@ -124,7 +159,13 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
     setSaving(true);
     try {
       // Пращаме сурово Sofia-време; сървърът смята UTC (DST-safe), не браузърът.
-      const res = await addMyTimeOff({ dateStr: date, fromTime: from, toTime: to, reason: reason || null });
+      const input = { dateStr: date, fromTime: from, toTime: to, reason: reason || null };
+      let res = await addMyTimeOff(input);
+      // Записани часове в интервала: питаме и пращаме пак с force при потвърждение.
+      if (!res.ok && "conflicts" in res) {
+        if (!window.confirm(res.error)) return;
+        res = await addMyTimeOff({ ...input, force: true });
+      }
       if (res.ok) {
         toast.success("Почивката е добавена.");
         setOpen(false);
@@ -162,7 +203,10 @@ function TimeOffSection({ offs, setOffs }: { offs: TimeOffItem[]; setOffs: React
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Почивки и отпуск</h2>
+        <h2 className="flex items-center gap-0.5 text-sm font-semibold">
+          Почивки и отпуск
+          <FieldHint hint={FIELD_HINTS.timeOff} />
+        </h2>
         <Button variant="outline" size="sm" onClick={() => setOpen((v) => !v)} className="rounded-full">
           <Plus className="size-3.5" /> Добави
         </Button>

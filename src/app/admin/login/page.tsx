@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/logo";
+import { safeFrom } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ function LoginForm() {
       return;
     }
     toast.success("Здравей.");
-    router.replace(params.get("from") ?? "/admin");
+    router.replace(safeFrom(params.get("from"), "/admin"));
   }
 
   return (

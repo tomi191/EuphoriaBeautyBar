@@ -156,6 +156,19 @@ async function seedGallery() {
 }
 
 async function main() {
+  // Seed-ът ТРИЕ team/services/testimonials/faq/gallery преди да сее. Пуснат срещу production
+  // помита реалните данни (галерия, FAQ, услуги + каскадно цените на изпълнителите). Одит 15.10.2026.
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    console.error("✗ seed отказва да работи в production среда.");
+    process.exit(1);
+  }
+  if (!process.argv.includes("--force")) {
+    const existing = await db.query.serviceItems.findMany({ columns: { id: true }, limit: 1 });
+    if (existing.length) {
+      console.error("✗ Базата вече има данни. seed трие и презаписва всичко → пусни с --force, ако наистина искаш това.");
+      process.exit(1);
+    }
+  }
   console.log("⚙ Стартиране на seed...\n");
   await ensureAdmin();
   await seedTeam();

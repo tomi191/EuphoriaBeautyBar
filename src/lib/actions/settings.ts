@@ -6,6 +6,9 @@ import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 
 export async function getSetting<T = unknown>(key: string): Promise<T | null> {
+  // "use server" прави всеки export публичен endpoint. Без guard всеки можеше да прочете
+  // произволен ключ от site_settings (Telegram link token, OAuth refresh token). Одит 15.10.2026.
+  await requireAdmin();
   const row = await db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, key) });
   return (row?.value as T) ?? null;
 }

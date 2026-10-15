@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
@@ -12,6 +12,8 @@ import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
 import { resolveOffering } from "@/lib/booking/offering";
+import { allowedFrom, TRANSITION_ERROR } from "@/lib/booking/status";
+import { isValidDateStr, isValidTimeStr } from "@/lib/booking/input-guards";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -52,8 +54,16 @@ const bookingSchema = z.object({
 export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
   const { session, resource } = await requireStaff();
   const d = bookingSchema.parse(input);
+  // Услугата трябва да е в собствения набор на изпълнителя — иначе чужда/произволна
+  // услуга минава с резолюция по салонния fallback и фалшива цена в оборота.
+  const owns = await db.query.resourceServices.findFirst({
+    where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, d.serviceItemId)),
+    columns: { id: true },
+  });
+  if (!owns) return { ok: false as const, error: "Тази услуга не е в твоя списък." };
   const { durationMin, bufferMin, priceEur, activeMin, processingMin } = await resolveOffering(resource.id, d.serviceItemId);
   const start = new Date(d.startAt);
+  if (Number.isNaN(start.getTime())) return { ok: false as const, error: "Невалиден час." };
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
 
   if (await isClosed(sofiaDateStr(start))) {
@@ -99,6 +109,7 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
       updatedAt: new Date(),
     });
     revalidatePath("/staff");
+    revalidatePath("/staff/board");
     revalidatePath("/admin/bookings");
     return { ok: true as const, id };
   } catch (err: unknown) {
@@ -190,10 +201,17 @@ const editSchema = z.object({
 export async function editMyBooking(id: string, input: z.infer<typeof editSchema>) {
   const { resource } = await requireStaff();
   const d = editSchema.parse(input);
+  if (!isValidDateStr(d.dateStr) || !isValidTimeStr(d.timeStr)) {
+    return { ok: false as const, error: "Невалидна дата или час." };
+  }
   const booking = await db.query.bookings.findFirst({
     where: (b, { and, eq }) => and(eq(b.id, id), eq(b.resourceId, resource.id)),
   });
   if (!booking) return { ok: false as const, error: "Часът не е намерен или не е твой." };
+  // Приключен/отменен час е история (оборот, статистика) — не се пренаписва.
+  if (booking.status === "completed" || booking.status === "cancelled" || booking.status === "no_show") {
+    return { ok: false as const, error: "Приключен или отменен час не може да се редактира." };
+  }
   if (await isClosed(d.dateStr)) return { ok: false as const, error: "Салонът е затворен на тази дата." };
   const start = sofiaWallToUtc(d.dateStr, d.timeStr);
   const end = new Date(start.getTime() + d.durationMin * 60000);
@@ -245,52 +263,53 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
   }
 }
 
-/** Изпълнителят отменя свой час. */
-export async function cancelMyBooking(id: string) {
+/**
+ * Общ преход на статус за свой час: атомарен UPDATE ... WHERE status IN (позволени)
+ * с returning. Чужд/несъществуващ id или недопустим преход дава 0 реда -> ok:false
+ * (преди това връщаше ok:true и UI-ът показваше фалшив успех).
+ */
+async function transitionMine(
+  id: string,
+  to: "arrived" | "completed" | "cancelled" | "no_show",
+  extra: Record<string, Date>,
+) {
   const { resource } = await requireStaff();
-  await db
+  const rows = await db
     .update(schema.bookings)
-    .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
+    .set({ status: to, ...extra, updatedAt: new Date() })
+    .where(
+      and(
+        eq(schema.bookings.id, id),
+        eq(schema.bookings.resourceId, resource.id),
+        inArray(schema.bookings.status, allowedFrom(to)),
+      ),
+    )
+    .returning({ id: schema.bookings.id });
+  if (rows.length === 0) return { ok: false as const, error: TRANSITION_ERROR };
   revalidatePath("/staff");
+  revalidatePath("/staff/board");
   revalidatePath("/admin/bookings");
   return { ok: true as const };
+}
+
+/** Изпълнителят отменя свой час. */
+export async function cancelMyBooking(id: string) {
+  return transitionMine(id, "cancelled", { cancelledAt: new Date() });
 }
 
 /** Изпълнителят отбелязва, че клиентът е дошъл. */
 export async function markMyArrived(id: string) {
-  const { resource } = await requireStaff();
-  await db
-    .update(schema.bookings)
-    .set({ status: "arrived", arrivedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
-  revalidatePath("/staff");
-  revalidatePath("/admin/bookings");
-  return { ok: true as const };
+  return transitionMine(id, "arrived", { arrivedAt: new Date() });
 }
 
 /** Изпълнителят приключва свой час. */
 export async function markMyCompleted(id: string) {
-  const { resource } = await requireStaff();
-  await db
-    .update(schema.bookings)
-    .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
-  revalidatePath("/staff");
-  revalidatePath("/admin/bookings");
-  return { ok: true as const };
+  return transitionMine(id, "completed", { completedAt: new Date() });
 }
 
 /** Изпълнителят отбелязва неявяване на клиента. */
 export async function markMyNoShow(id: string) {
-  const { resource } = await requireStaff();
-  await db
-    .update(schema.bookings)
-    .set({ status: "no_show", updatedAt: new Date() })
-    .where(and(eq(schema.bookings.id, id), eq(schema.bookings.resourceId, resource.id)));
-  revalidatePath("/staff");
-  revalidatePath("/admin/bookings");
-  return { ok: true as const };
+  return transitionMine(id, "no_show", {});
 }
 
 // Оборотът на изпълнителя живее в @/lib/actions/revenue (getMyRevenue) — модел

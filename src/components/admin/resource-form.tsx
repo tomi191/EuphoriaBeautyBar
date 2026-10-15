@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { createResource, updateResource, type ResourceInput } from "@/lib/actions/resources";
@@ -68,8 +70,8 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
               <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} placeholder="напр. Снежана" />
             </div>
             <div className="space-y-2">
-              <Label>Тип услуги</Label>
-              <select className={selectCls} value={kind} onChange={(e) => setKind(e.target.value as "hair" | "nails" | "cosmetics")}>
+              <LabelWithHint htmlFor="res-kind" label="Тип услуги" hint={FIELD_HINTS.resourceKind} />
+              <select id="res-kind" className={selectCls} value={kind} onChange={(e) => setKind(e.target.value as "hair" | "nails" | "cosmetics")}>
                 {KINDS.map((k) => (
                   <option key={k.value} value={k.value}>
                     {k.label}
@@ -78,8 +80,8 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Цвят в календара</Label>
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-16 rounded-md border border-input bg-background" />
+              <LabelWithHint htmlFor="res-color" label="Цвят в календара" hint={FIELD_HINTS.resourceColor} />
+              <input id="res-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-16 rounded-md border border-input bg-background" />
             </div>
             <div className="space-y-2">
               <Label>Снимка</Label>
