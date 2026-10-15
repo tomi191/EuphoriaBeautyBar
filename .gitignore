@@ -82,3 +82,9 @@ scripts/test-push.ts
 vercel-deploys*.md
 vercel-env.md
 staff-profile.md
+
+# promo video work dirs (venv, renders, audio)
+/video/
+
+# libSQL leftover (held an admin password hash; was tracked in the public repo until 15.10.2026)
+local.db

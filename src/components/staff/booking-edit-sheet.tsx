@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import {
@@ -234,7 +236,7 @@ export function BookingEditSheet({
               <Input id="bes-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-11" required />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="bes-duration">Минути</Label>
+              <LabelWithHint htmlFor="bes-duration" label="Минути" hint={FIELD_HINTS.bookingMinutes} />
               <Input
                 id="bes-duration"
                 type="number"
@@ -252,7 +254,7 @@ export function BookingEditSheet({
           {/* Активни минути / престой — за паралелни часове (дълга/къса коса) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="bes-active">Активни минути</Label>
+              <LabelWithHint htmlFor="bes-active" label="Активни минути" hint={FIELD_HINTS.bookingActive} />
               <Input
                 id="bes-active"
                 type="number"
@@ -265,7 +267,7 @@ export function BookingEditSheet({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="bes-processing">Минути престой</Label>
+              <LabelWithHint htmlFor="bes-processing" label="Минути престой" hint={FIELD_HINTS.bookingProcessing} />
               <Input
                 id="bes-processing"
                 type="number"

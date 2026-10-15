@@ -121,6 +121,15 @@ export async function createPublicBooking(input: PublicBookingInput) {
 
   // Защита: не приемаме онлайн запис, ако изпълнителят е спрял онлайн записа за услуга
   // (единична или коя да е от комбинираните).
+  // Сървърно налагане: слотовете се филтрират при показване, но директен POST може да
+  // подаде скрита/непредлагана услуга. Изискваме видим каталог + активна оферта.
+  const notOffered = "Тази услуга не се предлага онлайн от избрания специалист.";
+  if (single && (!single.catalogVisible || !single.offered)) {
+    return { ok: false as const, error: notOffered };
+  }
+  if (combined?.some((o) => !o.catalogVisible || !o.offered)) {
+    return { ok: false as const, error: notOffered };
+  }
   if (single && !single.onlineBookable) {
     return { ok: false as const, error: "Тази услуга не се записва онлайн при този изпълнител. Обади се за час." };
   }

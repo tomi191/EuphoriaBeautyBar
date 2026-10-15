@@ -9,6 +9,8 @@ import { uploadStaffPhoto } from "@/lib/actions/staff-photo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 
 export function StaffProfileForm({
@@ -38,7 +40,11 @@ export function StaffProfileForm({
     e.preventDefault();
     setSavingProfile(true);
     try {
-      await updateStaffProfile({ name, image: image.trim() || null, bio: bio.trim() || null, phone: phone.trim() || null });
+      const res = await updateStaffProfile({ name, image: image.trim() || null, bio: bio.trim() || null, phone: phone.trim() || null });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       toast.success("Профилът е запазен.");
     } catch {
       toast.error("Грешка при запазване.");
@@ -139,7 +145,7 @@ export function StaffProfileForm({
           </div>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Име</Label>
+          <LabelWithHint label="Име" hint={FIELD_HINTS.profilePublic} className="text-xs" />
           <Input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-10" />
         </div>
         <div className="space-y-1">

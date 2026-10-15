@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FieldHint, LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { formatServicePrice } from "@/lib/booking/price";
 import { parseDecimalInput } from "@/lib/decimal";
@@ -225,14 +227,18 @@ export function MyServices({ services, categories, phone }: { services: MyServic
                 ) : (
                   <Switch checked={s.offered} onCheckedChange={() => onToggle(s)} aria-label="Предлагам" />
                 )}
-                <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Предлагам</span>
+                <span className="inline-flex items-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Предлагам
+                  <FieldHint hint={FIELD_HINTS.offerActive} className="-my-1.5 -mr-2" />
+                </span>
               </span>
             </div>
 
             {s.offered && (
               <label className="mt-2 flex cursor-pointer items-center justify-between gap-2 border-t border-border/50 pt-2">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground">
                   {s.onlineBookable ? "Онлайн запис включен" : "Онлайн изключен · клиентът вижда телефона ти"}
+                  <FieldHint hint={FIELD_HINTS.onlineBookable} />
                 </span>
                 <Switch checked={s.onlineBookable} onCheckedChange={() => onToggleOnline(s)} aria-label="Онлайн запис" />
               </label>
@@ -354,8 +360,9 @@ function EditSheet({
       <SheetDescription className="sr-only">Редакция на цена, продължителност и времена за паралелни часове.</SheetDescription>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
-            <Label>Цена (€)</Label>
+            <LabelWithHint htmlFor="ms-price" label="Цена (€)" hint={FIELD_HINTS.priceOwn} />
             <Input
+              id="ms-price"
               type="text"
               inputMode="decimal"
               value={price}
@@ -370,14 +377,15 @@ function EditSheet({
             {errors.price && <p role="alert" className="text-xs text-destructive">{errors.price}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Продължителност (мин)</Label>
-            <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
+            <LabelWithHint htmlFor="ms-duration" label="Продължителност (мин)" hint={FIELD_HINTS.durationOwn} />
+            <Input id="ms-duration" type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
           </div>
         </div>
         <div className="mt-2.5 grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
-            <Label>Макс. цена (опц.)</Label>
+            <LabelWithHint htmlFor="ms-pricemax" label="Макс. цена (опц.)" hint={FIELD_HINTS.priceMax} />
             <Input
+              id="ms-pricemax"
               type="text"
               inputMode="decimal"
               value={priceMax}
@@ -392,25 +400,28 @@ function EditSheet({
             {errors.priceMax && <p role="alert" className="text-xs text-destructive">{errors.priceMax}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Валута</Label>
+            <LabelWithHint label="Валута" hint={FIELD_HINTS.currency} />
             {/* Салонът работи в €; левова цена би влязла числово като € в оборота. */}
             <div className="grid h-11 w-full place-items-center rounded-md border border-input bg-muted/40 px-3 text-base text-muted-foreground">€</div>
           </div>
         </div>
         <label className="mt-3 flex items-center justify-between rounded-xl border border-border p-3">
-          <span className="text-sm font-medium">&quot;от&quot; цена (ориентировъчна)</span>
+          <span className="flex items-center gap-0.5 text-sm font-medium">
+            &quot;от&quot; цена (ориентировъчна)
+            <FieldHint hint={FIELD_HINTS.priceFrom} />
+          </span>
           <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
         </label>
         <div className="mt-3 rounded-xl border border-border p-3">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Паралелни часове</p>
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1.5">
-              <Label>Активни (намазване) мин</Label>
-              <Input type="number" min={0} step={5} value={activeMin} onChange={(e) => setActiveMin(Number(e.target.value))} className="h-11 text-base" />
+              <LabelWithHint htmlFor="ms-active" label="Активни (намазване) мин" hint={FIELD_HINTS.activeMin} />
+              <Input id="ms-active" type="number" min={0} step={5} value={activeMin} onChange={(e) => setActiveMin(Number(e.target.value))} className="h-11 text-base" />
             </div>
             <div className="space-y-1.5">
-              <Label>Престой (мин)</Label>
-              <Input type="number" min={0} step={5} value={processingMin} onChange={(e) => setProcessingMin(Number(e.target.value))} className="h-11 text-base" />
+              <LabelWithHint htmlFor="ms-processing" label="Престой (мин)" hint={FIELD_HINTS.processingMin} />
+              <Input id="ms-processing" type="number" min={0} step={5} value={processingMin} onChange={(e) => setProcessingMin(Number(e.target.value))} className="h-11 text-base" />
             </div>
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
@@ -517,9 +528,10 @@ function AddSheet({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>
-              Група (подкатегория) <span className="text-destructive">*</span>
-            </Label>
+            <LabelWithHint
+              label={<>Група (подкатегория) <span className="text-destructive">*</span></>}
+              hint={FIELD_HINTS.group}
+            />
             {groupMode === "pick" ? (
               <div className="flex flex-wrap gap-1.5">
                 {groups.map((g) => (
@@ -596,10 +608,13 @@ function AddSheet({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>
-                Цена (€) <span className="text-destructive">*</span>
-              </Label>
+              <LabelWithHint
+                htmlFor="ma-price"
+                label={<>Цена (€) <span className="text-destructive">*</span></>}
+                hint={FIELD_HINTS.priceOwn}
+              />
               <Input
+                id="ma-price"
                 type="text"
                 inputMode="decimal"
                 value={price}
@@ -613,15 +628,18 @@ function AddSheet({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Продължителност (мин)</Label>
-              <Input type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
+              <LabelWithHint htmlFor="ma-duration" label="Продължителност (мин)" hint={FIELD_HINTS.durationOwn} />
+              <Input id="ma-duration" type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} className="h-11 text-base" />
             </div>
           </div>
           {errors.price && (
             <p role="alert" className="text-xs text-destructive">{errors.price}</p>
           )}
           <label className="flex items-center justify-between rounded-xl border border-border p-3">
-            <span className="text-sm font-medium">&quot;от&quot; цена (ориентировъчна)</span>
+            <span className="flex items-center gap-0.5 text-sm font-medium">
+              &quot;от&quot; цена (ориентировъчна)
+              <FieldHint hint={FIELD_HINTS.priceFrom} />
+            </span>
             <Switch checked={priceFrom} onCheckedChange={setPriceFrom} />
           </label>
         </div>

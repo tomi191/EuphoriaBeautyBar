@@ -107,8 +107,6 @@ export function BookingForm({
         resourceId,
         serviceItemId: svc.id,
         serviceName: svc.name,
-        durationMin: svc.durationMin,
-        bufferMin: svc.bufferMin,
         startAt: slot,
         clientName: name,
         clientPhone: phone,

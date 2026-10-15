@@ -23,6 +23,10 @@ export interface ResolvedOffering {
   processingMin: number;
   /** Приема ли изпълнителят онлайн запис за услугата (resource_services). */
   onlineBookable: boolean;
+  /** Каталожният ред е видим за онлайн записване (service_items.bookableOnline). */
+  catalogVisible: boolean;
+  /** Изпълнителят предлага услугата (resource_services.active; няма ред → false). */
+  offered: boolean;
   /** Има ли изобщо собствена оферта (false → само каталожен fallback). */
   hasOwnOffering: boolean;
 }
@@ -51,6 +55,8 @@ export async function resolveOffering(resourceId: string, serviceItemId: string)
     activeMin: item?.activeMin ?? 0,
     processingMin: item?.processingMin ?? 0,
     onlineBookable: rs?.onlineBookable ?? true,
+    catalogVisible: item?.bookableOnline ?? false,
+    offered: rs?.active ?? false,
     hasOwnOffering: !!rs,
   };
 }

@@ -6,23 +6,37 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
+import { validatePrice, validateServiceTiming } from "@/lib/booking/service-rules";
 
 const serviceItemSchema = z.object({
   categoryId: z.string(),
   groupTitle: z.string().min(2),
   name: z.string().min(2),
-  price: z.number().positive(),
-  priceMax: z.number().positive().nullable().optional(),
+  price: z.number(),
+  priceMax: z.number().nullable().optional(),
   priceFrom: z.boolean().default(false),
   currency: z.string().min(1).default("лв"),
   duration: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  durationMin: z.number().int().positive().default(30),
-  bufferMin: z.number().int().min(0).default(10),
-  activeMin: z.coerce.number().int().min(0).default(0),
-  processingMin: z.coerce.number().int().min(0).default(0),
+  durationMin: z.number().default(30),
+  bufferMin: z.number().default(10),
+  activeMin: z.coerce.number().default(0),
+  processingMin: z.coerce.number().default(0),
   bookableOnline: z.boolean().default(true),
+}).superRefine((d, ctx) => {
+  // Правилата живеят в service-rules (общи със staff PWA); тук само ги закачаме към zod.
+  const msg = validatePrice(d.price, d.priceMax) ?? validateServiceTiming(d);
+  if (msg) ctx.addIssue({ code: "custom", message: msg });
 });
+
+type SaveResult = { ok: true } | { ok: false; error: string };
+
+/** Валидацията връща грешка като стойност (не throw) — server action throw се маскира на клиента. */
+function parseInput(input: ServiceItemInput) {
+  const r = serviceItemSchema.safeParse(input);
+  if (!r.success) return { ok: false, error: r.error.issues[0]?.message ?? "Провери въведените данни." } as const;
+  return { ok: true, data: r.data } as const;
+}
 
 export type ServiceItemInput = z.infer<typeof serviceItemSchema>;
 
@@ -41,9 +55,11 @@ function revalidateCatalog() {
   revalidatePath("/zapazi-chas"); // онлайн записване
 }
 
-export async function createServiceItem(input: ServiceItemInput) {
+export async function createServiceItem(input: ServiceItemInput): Promise<SaveResult> {
   await requireAdmin();
-  const data = serviceItemSchema.parse(input);
+  const parsed = parseInput(input);
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  const data = parsed.data;
   await db.insert(schema.serviceItems).values({
     id: nanoid(),
     ...data,
@@ -53,11 +69,14 @@ export async function createServiceItem(input: ServiceItemInput) {
     sortOrder: 0,
   });
   revalidateCatalog();
+  return { ok: true };
 }
 
-export async function updateServiceItem(id: string, input: ServiceItemInput) {
+export async function updateServiceItem(id: string, input: ServiceItemInput): Promise<SaveResult> {
   await requireAdmin();
-  const data = serviceItemSchema.parse(input);
+  const parsed = parseInput(input);
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  const data = parsed.data;
   await db
     .update(schema.serviceItems)
     .set({
@@ -68,6 +87,7 @@ export async function updateServiceItem(id: string, input: ServiceItemInput) {
     })
     .where(eq(schema.serviceItems.id, id));
   revalidateCatalog();
+  return { ok: true };
 }
 
 export async function deleteServiceItem(id: string) {

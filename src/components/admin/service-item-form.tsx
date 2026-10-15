@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +28,7 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
 
   const [groupTitle, setGroupTitle] = React.useState(initial?.groupTitle ?? groupTitles[0] ?? "");
   const [name, setName] = React.useState(initial?.name ?? "");
-  const [price, setPrice] = React.useState(initial?.price ?? 0);
+  const [price, setPrice] = React.useState<number | "">(initial?.price ?? "");
   const [priceMax, setPriceMax] = React.useState<number | "">(initial?.priceMax ?? "");
   const [priceFrom, setPriceFrom] = React.useState(initial?.priceFrom ?? false);
   const [currency, setCurrency] = React.useState(initial?.currency ?? "€");
@@ -41,6 +43,11 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    if (price === "") {
+      toast.error("Въведи цена.");
+      setSubmitting(false);
+      return;
+    }
     const payload: ServiceItemInput = {
       categoryId,
       groupTitle,
@@ -58,13 +65,13 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
       bookableOnline,
     };
     try {
-      if (initial) {
-        await updateServiceItem(initial.id, payload);
-        toast.success("Услугата е обновена.");
-      } else {
-        await createServiceItem(payload);
-        toast.success("Услугата е добавена.");
+      const res = initial ? await updateServiceItem(initial.id, payload) : await createServiceItem(payload);
+      if (!res.ok) {
+        // Валидационна причина от сървъра (напр. престой 5 мин) — не общо „Грешка".
+        toast.error(res.error);
+        return;
       }
+      toast.success(initial ? "Услугата е обновена." : "Услугата е добавена.");
       setOpen(false);
     } catch {
       toast.error("Грешка при запазване.");
@@ -83,8 +90,8 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Група</Label>
-              <Input list="groups" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} required />
+              <LabelWithHint htmlFor="si-group" label="Група" hint={FIELD_HINTS.group} />
+              <Input id="si-group" list="groups" value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} required />
               <datalist id="groups">
                 {groupTitles.map((g) => (
                   <option key={g} value={g} />
@@ -92,9 +99,9 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
               </datalist>
             </div>
             <div className="space-y-2">
-              <Label>Валута</Label>
+              <LabelWithHint htmlFor="si-currency" label="Валута" hint={FIELD_HINTS.currency} />
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="si-currency"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="€">€</SelectItem>
                   {/* „лв" остава избираемо за легаси данни, но priceEur snapshot-ът вече
@@ -110,21 +117,21 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label>Цена</Label>
-              <Input type="number" step="0.5" value={price} onChange={(e) => setPrice(Number(e.target.value))} required />
+              <LabelWithHint htmlFor="si-price" label="Цена" hint={FIELD_HINTS.priceCatalog} />
+              <Input id="si-price" type="number" step="0.5" value={price} onChange={(e) => setPrice(e.target.value === "" ? "" : Number(e.target.value))} required />
             </div>
             <div className="space-y-2">
-              <Label>Макс. цена (опц.)</Label>
-              <Input type="number" step="0.5" value={priceMax} onChange={(e) => setPriceMax(e.target.value === "" ? "" : Number(e.target.value))} />
+              <LabelWithHint htmlFor="si-pricemax" label="Макс. цена (опц.)" hint={FIELD_HINTS.priceMax} />
+              <Input id="si-pricemax" type="number" step="0.5" value={priceMax} onChange={(e) => setPriceMax(e.target.value === "" ? "" : Number(e.target.value))} />
             </div>
             <div className="flex items-end justify-between rounded-lg border border-border p-3">
-              <Label htmlFor="from" className="text-xs">&quot;от&quot; цена</Label>
+              <LabelWithHint htmlFor="from" label={<>&quot;от&quot; цена</>} hint={FIELD_HINTS.priceFrom} className="text-xs" />
               <Switch id="from" checked={priceFrom} onCheckedChange={setPriceFrom} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Продължителност (опц.)</Label>
-            <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="напр. 90 мин" />
+            <LabelWithHint htmlFor="si-durtext" label="Продължителност (опц.)" hint={FIELD_HINTS.durationText} />
+            <Input id="si-durtext" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="напр. 90 мин" />
           </div>
           <div className="space-y-2">
             <Label>Описание (опц.)</Label>
@@ -135,29 +142,29 @@ export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: P
             <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">За онлайн записване</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="si-duration">Времетраене (мин)</Label>
+                <LabelWithHint htmlFor="si-duration" label="Времетраене (мин)" hint={FIELD_HINTS.durationMin} />
                 <Input id="si-duration" type="number" min={5} step={5} value={durationMin} onChange={(e) => setDurationMin(Number(e.target.value))} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="si-buffer">Буфер / почистване (мин)</Label>
+                <LabelWithHint htmlFor="si-buffer" label="Буфер / почистване (мин)" hint={FIELD_HINTS.bufferMin} />
                 <Input id="si-buffer" type="number" min={0} step={5} value={bufferMin} onChange={(e) => setBufferMin(Number(e.target.value))} required />
               </div>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="si-active">Активни минути</Label>
+                <LabelWithHint htmlFor="si-active" label="Активни минути" hint={FIELD_HINTS.activeMin} />
                 <Input id="si-active" type="number" min={0} step={5} value={activeMin} onChange={(e) => setActiveMin(Number(e.target.value))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="si-processing">Минути престой</Label>
+                <LabelWithHint htmlFor="si-processing" label="Минути престой" hint={FIELD_HINTS.processingMin} />
                 <Input id="si-processing" type="number" min={0} step={5} value={processingMin} onChange={(e) => setProcessingMin(Number(e.target.value))} />
               </div>
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-              За паралелни часове по време на престой; 0 = няма престой; активни = колко мин майсторът работи преди престоя.
+              Нужни са за онлайн записването и за паралелните часове.
             </p>
             <div className="mt-3 flex items-center justify-between rounded-md border border-border p-3">
-              <Label htmlFor="bookable" className="cursor-pointer text-sm">Може да се записва онлайн</Label>
+              <LabelWithHint htmlFor="bookable" label="Показва се на сайта и в онлайн записването" hint={FIELD_HINTS.catalogVisible} className="cursor-pointer text-sm" />
               <Switch id="bookable" checked={bookableOnline} onCheckedChange={setBookableOnline} />
             </div>
           </div>

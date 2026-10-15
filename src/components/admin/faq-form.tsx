@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LabelWithHint } from "@/components/ui/field-hint";
+import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { createFaq, updateFaq, type FaqInput } from "@/lib/actions/faq";
@@ -59,8 +61,8 @@ export function FaqForm({ trigger, initial }: { trigger: React.ReactNode; initia
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Подредба</Label>
-              <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
+              <LabelWithHint htmlFor="faq-order" label="Подредба" hint={FIELD_HINTS.faqOrder} />
+              <Input id="faq-order" type="number" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
             </div>
             <div className="flex items-end justify-between rounded-lg border border-border p-3">
               <Label htmlFor="active" className="cursor-pointer">Активен</Label>

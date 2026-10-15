@@ -24,10 +24,11 @@ export function BookingRowActions({
 }) {
   const [busy, setBusy] = React.useState(false);
 
-  async function run(fn: () => Promise<void>) {
+  async function run(fn: () => Promise<void | { ok: boolean; error?: string }>) {
     setBusy(true);
     try {
-      await fn();
+      const res = await fn();
+      if (res && !res.ok) toast.error(res.error ?? "Грешка.");
     } catch {
       toast.error("Грешка.");
     } finally {

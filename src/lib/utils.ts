@@ -25,3 +25,12 @@ export function slugify(text: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+/**
+ * Безопасен `?from=` след вход: само относителен път в същия сайт. "//evil.com",
+ * "/\evil.com" и абсолютни URL-и са open redirect, затова връщаме fallback.
+ */
+export function safeFrom(from: string | null | undefined, fallback: string): string {
+  if (!from || !from.startsWith("/") || from.startsWith("//") || from.includes("\\")) return fallback;
+  return from;
+}

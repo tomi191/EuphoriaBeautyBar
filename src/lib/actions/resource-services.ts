@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { validatePrice, validateServiceTiming } from "@/lib/booking/service-rules";
 
 function revalidate() {
   revalidatePath("/staff/services");
@@ -30,6 +31,14 @@ function revalidate() {
  */
 export async function toggleMyService(serviceItemId: string) {
   const { resource } = await requireStaff();
+  // Ownership по kind (като в updateMyService): иначе крафтнат serviceItemId от чужд тип
+  // би създал оферта за услуга, която изпълнителят не може да извършва.
+  const target = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
+  if (!target) return { ok: false as const, error: "Услугата не е намерена." };
+  const targetCat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, target.categoryId) });
+  if (!targetCat || KIND_BY_SLUG[targetCat.slug] !== resource.kind) {
+    return { ok: false as const, error: "Услугата не е от твоя тип." };
+  }
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
@@ -39,8 +48,7 @@ export async function toggleMyService(serviceItemId: string) {
       .set({ active: !existing.active, updatedAt: new Date() })
       .where(eq(schema.resourceServices.id, existing.id));
   } else {
-    const item = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
-    if (!item) return { ok: false as const };
+    const item = target;
     await db.insert(schema.resourceServices).values({
       id: nanoid(),
       resourceId: resource.id,
@@ -61,14 +69,15 @@ export async function toggleMyService(serviceItemId: string) {
 }
 
 const updateSchema = z.object({
-  price: z.number().positive(),
-  priceMax: z.number().positive().nullable().optional(),
+  // Числовите граници са в service-rules (български съобщения); тук само формата.
+  price: z.number(),
+  priceMax: z.number().nullable().optional(),
   priceFrom: z.boolean(),
   currency: z.string().min(1),
-  durationMin: z.number().int().positive(),
-  bufferMin: z.number().int().min(0),
-  activeMin: z.number().int().min(0).max(600).optional(),
-  processingMin: z.number().int().min(0).max(600).optional(),
+  durationMin: z.number(),
+  bufferMin: z.number(),
+  activeMin: z.number().optional(),
+  processingMin: z.number().optional(),
 });
 
 /**
@@ -78,12 +87,14 @@ const updateSchema = z.object({
  */
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
   const { resource } = await requireStaff();
-  const d = updateSchema.parse(input);
-  // Инвариант: активно + престой ≤ блок (продължителност + буфер). Иначе паралелният
-  // прозорец (windowFor) излиза след края на часа → фантомни слотове.
-  if ((d.activeMin ?? 0) + (d.processingMin ?? 0) > d.durationMin + d.bufferMin) {
-    return { ok: false as const, error: "Активно + престой не може да надвишава продължителност + буфер." };
-  }
+  const parsedInput = updateSchema.safeParse(input);
+  if (!parsedInput.success) return { ok: false as const, error: "Провери въведените данни." };
+  const d = parsedInput.data;
+  // Цена + собствено време (кратно на 5, граници). Number("") = 0 → „Въведи минути…".
+  const baseErr =
+    validatePrice(d.price, d.priceMax) ??
+    validateServiceTiming({ durationMin: d.durationMin, bufferMin: d.bufferMin, activeMin: 0, processingMin: 0 });
+  if (baseErr) return { ok: false as const, error: baseErr };
   // Ownership по kind: activeMin/processingMin се пишат ГЛОБАЛНО в каталога → крафтнат
   // serviceItemId от чужд тип не бива да променя чужда услуга.
   const target = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
@@ -96,6 +107,31 @@ export async function updateMyService(serviceItemId: string, input: z.infer<type
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
+  // Активно/престой са ГЛОБАЛНИ (service_items) и важат за всеки изпълнител, а времетраенето
+  // може да е различно по изпълнител → сумата се сверява с НАЙ-КРАТКОТО време, с което някой
+  // предлага услугата. Иначе при колега с по-кратко време прозорецът излиза след края на часа.
+  if (activeMin !== undefined || processingMin !== undefined) {
+    const nextActive = activeMin ?? target.activeMin;
+    const nextProcessing = processingMin ?? target.processingMin;
+    // Форма/кратност/10-мин праг: с най-голямо време, за да не се дублира проверката за сумата.
+    const shapeErr = validateServiceTiming({ durationMin: 600, bufferMin: d.bufferMin, activeMin: nextActive, processingMin: nextProcessing });
+    if (shapeErr) return { ok: false as const, error: shapeErr };
+    const offers = await db.query.resourceServices.findMany({
+      where: (rs, { and, eq }) => and(eq(rs.serviceItemId, serviceItemId), eq(rs.active, true)),
+    });
+    const durations = [
+      target.durationMin,
+      d.durationMin,
+      ...offers.filter((o) => o.resourceId !== resource.id).map((o) => o.durationMin),
+    ];
+    const minDuration = Math.min(...durations);
+    if (nextActive + nextProcessing > minDuration) {
+      return {
+        ok: false as const,
+        error: `Активни + престой (${nextActive + nextProcessing} мин) може да са най-много ${minDuration} мин, колкото е най-краткото време, с което колега предлага услугата.`,
+      };
+    }
+  }
   if (existing) {
     await db
       .update(schema.resourceServices)
@@ -156,10 +192,10 @@ const createSchema = z.object({
   groupTitle: z.string().min(2),
   /** Slug на категорията — нужен само ако групата е нова (не се извежда от нея). */
   categorySlug: z.string().nullable().optional(),
-  price: z.number().positive(),
+  price: z.number(),
   priceFrom: z.boolean().default(false),
-  durationMin: z.number().int().positive(),
-  bufferMin: z.number().int().min(0).default(10),
+  durationMin: z.number(),
+  bufferMin: z.number().default(10),
 });
 
 /**
@@ -169,7 +205,13 @@ const createSchema = z.object({
  */
 export async function createMyService(input: z.infer<typeof createSchema>) {
   const { resource } = await requireStaff();
-  const d = createSchema.parse(input);
+  const parsedInput = createSchema.safeParse(input);
+  if (!parsedInput.success) return { ok: false as const, error: parsedInput.error.issues[0]?.message ?? "Провери въведените данни." };
+  const d = parsedInput.data;
+  const baseErr =
+    validatePrice(d.price) ??
+    validateServiceTiming({ durationMin: d.durationMin, bufferMin: d.bufferMin, activeMin: 0, processingMin: 0 });
+  if (baseErr) return { ok: false as const, error: baseErr };
 
   // Категория: от съществуваща група за неговия kind, иначе от подадения slug.
   const cats = await db.query.serviceCategories.findMany();
