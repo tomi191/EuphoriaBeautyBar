@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
-import { team } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/team-db";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -58,7 +58,8 @@ const faq = [
   },
 ];
 
-export default function BalayazhVarnaPage() {
+export default async function BalayazhVarnaPage() {
+  const team = await getTeam();
   const founder = team[0];
 
   return (

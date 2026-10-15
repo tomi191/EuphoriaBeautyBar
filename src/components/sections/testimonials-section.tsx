@@ -1,10 +1,13 @@
 import { Quote, Star } from "lucide-react";
 import { Marquee } from "@/components/reactbits/marquee";
 import { Reveal } from "@/components/reactbits/reveal";
-import { testimonials } from "@/lib/data/testimonials";
+import type { PublicTestimonial } from "@/lib/data/testimonials-db";
 import { cn } from "@/lib/utils";
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ items }: { items: PublicTestimonial[] }) {
+  // Празна база = няма секция; не показваме измислени отзиви.
+  if (items.length === 0) return null;
+  const testimonials = items;
   const firstHalf = testimonials.slice(0, Math.ceil(testimonials.length / 2));
   const secondHalf = testimonials.slice(Math.ceil(testimonials.length / 2));
 
@@ -19,6 +22,7 @@ export function TestimonialsSection() {
             <h2 className="font-display text-4xl font-medium text-balance md:text-5xl lg:text-6xl">
               Думи, които <span className="gradient-text">не оставят равнодушни</span>.
             </h2>
+            <p className="mt-4 text-sm text-muted-foreground">Отзиви, споделени директно със салона.</p>
           </div>
         </Reveal>
       </div>
@@ -48,7 +52,7 @@ function TestimonialCard({
   rating,
   initials,
   className,
-}: (typeof testimonials)[number] & { className?: string }) {
+}: PublicTestimonial & { className?: string }) {
   return (
     <figure
       className={cn(

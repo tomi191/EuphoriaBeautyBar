@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
 import { TiltedCard } from "@/components/reactbits/tilted-card";
-import { team } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/team-db";
+import { getTestimonials } from "@/lib/data/testimonials-db";
+import { TestimonialsSection } from "@/components/sections/testimonials-section";
 import { siteConfig } from "@/lib/site";
 import { db } from "@/lib/db";
 
@@ -39,7 +41,10 @@ const milestones = [
 ];
 
 export default async function AboutPage() {
+  const team = await getTeam();
   const founder = team[0];
+  const otherMembers = team.slice(1);
+  const testimonials = await getTestimonials();
   const rentalOpenRow = await db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "rental_open") });
   const rentalOpen = rentalOpenRow ? Boolean(rentalOpenRow.value) : true;
 
@@ -127,6 +132,23 @@ export default async function AboutPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Останалите активни от /admin/team; без тях секцията не се рисува */}
+      {otherMembers.length > 0 && (
+        <section className="py-16 lg:py-20">
+          <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
+            {otherMembers.map((m) => (
+              <article key={m.slug} className="rounded-md border border-border bg-background p-6">
+                <h3 className="font-display text-2xl">{m.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{m.role} · {m.experience}</p>
+                <p className="mt-4 text-sm text-foreground/80">{m.bio}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <TestimonialsSection items={testimonials} />
 
       <section className="relative overflow-hidden border-y border-border/40 bg-secondary/40 py-24 lg:py-32">
         <Image

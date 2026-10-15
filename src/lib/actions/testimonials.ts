@@ -7,6 +7,13 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 
+// Отзивите се показват само на /za-nas (началната ползва Google ревюта).
+const TESTIMONIAL_PATHS = ["/admin/testimonials", "/za-nas"] as const;
+
+function revalidateAll() {
+  for (const p of TESTIMONIAL_PATHS) revalidatePath(p);
+}
+
 const testimonialSchema = z.object({
   name: z.string().min(2),
   service: z.string().min(2),
@@ -28,21 +35,18 @@ export async function createTestimonial(input: TestimonialInput) {
     sortOrder: 0,
     createdAt: new Date(),
   });
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateAll();
 }
 
 export async function updateTestimonial(id: string, input: TestimonialInput) {
   await requireAdmin();
   const data = testimonialSchema.parse(input);
   await db.update(schema.testimonials).set(data).where(eq(schema.testimonials.id, id));
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateAll();
 }
 
 export async function deleteTestimonial(id: string) {
   await requireAdmin();
   await db.delete(schema.testimonials).where(eq(schema.testimonials.id, id));
-  revalidatePath("/admin/testimonials");
-  revalidatePath("/");
+  revalidateAll();
 }

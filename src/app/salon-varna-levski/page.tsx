@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { localBusinessSchema, breadcrumbSchema, faqSchema } from "@/lib/schema";
-import { team } from "@/lib/data/team";
+import { getTeam } from "@/lib/data/team-db";
 import { db } from "@/lib/db";
 import { siteConfig } from "@/lib/site";
 
@@ -99,6 +99,7 @@ export default async function SalonVarnaLevskiPage() {
   // Два различни рейтинга за един и същ @id са невярно твърдение към Google.
   const summary = summaryRow?.value as { rating: number; total: number } | undefined;
   const rating = summary?.rating ? { value: summary.rating, count: summary.total } : undefined;
+  const team = await getTeam();
   const founder = team[0];
 
   return (

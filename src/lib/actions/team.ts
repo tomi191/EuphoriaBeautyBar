@@ -8,6 +8,13 @@ import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { slugify } from "@/lib/utils";
 
+// Всички страници, които четат екипа през getTeam(). Един списък, за да не се разминава.
+const TEAM_PATHS = ["/admin/team", "/", "/za-nas", "/salon-varna-levski", "/uslugi/balayazh-varna"] as const;
+
+function revalidateAll() {
+  for (const p of TEAM_PATHS) revalidatePath(p);
+}
+
 const teamSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
   role: z.string().min(2),
@@ -39,9 +46,7 @@ export async function createTeamMember(input: TeamInput) {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
-  revalidatePath("/admin/team");
-  revalidatePath("/");
-  revalidatePath("/za-nas");
+  revalidateAll();
   return { id };
 }
 
@@ -52,15 +57,11 @@ export async function updateTeamMember(id: string, input: TeamInput) {
     .update(schema.teamMembers)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(schema.teamMembers.id, id));
-  revalidatePath("/admin/team");
-  revalidatePath("/");
-  revalidatePath("/za-nas");
+  revalidateAll();
 }
 
 export async function deleteTeamMember(id: string) {
   await requireAdmin();
   await db.delete(schema.teamMembers).where(eq(schema.teamMembers.id, id));
-  revalidatePath("/admin/team");
-  revalidatePath("/");
-  revalidatePath("/za-nas");
+  revalidateAll();
 }
