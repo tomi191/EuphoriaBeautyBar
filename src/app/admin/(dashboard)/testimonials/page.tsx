@@ -37,16 +37,16 @@ export default async function AdminTestimonialsPage() {
               <TableHead>Рейтинг</TableHead>
               <TableHead>Цитат</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((t) => {
               const del = deleteTestimonial.bind(null, t.id);
               return (
-                <TableRow key={t.id}>
+                <TableRow key={t.id} className="group">
                   <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{t.service}</TableCell>
+                  <TableCell className="whitespace-normal text-sm text-muted-foreground">{t.service}</TableCell>
                   <TableCell>
                     <div className="flex">
                       {Array.from({ length: t.rating }).map((_, i) => (
@@ -54,7 +54,7 @@ export default async function AdminTestimonialsPage() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-md">
+                  <TableCell className="max-w-sm whitespace-normal">
                     <p className="line-clamp-2 text-sm text-muted-foreground">{t.quote}</p>
                   </TableCell>
                   <TableCell>
@@ -62,7 +62,7 @@ export default async function AdminTestimonialsPage() {
                       {t.approved ? "Одобрен" : "Чернова"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <TestimonialForm initial={t} trigger={<Button variant="outline" size="sm">Редакция</Button>} />
                       <DeleteButton action={del} />

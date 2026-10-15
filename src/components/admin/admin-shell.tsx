@@ -22,7 +22,9 @@ import {
   X,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { Logo } from "@/components/brand/logo";
+import Image from "next/image";
+import { AdminNotifications } from "@/components/admin/admin-notifications";
+import type { AdminNotificationsState } from "@/lib/admin/notifications";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -41,7 +43,27 @@ const nav = [
   { href: "/admin/settings", label: "Настройки", icon: Settings },
 ];
 
-export function AdminShell({ user, children }: { user: { name?: string | null; email?: string | null }; children: React.ReactNode }) {
+/** Знакът + името: квадратното лого в 56px оставя надписа нечетим, затова тук е знакът и текст. */
+function AdminBrand({ size }: { size: "md" | "sm" }) {
+  const img = size === "md" ? "h-10 w-auto" : "h-8 w-auto";
+  return (
+    <Link href="/admin" aria-label="Към таблото" className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <Image src="/images/brand/logo-mark.png" alt="" width={80} height={80} className={cn("select-none dark:hidden", img)} />
+      <Image src="/images/brand/logo-mark-white.png" alt="" width={80} height={80} className={cn("hidden select-none dark:block", img)} aria-hidden />
+      <span className={cn("truncate font-display font-medium tracking-tight", size === "md" ? "text-xl" : "text-lg")}>Euphoria</span>
+    </Link>
+  );
+}
+
+export function AdminShell({
+  user,
+  notifications,
+  children,
+}: {
+  user: { name?: string | null; email?: string | null };
+  notifications: AdminNotificationsState;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -62,7 +84,10 @@ export function AdminShell({ user, children }: { user: { name?: string | null; e
     <div className="min-h-screen bg-secondary/40">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-background lg:flex">
         <div className="flex h-20 items-center border-b border-border px-5">
-          <Logo width={120} height={36} />
+          <AdminBrand size="md" />
+          <div className="ml-auto">
+            <AdminNotifications initial={notifications} size="md" />
+          </div>
         </div>
         <nav className="flex-1 space-y-0.5 p-3">
           {nav.map((item) => {
@@ -116,7 +141,10 @@ export function AdminShell({ user, children }: { user: { name?: string | null; e
         >
           <Menu className="size-5" />
         </button>
-        <Logo width={110} height={32} />
+        <AdminBrand size="sm" />
+        <div className="ml-auto">
+          <AdminNotifications initial={notifications} size="lg" />
+        </div>
       </header>
 
       {/* Мобилна навигация — панелът нямаше НИКАква навигация на телефон. */}
@@ -125,7 +153,7 @@ export function AdminShell({ user, children }: { user: { name?: string | null; e
           <button aria-label="Затвори" className="fixed inset-0 z-40 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <div role="dialog" aria-modal="true" aria-label="Меню" className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col border-r border-border bg-background">
             <div className="flex h-16 items-center justify-between border-b border-border px-4">
-              <Logo width={110} height={32} />
+              <AdminBrand size="sm" />
               <button onClick={() => setMobileOpen(false)} aria-label="Затвори" className="grid size-11 place-items-center rounded-md hover:bg-secondary">
                 <X className="size-5" />
               </button>
@@ -160,9 +188,10 @@ export function AdminShell({ user, children }: { user: { name?: string | null; e
         </div>
       )}
 
-      <main className="lg:pl-64">
+      {/* Не <main>: root layout-ът вече дава landmark-а, вложен втори <main> е невалиден. */}
+      <div className="lg:pl-64">
         <div className="mx-auto max-w-6xl px-4 py-8 lg:px-10 lg:py-12">{children}</div>
-      </main>
+      </div>
     </div>
   );
 }

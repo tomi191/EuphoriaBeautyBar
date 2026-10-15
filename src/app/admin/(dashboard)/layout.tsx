@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { loadAdminNotifications } from "@/lib/admin/notifications";
 
 // Админът е зад auth и винаги чете live данни — никога не се prerender-ва на
 // build (премахва DB зависимостта на билда за всички /admin страници).
@@ -12,8 +13,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // role check: staff акаунтите имат сесия, но не бива да виждат admin таблото.
   if (!session?.user || session.user.role !== "admin") redirect("/admin/login");
 
+  const notifications = await loadAdminNotifications();
+
   return (
-    <AdminShell user={{ name: session.user.name, email: session.user.email }}>
+    <AdminShell user={{ name: session.user.name, email: session.user.email }} notifications={notifications}>
       {children}
     </AdminShell>
   );

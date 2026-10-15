@@ -34,7 +34,7 @@ export default function StaffLoginPage() {
     <div className="grid min-h-screen place-items-center bg-secondary/40 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <Logo width={150} height={44} href={null} />
+          <Logo width={120} height={120} className="h-28 w-auto" href={null} />
         </div>
         <p className="mb-6 text-center text-sm text-muted-foreground">Вход за екипа</p>
         <InstallBanner />

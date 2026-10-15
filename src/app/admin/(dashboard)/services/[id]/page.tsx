@@ -40,7 +40,7 @@ export default async function CategoryEditPage({ params }: Params) {
 
       <PageHeader
         title={category.title}
-        subtitle={`${items.length} услуги · slug: ${category.slug}`}
+        subtitle={`${items.length} услуги · на сайта: /uslugi/${category.slug}`}
         action={
           <ServiceItemForm
             categoryId={category.id}
@@ -59,20 +59,20 @@ export default async function CategoryEditPage({ params }: Params) {
           <TableHeader>
             <TableRow>
               <TableHead>Група</TableHead>
-              <TableHead>Услуга</TableHead>
+              <TableHead className="min-w-44">Услуга</TableHead>
               <TableHead>Цена</TableHead>
               <TableHead>Времетраене</TableHead>
               <TableHead>Описание</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((i) => {
               const del = deleteServiceItem.bind(null, i.id);
               return (
-                <TableRow key={i.id}>
-                  <TableCell className="text-xs uppercase tracking-wider text-muted-foreground">{i.groupTitle}</TableCell>
-                  <TableCell className="font-medium">{i.name}</TableCell>
+                <TableRow key={i.id} className="group">
+                  <TableCell className="whitespace-normal text-xs uppercase tracking-wider text-muted-foreground">{i.groupTitle}</TableCell>
+                  <TableCell className="min-w-44 whitespace-normal font-medium">{i.name}</TableCell>
                   <TableCell className="font-display text-base font-medium">
                     {i.priceFrom && <span className="text-xs text-muted-foreground">от </span>}
                     {i.price}
@@ -90,9 +90,9 @@ export default async function CategoryEditPage({ params }: Params) {
                     </span>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="line-clamp-1 text-xs text-muted-foreground">{i.description ?? "—"}</p>
+                    <p className="truncate text-xs text-muted-foreground" title={i.description ?? undefined}>{i.description ?? "-"}</p>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <ServiceItemForm
                         categoryId={category.id}

@@ -36,7 +36,7 @@ export default async function AdminBlogPage() {
               <p className="text-xs uppercase tracking-wider text-primary">{p.category}</p>
               <h3 className="mt-1 truncate font-display text-lg">{p.title}</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                {dateFmt.format(p.publishedAt)} · {p.readingMinutes} мин · <span className={p.status === "published" ? "text-foreground" : "text-destructive"}>{p.status}</span>
+                {dateFmt.format(p.publishedAt)} · {p.readingMinutes} мин · <span className={p.status === "published" ? "text-foreground" : "text-destructive"}>{p.status === "published" ? "публикувана" : p.status === "draft" ? "чернова" : p.status}</span>
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">

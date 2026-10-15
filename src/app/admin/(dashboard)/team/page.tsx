@@ -37,14 +37,14 @@ export default async function AdminTeamPage() {
               <TableHead>Опит</TableHead>
               <TableHead>Специализации</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
+              <TableHead className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {members.map((m) => {
               const deleteAction = deleteTeamMember.bind(null, m.id);
               return (
-                <TableRow key={m.id}>
+                <TableRow key={m.id} className="group">
                   <TableCell className="font-medium">{m.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{m.role}</TableCell>
                   <TableCell className="text-sm">{m.experience}</TableCell>
@@ -71,7 +71,7 @@ export default async function AdminTeamPage() {
                       {m.active ? "Активен" : "Скрит"}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <TeamForm
                         initial={m}
