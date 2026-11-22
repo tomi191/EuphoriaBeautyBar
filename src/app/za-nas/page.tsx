@@ -18,6 +18,7 @@ import { getTestimonials } from "@/lib/data/testimonials-db";
 import { TestimonialsSection } from "@/components/sections/testimonials-section";
 import { siteConfig } from "@/lib/site";
 import { db } from "@/lib/db";
+import { hasOpenListings } from "@/lib/data/rental-listings";
 
 export const metadata: Metadata = {
   title: "За нас — салон за красота в кв. Левски, Варна",
@@ -46,7 +47,8 @@ export default async function AboutPage() {
   const otherMembers = team.slice(1);
   const testimonials = await getTestimonials();
   const rentalOpenRow = await db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "rental_open") });
-  const rentalOpen = rentalOpenRow ? Boolean(rentalOpenRow.value) : true;
+  // Банерът само при включен ключ И поне една публикувана обява (иначе води към «няма свободни места»).
+  const rentalOpen = (rentalOpenRow ? Boolean(rentalOpenRow.value) : true) && (await hasOpenListings());
 
   return (
     <>

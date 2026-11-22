@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -191,17 +191,41 @@ export const googleReviews = pgTable("google_reviews", {
   fetchedAt: ts("fetched_at").notNull().$defaultFn(() => new Date()),
 });
 
-export const rentalPositions = pgTable("rental_positions", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  type: text("type").notNull(),
-  description: text("description").notNull(),
-  skills: jsonb("skills").notNull().$type<string[]>(),
-  active: boolean("active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
-  updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
-});
+export const rentalPositions = pgTable(
+  "rental_positions",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    type: text("type").notNull(),
+    description: text("description").notNull(),
+    skills: jsonb("skills").notNull().$type<string[]>(),
+    // Старите четци (/karieri, ботът) гледат само active; новите действия го държат = (status === "published").
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+    updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
+    // Обявата (№8 Б, миграция drizzle/manual/0001_rental_listings.sql). Всички са празни при старите редове.
+    categoryId: text("category_id").references(() => serviceCategories.id, { onDelete: "set null" }),
+    serviceIds: jsonb("service_ids").notNull().default([]).$type<string[]>(), // service_items.id
+    slug: text("slug"), // /karieri/<slug>; уникален (индекс долу)
+    image: text("image"),
+    benefits: jsonb("benefits").notNull().default([]).$type<string[]>(), // ключове от lib/rental/benefits.ts
+    adminNote: text("admin_note"), // само за администратора: НИКОГА в публичните четения
+    // null = стар ред отпреди обявите: важи active (active → публикувана, иначе спряна).
+    status: text("status").$type<"draft" | "published" | "filled" | "paused">(),
+    // FK към resources (on delete set null) се налага на ниво БД, като при gallery_images.
+    filledByResourceId: text("filled_by_resource_id"),
+    publishedAt: ts("published_at"),
+    filledAt: ts("filled_at"),
+    fbPostId: text("fb_post_id"),
+    fbPostedAt: ts("fb_posted_at"),
+  },
+  (t) => [
+    uniqueIndex("rental_positions_slug_uq").on(t.slug),
+    index("rental_positions_status_idx").on(t.status),
+    index("rental_positions_filled_by_idx").on(t.filledByResourceId),
+  ],
+);
 
 /* ──────────────────────────────────────
  * Booking система
