@@ -15,6 +15,8 @@ export function MobileCallBar() {
   const pathname = usePathname();
   // Скрита в админ панела и приложението за екипа (те имат собствена долна навигация).
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
+  // Обявите за място под наем имат своя лента («Обади се» и «Пиши във Viber»), RentalCallBar.
+  if (pathname.startsWith("/karieri")) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[1fr_1fr_1.3fr] border-t border-border/60 bg-background/95 backdrop-blur lg:hidden">
