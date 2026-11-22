@@ -7,6 +7,7 @@ import { nanoid } from "nanoid";
 import { db, schema } from "@/lib/db";
 import { galleryAlt } from "@/lib/data/gallery";
 import { requireAdmin } from "@/lib/actions/auth-guard";
+import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
 import { galleryCategories } from "@/lib/data/gallery";
 
 const BUCKET = "gallery";
@@ -73,7 +74,9 @@ export async function uploadGalleryImage(formData: FormData) {
 
   const id = `gu-${nanoid(10)}`;
   const path = `${id}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
+  const buffer = await stripImageMetadata(Buffer.from(await file.arrayBuffer()));
+  if (!buffer) return { ok: false as const, error: IMAGE_NOT_READABLE };
   const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type });
   if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
 

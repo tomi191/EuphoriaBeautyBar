@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { postListingToFacebookPage, type FacebookPostResult } from "@/lib/facebook/page-post";
+import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
 import { RENTAL_BENEFIT_KEYS } from "@/lib/rental/benefits";
 import {
   effectiveStatus,
@@ -323,9 +324,12 @@ export async function uploadListingImage(id: string, formData: FormData) {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return fail("Няма избран файл.");
   if (file.size > MAX_BYTES) return fail("Снимката е над 5 MB.");
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const type = sniffImageType(buffer.subarray(0, 16));
+  const original = Buffer.from(await file.arrayBuffer());
+  const type = sniffImageType(original.subarray(0, 16));
   if (!type) return fail("Позволени са само JPG, PNG и WebP изображения.");
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
+  const buffer = await stripImageMetadata(original);
+  if (!buffer) return fail(IMAGE_NOT_READABLE);
 
   const row = await db.query.rentalPositions.findFirst({
     where: (p, { eq }) => eq(p.id, id),

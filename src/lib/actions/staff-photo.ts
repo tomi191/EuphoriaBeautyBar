@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
+import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
 
 const BUCKET = "team";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -36,7 +37,9 @@ export async function uploadStaffPhoto(formData: FormData) {
 
   // Нов път всеки път → не се сблъсква с CDN кеша на стария файл.
   const path = `${resource.id}-${Date.now()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
+  const buffer = await stripImageMetadata(Buffer.from(await file.arrayBuffer()));
+  if (!buffer) return { ok: false as const, error: IMAGE_NOT_READABLE };
   const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type, upsert: true });
   if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
 
