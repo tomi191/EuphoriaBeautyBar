@@ -947,7 +947,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
       </form>
 
       <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
-        <DialogContent className="max-w-3xl" description="Галерия със снимки от работата на избрания изпълнител.">
+        <DialogContent className="max-w-3xl" description="Галерия със снимки от работата на избрания специалист.">
           <DialogHeader>
             <DialogTitle>Работа на {lightbox?.name}</DialogTitle>
           </DialogHeader>
