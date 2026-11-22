@@ -9,6 +9,7 @@ import { galleryAlt } from "@/lib/data/gallery";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
 import { galleryCategories } from "@/lib/data/gallery";
+import { ORIGINALS_BUCKET } from "@/lib/gallery/storage";
 
 const BUCKET = "gallery";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -148,6 +149,12 @@ export async function deleteGalleryImage(imageId: string) {
       const supabase = createClient(supabaseUrl, serviceKey);
       await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
     }
+  }
+  // Снимка от специалист: и оригиналът без знак в частното хранилище.
+  if (supabaseUrl && serviceKey && img.originalPath) {
+    const supabase = createClient(supabaseUrl, serviceKey);
+    const { error } = await supabase.storage.from(ORIGINALS_BUCKET).remove([img.originalPath]);
+    if (error) console.error("[gallery] не успях да изтрия оригинала:", img.originalPath, error);
   }
 
   revalidateGallery();
