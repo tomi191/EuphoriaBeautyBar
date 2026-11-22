@@ -51,8 +51,9 @@ export function SiteBot() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, open]);
 
-  // Като SiteHeader: ботът е само за публичните страници.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
+  // Като SiteHeader: ботът е само за публичните страници. На страницата за записване
+  // не се показва: там закриваше цени и полета, а записването е на самата страница.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/staff") || pathname === "/zapazi-chas") return null;
 
   async function send(text: string) {
     const message = text.trim();

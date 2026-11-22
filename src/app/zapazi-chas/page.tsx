@@ -111,7 +111,7 @@ export default async function BookingPage() {
         <h1 className="font-display text-4xl font-medium md:text-5xl">Запази час</h1>
         <p className="mt-4 font-serif text-lg italic text-muted-foreground">
           {services.length > 0
-            ? "Избери услуга, изпълнител и свободен час. Ще получиш потвърждение на имейла."
+            ? "Избери услуга, специалист и свободен час. Ще получиш потвърждение на имейла."
             : "В момента онлайн записването не е налично. Обади се или ни пиши във Viber."}
         </p>
         <p className="mt-3 mb-6 md:mb-8 text-sm text-muted-foreground">
