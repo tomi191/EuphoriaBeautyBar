@@ -50,7 +50,8 @@ export async function prepareFile(file: File): Promise<Prepared> {
     const jpeg = new File([jpegBlob], name, { type: "image/jpeg" });
     return { file: jpeg, width, height, previewUrl: URL.createObjectURL(jpeg) };
   }
-  // Fallback (браузър без WebP encode): качваме оригинала → размерите са оригиналните.
+  // Резервен път (браузър без WebP и JPEG encode): пращаме оригинала, а сървърът го пресъздава
+  // без метаданни преди запис (stripImageMetadata), затова местоположението не стига до хранилището.
   return { file, width: originalWidth, height: originalHeight, previewUrl: URL.createObjectURL(file) };
 }
 

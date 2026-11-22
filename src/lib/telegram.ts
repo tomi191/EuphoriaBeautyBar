@@ -2,6 +2,8 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 
 const API = "https://api.telegram.org";
+/** Бавен Telegram не бива да задържа заявката, която го вика (покрива и четенето на отговора). */
+const TIMEOUT_MS = 5000;
 
 export type InlineButton = { text: string; callback_data?: string; url?: string };
 export type InlineKeyboard = { inline_keyboard: InlineButton[][] };
@@ -17,6 +19,7 @@ async function call(method: string, body: Record<string, unknown>): Promise<Resp
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (e) {
     console.warn("[telegram] %s грешка:", method, e instanceof Error ? e.message : String(e));

@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -191,17 +191,76 @@ export const googleReviews = pgTable("google_reviews", {
   fetchedAt: ts("fetched_at").notNull().$defaultFn(() => new Date()),
 });
 
-export const rentalPositions = pgTable("rental_positions", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  type: text("type").notNull(),
-  description: text("description").notNull(),
-  skills: jsonb("skills").notNull().$type<string[]>(),
-  active: boolean("active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
-  updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
-});
+export const rentalPositions = pgTable(
+  "rental_positions",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    type: text("type").notNull(),
+    description: text("description").notNull(),
+    skills: jsonb("skills").notNull().$type<string[]>(),
+    // Старите четци (/karieri, ботът) гледат само active; новите действия го държат = (status === "published").
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+    updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
+    // Обявата (№8 Б, миграция drizzle/manual/0001_rental_listings.sql). Всички са празни при старите редове.
+    categoryId: text("category_id").references(() => serviceCategories.id, { onDelete: "set null" }),
+    serviceIds: jsonb("service_ids").notNull().default([]).$type<string[]>(), // service_items.id
+    slug: text("slug"), // /karieri/<slug>; уникален (индекс долу)
+    image: text("image"),
+    benefits: jsonb("benefits").notNull().default([]).$type<string[]>(), // ключове от lib/rental/benefits.ts
+    adminNote: text("admin_note"), // само за администратора: НИКОГА в публичните четения
+    // null = стар ред отпреди обявите: важи active (active → публикувана, иначе спряна).
+    status: text("status").$type<"draft" | "published" | "filled" | "paused">(),
+    // FK към resources (on delete set null) се налага на ниво БД, като при gallery_images.
+    filledByResourceId: text("filled_by_resource_id"),
+    publishedAt: ts("published_at"),
+    filledAt: ts("filled_at"),
+    fbPostId: text("fb_post_id"),
+    fbPostedAt: ts("fb_posted_at"),
+    // Наемът на месец (сумата в €) и ключът «показвай в обявата». Изключен ключ → сумата не излиза публично.
+    rentText: text("rent_text"),
+    rentPublic: boolean("rent_public").notNull().default(false),
+    // Свои редове в «Какво получаваш» (текстът на Снежана, до 60 знака): в обявата са без дясна част.
+    customBenefits: jsonb("custom_benefits").notNull().default([]).$type<string[]>(),
+  },
+  (t) => [
+    uniqueIndex("rental_positions_slug_uq").on(t.slug),
+    index("rental_positions_status_idx").on(t.status),
+    index("rental_positions_filled_by_idx").on(t.filledByResourceId),
+  ],
+);
+
+// Запитванията от обявата (миграция drizzle/manual/0001_rental_listings.sql). Лични данни: само за
+// администратора, трият се сами 6 месеца след created_at (lib/rental/inquiry-purge.ts).
+export const rentalInquiries = pgTable(
+  "rental_inquiries",
+  {
+    id: text("id").primaryKey(),
+    positionId: text("position_id")
+      .notNull()
+      .references(() => rentalPositions.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(), // каноничен вид +359…
+    specialty: text("specialty"),
+    message: text("message"),
+    consentAt: ts("consent_at").notNull(),
+    createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+    status: text("status").notNull().default("new").$type<"new" | "handled">(),
+    handledAt: ts("handled_at"),
+    clientToken: text("client_token").notNull(), // двойно натискане → един ред
+    ipHash: text("ip_hash"),
+    notifyLog: jsonb("notify_log").$type<Record<string, unknown>>(),
+  },
+  (t) => [
+    uniqueIndex("rental_inquiries_client_token_uq").on(t.clientToken),
+    index("rental_inquiries_position_idx").on(t.positionId),
+    index("rental_inquiries_created_idx").on(t.createdAt),
+    index("rental_inquiries_phone_created_idx").on(t.phone, t.createdAt),
+    index("rental_inquiries_ip_created_idx").on(t.ipHash, t.createdAt),
+  ],
+);
 
 /* ──────────────────────────────────────
  * Booking система
@@ -370,6 +429,7 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GoogleReview = typeof googleReviews.$inferSelect;
 export type RentalPosition = typeof rentalPositions.$inferSelect;
+export type RentalInquiry = typeof rentalInquiries.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type WorkingHour = typeof workingHours.$inferSelect;
 export type ResourceService = typeof resourceServices.$inferSelect;

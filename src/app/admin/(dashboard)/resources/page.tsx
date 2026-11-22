@@ -18,7 +18,18 @@ const KIND_LABEL: Record<string, string> = {
   cosmetics: "Лице / Козметика",
 };
 
-export default async function AdminResourcesPage() {
+/** Връщане само към «Места под наем» (от «Добави нов изпълнител» в листа «Кой зае мястото?»). */
+function safeBack(v: string | string[] | undefined): string | undefined {
+  return typeof v === "string" && /^\/admin\/positions(\?[\w=&%-]*)?$/.test(v) ? v : undefined;
+}
+
+export default async function AdminResourcesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const back = safeBack(sp.back);
   const resources = await db.query.resources.findMany({
     orderBy: (r, { asc }) => [asc(r.sortOrder), asc(r.name)],
   });
@@ -39,6 +50,8 @@ export default async function AdminResourcesPage() {
         subtitle="Кой работи в салона и приема записвания. Часовете и графикът се водят по изпълнител."
         action={
           <ResourceForm
+            defaultOpen={sp.new === "1"}
+            returnTo={back}
             trigger={
               <Button className="bg-foreground text-background hover:bg-foreground/90">
                 <Plus className="size-4" /> Нов изпълнител
@@ -64,7 +77,7 @@ export default async function AdminResourcesPage() {
             {resources.map((r) => {
               const deleteAction = deleteResource.bind(null, r.id);
               return (
-                <TableRow key={r.id} className="group">
+                <TableRow key={r.id} id={`r-${r.id}`} className="group scroll-mt-24 target:bg-mint/20">
                   <TableCell className="font-medium">
                     {r.name}
                     {r.active && readiness.get(r.id) && notReadyLabel(readiness.get(r.id)!) && (

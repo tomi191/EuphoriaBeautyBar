@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   // OG генераторът чете Manrope.ttf през fs → трасирай го в serverless bundle-а,
   // иначе dynamic OG routes (напр. blog/[slug]) гърмят на runtime с ENOENT.
   outputFileTracingIncludes: {
-    "/**": ["./src/lib/og/*.woff"],
+    "/**": ["./src/lib/og/*.woff", "./src/lib/og/*.png"],
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion"],
@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
+      },
+      {
+        // Прегледът на обявата се показва в рамка във формата «Нова обява» (само от същия сайт).
+        source: "/admin/listing-preview",
+        headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }],
       },
     ];
   },

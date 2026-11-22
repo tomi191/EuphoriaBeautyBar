@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { auth } from "@/lib/auth";
 import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
+import { releaseListingsFilledBy } from "@/lib/rental/release";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -87,17 +88,23 @@ async function endStaffAccess(resourceId: string) {
   return true;
 }
 
-/** „Приключи сътрудничеството" от прозореца на изпълнителя. Нищо не се отказва; връща колко бъдещи часа има. */
+/**
+ * „Приключи сътрудничеството" от прозореца на изпълнителя. Нищо не се отказва; връща колко бъдещи
+ * часа има и кои места под наем, заети от него, са станали «спрени» (да ги предложим на Снежана).
+ */
 export async function endCooperation(id: string) {
   await requireAdmin();
   if (!(await endStaffAccess(id))) return { ok: false as const, error: "Изпълнителят не е намерен." };
+  const pausedListings = await releaseListingsFilledBy(id);
   revalidate();
+  if (pausedListings.length) revalidatePath("/admin/positions");
+  for (const l of pausedListings) if (l.slug) revalidatePath(`/karieri/${l.slug}`);
   const future = await db.query.bookings.findMany({
     where: (b, { and, eq, gt, inArray }) =>
       and(eq(b.resourceId, id), gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
     columns: { id: true },
   });
-  return { ok: true as const, futureBookings: future.length };
+  return { ok: true as const, futureBookings: future.length, pausedListings };
 }
 
 const staffSchema = z.object({
@@ -175,6 +182,7 @@ export async function deleteResource(id: string) {
     // FK restrict — има записани часове за този изпълнител; вместо изтриване приключва
     // сътрудничеството (скрит, без вход), историята на часовете остава.
     await endStaffAccess(id);
+    await releaseListingsFilledBy(id);
   }
   revalidate();
 }

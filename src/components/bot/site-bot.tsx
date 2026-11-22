@@ -27,7 +27,7 @@ interface BotMessage {
 const GREETING: BotMessage = {
   role: "bot",
   text: "Здравей! Мога да ти покажа услуги и цени, да те насоча към записване на час или да отговоря за работно време, адрес и свободни места под наем.",
-  suggestions: ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Работа при вас"],
+  suggestions: ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Места под наем"],
 };
 
 const ERROR_MESSAGE: BotMessage = {
@@ -54,6 +54,8 @@ export function SiteBot() {
   // Като SiteHeader: ботът е само за публичните страници. На страницата за записване
   // не се показва: там закриваше цени и полета, а записването е на самата страница.
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff") || pathname === "/zapazi-chas") return null;
+  // Обявите за място под наем са за специалисти, не за клиенти; там е лентата RentalCallBar.
+  if (pathname.startsWith("/karieri")) return null;
 
   async function send(text: string) {
     const message = text.trim();

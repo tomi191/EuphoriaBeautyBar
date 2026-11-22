@@ -37,7 +37,7 @@ export interface BotReply {
 }
 
 /** Стандартните chips след повечето отговори. */
-const MENU: string[] = ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Работа при вас"];
+const MENU: string[] = ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Места под наем"];
 
 const BOOK_LINK: BotLink = { label: "Запази час онлайн", href: "/zapazi-chas" };
 const PHONE_LINK: BotLink = { label: siteConfig.contact.phoneFormatted, href: `tel:${siteConfig.contact.phone}` };
@@ -183,19 +183,21 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
 
   // 5. Работа / места под наем.
   if (/(работа|кариер|под наем|назнач|свободно място|свободни места|стол под|кабинет|присъединя|екипа ви|търсите ли)/.test(q)) {
+    // Без «кариери», без обещание за форма или клиентска база: само каквото е на /karieri.
+    const intro = "Салонът дава места под наем на специалисти, които работят самостоятелно.";
     if (ctx.rentalOpen && ctx.positions.length > 0) {
-      const list = ctx.positions.map((p) => p.title).join(", ");
+      const list = ctx.positions.map((p) => p.title.replace(/^Място под наем за /, "")).join(", ");
       return {
         intent: "careers",
-        text: `Работим на модел „място под наем“, със свой график и готова клиентска база. В момента свободни са: ${list}. Детайлите и условията са на страницата за кариери.`,
+        text: `${intro} Свободни в момента: ${list}. Обявите са на страницата „Места под наем“.`,
         links: [{ label: "Виж свободните места", href: "/karieri" }, PHONE_LINK],
         suggestions: MENU,
       };
     }
     return {
       intent: "careers",
-      text: "Работим на модел „място под наем“. В момента няма обявени свободни места, но условията и формата за контакт са на страницата за кариери; обявите се появяват първо там.",
-      links: [{ label: "Страница Кариери", href: "/karieri" }, PHONE_LINK],
+      text: `${intro} В момента няма свободни места. Когато се освободи, обявата ще се появи на страницата „Места под наем“.`,
+      links: [{ label: "Места под наем", href: "/karieri" }, PHONE_LINK],
       suggestions: MENU,
     };
   }

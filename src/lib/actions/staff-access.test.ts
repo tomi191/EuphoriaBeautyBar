@@ -16,6 +16,7 @@ const m = vi.hoisted(() => ({
   upd: vi.fn(),
   updateSet: vi.fn(),
   updateWhere: vi.fn(),
+  release: vi.fn(),
   redirect: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   }),
@@ -61,6 +62,7 @@ vi.mock("@/lib/email/booking", () => ({
   formatWhen: vi.fn(),
 }));
 vi.mock("@/lib/notify", () => ({ notifyResource: vi.fn(), notifyAdmin: vi.fn() }));
+vi.mock("@/lib/rental/release", () => ({ releaseListingsFilledBy: m.release }));
 
 import { schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
@@ -74,6 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   m.deleteWhere.mockResolvedValue(undefined);
   m.updateWhere.mockResolvedValue(undefined);
+  m.release.mockResolvedValue([]);
   m.bookingsFindMany.mockResolvedValue([]);
   // По подразбиране r1 е „готов": своя активна услуга (видима).
   m.offersFindMany.mockResolvedValue([{ resourceId: "r1", serviceItemId: "s1" }]);
@@ -131,7 +134,7 @@ describe("приключване на сътрудничеството", () => {
     m.getSession.mockResolvedValue(admin);
     m.resourcesFindFirst.mockResolvedValue({ id: "r1", userId: "u1", active: true });
     m.userFindFirst.mockResolvedValue({ role: "staff" });
-    await expect(endCooperation("r1")).resolves.toEqual({ ok: true, futureBookings: 0 });
+    await expect(endCooperation("r1")).resolves.toEqual({ ok: true, futureBookings: 0, pausedListings: [] });
     expect(m.updateSet).toHaveBeenCalledWith(
       schema.resources,
       expect.objectContaining({ active: false, userId: null, telegramChatId: null, telegramLinkToken: null }),
@@ -146,9 +149,25 @@ describe("приключване на сътрудничеството", () => {
     m.resourcesFindFirst.mockResolvedValue({ id: "r1", userId: "u1", active: false });
     m.userFindFirst.mockResolvedValue({ role: "staff" });
     m.bookingsFindMany.mockResolvedValue([{ id: "b1" }, { id: "b2" }, { id: "b3" }]);
-    await expect(endCooperation("r1")).resolves.toEqual({ ok: true, futureBookings: 3 });
+    await expect(endCooperation("r1")).resolves.toEqual({ ok: true, futureBookings: 3, pausedListings: [] });
     expect(m.del).not.toHaveBeenCalledWith(schema.bookings);
     expect(m.updateSet).not.toHaveBeenCalledWith(schema.bookings, expect.anything());
+  });
+
+  it("заетото от него място става «спряно» и се връща, за да го предложим на Снежана", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", userId: null, active: true });
+    m.release.mockResolvedValue([{ id: "p1", title: "Място под наем за маникюрист", slug: "myasto-pod-naem-za-manikyurist" }]);
+    const res = await endCooperation("r1");
+    expect(m.release).toHaveBeenCalledWith("r1");
+    expect(res).toMatchObject({ ok: true, pausedListings: [{ id: "p1" }] });
+  });
+
+  it("изпълнител, който не е намерен: мястото не се пипа", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.resourcesFindFirst.mockResolvedValue(undefined);
+    await expect(endCooperation("rX")).resolves.toMatchObject({ ok: false });
+    expect(m.release).not.toHaveBeenCalled();
   });
 
   it("входът на админ (Снежана като изпълнител) само се откача, не се трие", async () => {

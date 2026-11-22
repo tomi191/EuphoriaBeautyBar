@@ -15,6 +15,7 @@
  */
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
+import { getOpenListings } from "@/lib/data/rental-listings";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
 import { slugify } from "@/lib/utils";
 
@@ -106,6 +107,18 @@ export const SECTIONS: SitemapSection[] = [
         changefreq: "monthly" as const,
         priority: 0.6,
       }));
+    },
+  },
+  {
+    // Обявите за място под наем: само публикуваните със своя страница (заетите са noindex).
+    id: "rental",
+    build: async () => {
+      const listings = await getOpenListings();
+      return listings.flatMap((l) =>
+        l.slug
+          ? [{ path: `/karieri/${l.slug}`, lastmod: l.publishedAt?.toISOString(), changefreq: "weekly" as const, priority: 0.5 }]
+          : [],
+      );
     },
   },
 ];

@@ -79,7 +79,7 @@ export function SiteFooter() {
               ))}
               <li>
                 <Link href="/karieri" className="text-muted-foreground transition-colors hover:text-primary">
-                  Кариери
+                  Места под наем
                 </Link>
               </li>
               <li>

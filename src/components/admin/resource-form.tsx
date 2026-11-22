@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,19 @@ export function ResourceForm({
   trigger,
   initial,
   futureBookings = 0,
+  defaultOpen = false,
+  returnTo,
 }: {
   trigger: React.ReactNode;
   initial?: Resource;
   futureBookings?: number; // бъдещи часове (за потвърждението при приключване)
+  /** Отворена още при зареждане (идва от «Добави нов изпълнител» в «Места под наем»). */
+  defaultOpen?: boolean;
+  /** След създаване връща там (с ?picked=<новия изпълнител>). */
+  returnTo?: string;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const router = useRouter();
+  const [open, setOpen] = React.useState(defaultOpen);
   const [submitting, setSubmitting] = React.useState(false);
   const [confirmEnd, setConfirmEnd] = React.useState(false);
   const [ending, setEnding] = React.useState(false);
@@ -57,8 +65,11 @@ export function ResourceForm({
         await updateResource(initial.id, payload);
         toast.success("Изпълнителят е обновен.");
       } else {
-        await createResource(payload);
+        const created = await createResource(payload);
         toast.success("Изпълнителят е добавен.");
+        if (returnTo) {
+          router.push(`${returnTo}${returnTo.includes("?") ? "&" : "?"}picked=${encodeURIComponent(created.id)}`);
+        }
       }
       setOpen(false);
     } catch {

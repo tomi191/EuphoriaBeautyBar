@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/politika-za-poveritelnost" },
 };
 
-const UPDATED = "1 юли 2026 г.";
+const UPDATED = "22 ноември 2026 г.";
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -46,6 +46,7 @@ export default function PrivacyPolicyPage() {
       <Section id="dannite" title="2. Какви данни събираме">
         <ul className="ml-5 list-disc space-y-1">
           <li><strong>При онлайн запис на час:</strong> име, телефонен номер и имейл адрес.</li>
+          <li><strong>При запитване за място под наем:</strong> име, телефон, специалност и съобщение, ако сте написали такова. Ползваме ги само за връзка с вас по мястото и ги изтриваме 6 месеца след запитването.</li>
           <li><strong>Бележки от специалиста:</strong> предпочитания и данни за услугата (напр. използвана формула за боя), видими само за вашия специалист.</li>
           <li><strong>История на посещенията:</strong> запазените услуги, дата, час и статус.</li>
           <li><strong>Технически данни:</strong> минимални данни, нужни за функционирането на сайта (напр. сесия).</li>
@@ -69,7 +70,7 @@ export default function PrivacyPolicyPage() {
           <li><strong>Хостинг на сайта</strong> — Vercel Inc., сървъри във Франкфурт и Дъблин.</li>
           <li><strong>База данни</strong> — Supabase, сървъри в Ирландия (Европейски съюз).</li>
           <li><strong>Изпращане на имейли</strong> — Resend, за потвърждения и напомняния за часа.</li>
-          <li><strong>Известия към екипа</strong> — Telegram, само служебна информация за часа (без вашия имейл) до вашия специалист.</li>
+          <li><strong>Известия към екипа:</strong> Telegram, служебна информация за часа до вашия специалист и данните от запитване за място (име и телефон) до управителя.</li>
         </ul>
       </Section>
 
