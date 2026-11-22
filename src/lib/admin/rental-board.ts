@@ -11,11 +11,14 @@ import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { isEnded } from "@/lib/booking/ended";
 import { effectiveStatus, positionForCategory, type ListingStatus } from "@/lib/rental/listing-rules";
 import { formatBgPhone } from "@/lib/rental/inquiry-rules";
+import { KIND_BY_SLUG } from "@/lib/booking/kind";
 
 export interface BoardListing {
   id: string;
   /** «Маникюрист» (от категорията); стар ред без категория: заглавието му. */
   place: string;
+  /** Видът изпълнител за мястото (hair, nails, cosmetics): в листа «Кой зае мястото?» тези са първи. */
+  kind: string | null;
   slug: string | null;
   image: string | null;
   status: ListingStatus;
@@ -31,6 +34,7 @@ export interface BoardListing {
 export interface BoardResource {
   id: string;
   name: string;
+  kind: string;
   kindLabel: string;
 }
 
@@ -51,7 +55,7 @@ export interface BoardInquiry {
   undelivered: boolean;
 }
 
-const KIND_LABEL: Record<string, string> = { hair: "Коса", nails: "Нокти", cosmetics: "Козметика" };
+const KIND_LABEL: Record<string, string> = { hair: "Коса", nails: "Маникюр", cosmetics: "Козметика" };
 
 const dm = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", day: "2-digit", month: "2-digit" });
 const dayMonth = (d: Date) => dm.format(d).replace(/\s*г\.?$/, "");
@@ -95,6 +99,7 @@ export async function loadRentalBoard() {
     return {
       id: row.id,
       place: slug ? capitalize(positionForCategory(slug)) : row.title,
+      kind: slug ? (KIND_BY_SLUG[slug] ?? null) : null,
       slug: row.slug,
       image: row.image,
       status,
@@ -129,7 +134,7 @@ export async function loadRentalBoard() {
   // В листа: само изпълнителите, които работят (приключилите и скритите не заемат място).
   const pickable: BoardResource[] = resources
     .filter((r) => r.active && !isEnded(r))
-    .map((r) => ({ id: r.id, name: r.name, kindLabel: KIND_LABEL[r.kind] ?? r.kind }));
+    .map((r) => ({ id: r.id, name: r.name, kind: r.kind, kindLabel: KIND_LABEL[r.kind] ?? r.kind }));
 
   return { listings, resources: pickable, inquiries: boardInquiries };
 }

@@ -20,6 +20,8 @@ import type { ListingStatus } from "@/lib/rental/listing-rules";
 export interface ActionListing {
   id: string;
   place: string;
+  /** Видът изпълнител за мястото: в листа тези изпълнители са първи. */
+  kind?: string | null;
   status: ListingStatus;
   /** Публичният адрес (само при публикувана): за «Сподели във Facebook». */
   shareUrl: string | null;
@@ -28,7 +30,7 @@ export interface ActionListing {
 
 interface Props {
   listing: ActionListing;
-  resources: { id: string; name: string; kindLabel: string }[];
+  resources: { id: string; name: string; kind?: string; kindLabel: string }[];
   /** card: картата на телефон; table: колоната «Действия»; facebook: колоната «Facebook». */
   layout: "card" | "table" | "facebook";
   className?: string;
@@ -39,9 +41,9 @@ interface Props {
 
 const DESKTOP = "(min-width: 1024px)";
 const btn =
-  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-base font-medium hover:bg-muted disabled:opacity-60";
+  "inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-border bg-background px-3 text-[0.9375rem] font-medium hover:bg-muted disabled:opacity-60";
 const btnTable =
-  "inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-[0.9375rem] font-medium hover:bg-muted disabled:opacity-60";
+  "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-[0.9375rem] font-medium hover:bg-muted disabled:opacity-60";
 
 function shareHref(url: string) {
   return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
@@ -75,7 +77,7 @@ export function ListingActions({ listing, resources, layout, className = "", ope
         href={shareHref(listing.shareUrl)}
         target="_blank"
         rel="noopener noreferrer"
-        className={layout === "card" ? btn : btnTable + " lg:h-12 lg:text-base"}
+        className={layout === "card" ? btn : btnTable}
       >
         <Share2 className="size-5" strokeWidth={1.7} aria-hidden /> Сподели във Facebook
       </a>
@@ -84,7 +86,7 @@ export function ListingActions({ listing, resources, layout, className = "", ope
   if (layout === "facebook") {
     if (listing.fbPostUrl) {
       return (
-        <a href={listing.fbPostUrl} target="_blank" rel="noopener noreferrer" className={btnTable + " lg:h-12 lg:text-base"}>
+        <a href={listing.fbPostUrl} target="_blank" rel="noopener noreferrer" className={btnTable}>
           <SquareArrowOutUpRight className="size-5" strokeWidth={1.7} aria-hidden /> Излезе във Facebook
         </a>
       );
@@ -206,7 +208,7 @@ function FillPicker({
             align="end"
             sideOffset={8}
             collisionPadding={16}
-            className="z-50 w-[24rem] rounded-2xl border border-border bg-background p-6 shadow-xl"
+            className="z-50 max-h-[var(--radix-popover-content-available-height)] w-[24rem] overflow-y-auto rounded-2xl border border-border bg-background px-6 pt-6 shadow-xl"
           >
             {body}
           </Popover.Content>
@@ -221,8 +223,8 @@ function FillPicker({
         {trigger}
       </span>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" showCloseButton={false} className="max-h-[90svh] gap-0 overflow-y-auto rounded-t-3xl px-5 pb-6 pt-3">
-          <span className="mx-auto mb-5 block h-1.5 w-12 rounded-full bg-border" aria-hidden />
+        <SheetContent side="bottom" showCloseButton={false} className="max-h-[90svh] gap-0 overflow-y-auto rounded-t-3xl px-5 pb-0 pt-3">
+          <span className="mx-auto mb-5 block h-1.5 w-12 shrink-0 rounded-full bg-border" aria-hidden />
           {body}
         </SheetContent>
       </Sheet>
@@ -249,6 +251,10 @@ function FillBody({
   );
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
+  // Изпълнителите от вида на мястото първи (маникюрист → «Маникюр»), другите след тях.
+  const ordered = listing.kind
+    ? [...resources.filter((r) => r.kind === listing.kind), ...resources.filter((r) => r.kind !== listing.kind)]
+    : resources;
   const back = `/admin/positions?fill=${listing.id}`;
   const addHref = `/admin/resources?new=1&back=${encodeURIComponent(back)}`;
   const Title = desktop ? "h2" : SheetTitle;
@@ -289,7 +295,7 @@ function FillBody({
         {resources.length === 0 && (
           <p className="border-b border-border py-4 text-base text-muted-foreground">Още няма изпълнители.</p>
         )}
-        {resources.map((r) => {
+        {ordered.map((r) => {
           const on = choice === r.id;
           return (
             <button
@@ -325,12 +331,13 @@ function FillBody({
       </div>
 
       <p className="mt-3 text-[0.9375rem] text-muted-foreground">Обявата излиза от сайта. Можеш да я отвориш отново.</p>
-      {error && (
-        <p role="alert" className="mt-3 text-[0.9375rem] font-medium text-destructive">
-          {error}
-        </p>
-      )}
-      <div className="mt-4 space-y-3">
+      {/* Бутоните остават видими долу, когато изпълнителите са много и листът се превърта. */}
+      <div className={"sticky bottom-0 mt-1 space-y-3 bg-background pb-6 pt-3 " + (desktop ? "-mx-6 px-6" : "-mx-5 px-5")}>
+        {error && (
+          <p role="alert" className="text-[0.9375rem] font-medium text-destructive">
+            {error}
+          </p>
+        )}
         <button
           type="button"
           onClick={save}

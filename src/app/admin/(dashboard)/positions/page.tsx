@@ -185,23 +185,25 @@ function ListingsTab({ sp, listings, resources }: { sp: SP; listings: BoardListi
           {/* Телефон: карти */}
           <ul className="space-y-4 lg:hidden">
             {shown.map((l) => (
-              <li key={l.id} className="rounded-2xl border border-border p-4">
-                <div className="flex gap-4">
-                  <Thumb l={l} className="h-[8.5rem] w-[7.25rem]" />
+              <li key={l.id} className="rounded-2xl border border-border p-3.5">
+                <div className="flex gap-3">
+                  <Thumb l={l} className="h-[8.5rem] w-[7.5rem]" />
                   <div className="min-w-0 flex-1">
                     <h2 className="font-display text-[1.3125rem] font-medium leading-tight">{l.place}</h2>
-                    <StatusPill status={l.status} className="mt-2" />
-                    <ul className="mt-3 space-y-2 text-base">
-                      <Meta icon={CalendarDays}>{l.dateLabel}</Meta>
+                    <StatusPill status={l.status} size="card" className="mt-2" />
+                    <ul className="mt-3 space-y-3 text-[0.9375rem]">
                       {l.status === "filled" && l.filledBy && (
                         <Meta icon={UserRound}>
                           <FilledByLink l={l} />
                         </Meta>
                       )}
+                      <Meta icon={CalendarDays}>{l.dateLabel}</Meta>
                       <Meta icon={MessageCircle}>
                         <InquiriesLink l={l} />
                       </Meta>
-                      <Meta icon={l.rentPublic ? Eye : Lock}>{l.rentPublic ? "Наемът се показва" : "Наемът не се показва"}</Meta>
+                      {l.status !== "filled" && (
+                        <Meta icon={l.rentPublic ? Eye : Lock}>{l.rentPublic ? "Наемът се показва" : "Наемът не се показва"}</Meta>
+                      )}
                       {l.fbPostUrl && (
                         <Meta icon={SquareArrowOutUpRight}>
                           <FbPostLink url={l.fbPostUrl} />
@@ -218,7 +220,7 @@ function ListingsTab({ sp, listings, resources }: { sp: SP; listings: BoardListi
                 <ListingActions
                   className="mt-4"
                   layout="card"
-                  listing={{ id: l.id, place: l.place, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
+                  listing={{ id: l.id, place: l.place, kind: l.kind, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
                   resources={resources}
                   openFill={openFill === l.id}
                   picked={openFill === l.id ? picked : undefined}
@@ -232,32 +234,32 @@ function ListingsTab({ sp, listings, resources }: { sp: SP; listings: BoardListi
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-border text-base">
-                  <th className="w-[34%] px-5 py-5 font-normal">Място</th>
-                  <th className="border-l border-border px-4 py-5 font-normal">Състояние</th>
-                  <th className="border-l border-border px-4 py-5 font-normal">Запитвания</th>
-                  <th className="border-l border-border px-4 py-5 font-normal">Facebook</th>
-                  <th className="w-[19%] border-l border-border px-4 py-5 font-normal">Действия</th>
+                  <th className="w-[30%] px-3 py-5 font-normal">Място</th>
+                  <th className="w-[14%] border-l border-border px-2.5 py-5 font-normal">Състояние</th>
+                  <th className="w-[12%] border-l border-border px-3 py-5 font-normal">Запитвания</th>
+                  <th className="w-[23%] border-l border-border px-2.5 py-5 font-normal">Facebook</th>
+                  <th className="border-l border-border px-3 py-5 font-normal">Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {shown.map((l) => (
                   <tr key={l.id} className="border-b border-border align-middle last:border-b-0">
-                    <td className="px-5 py-5">
-                      <div className="flex items-center gap-4">
+                    <td className="px-3 py-5">
+                      <div className="flex items-center gap-3">
                         <Thumb l={l} className="h-[7.5rem] w-28" />
                         <div className="min-w-0">
                           <div className="font-display text-[1.375rem] font-medium leading-tight">{l.place}</div>
-                          <div className="mt-2 text-[1.0625rem] text-muted-foreground">{l.dateLabel}</div>
-                          <div className="mt-3 flex items-center gap-2 text-[0.9375rem]">
+                          <div className="mt-2 whitespace-nowrap text-[0.9375rem] text-muted-foreground">{l.dateLabel}</div>
+                          <div className="mt-3 flex items-center gap-2 whitespace-nowrap text-sm">
                             {l.rentPublic ? <Eye className="size-4" strokeWidth={1.8} aria-hidden /> : <Lock className="size-4" strokeWidth={1.8} aria-hidden />}
                             {l.rentPublic ? "Наемът се показва" : "Наемът не се показва"}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="border-l border-border px-4 py-5">
+                    <td className="border-l border-border px-2.5 py-5">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <StatusPill status={l.status} />
+                        <StatusPill status={l.status} size="table" />
                         {l.status === "filled" && l.filledBy && (
                           <span className="text-[0.9375rem]">
                             от{" "}
@@ -275,20 +277,20 @@ function ListingsTab({ sp, listings, resources }: { sp: SP; listings: BoardListi
                         <div className="mt-2 text-[0.9375rem] text-muted-foreground">Беше заето от {l.filledBy.firstName}</div>
                       )}
                     </td>
-                    <td className="border-l border-border px-4 py-5 text-[1.0625rem]">
+                    <td className="whitespace-nowrap border-l border-border px-3 py-5 text-base">
                       <InquiriesLink l={l} />
                     </td>
-                    <td className="border-l border-border px-4 py-5">
+                    <td className="border-l border-border px-2.5 py-5">
                       <ListingActions
                         layout="facebook"
-                        listing={{ id: l.id, place: l.place, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
+                        listing={{ id: l.id, place: l.place, kind: l.kind, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
                         resources={resources}
                       />
                     </td>
-                    <td className="border-l border-border px-4 py-5">
+                    <td className="border-l border-border px-3 py-5">
                       <ListingActions
                         layout="table"
-                        listing={{ id: l.id, place: l.place, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
+                        listing={{ id: l.id, place: l.place, kind: l.kind, status: l.status, shareUrl: shareUrl(l), fbPostUrl: l.fbPostUrl }}
                         resources={resources}
                         openFill={openFill === l.id}
                         picked={openFill === l.id ? picked : undefined}
@@ -322,10 +324,11 @@ function Thumb({ l, className }: { l: BoardListing; className: string }) {
   );
 }
 
-function StatusPill({ status, className = "" }: { status: ListingStatus; className?: string }) {
+function StatusPill({ status, size, className = "" }: { status: ListingStatus; size: "card" | "table"; className?: string }) {
   const s = STATUS[status];
+  const sizeCls = size === "card" ? "h-8 gap-2 px-3" : "h-9 gap-1.5 px-2.5";
   return (
-    <span className={`inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-base ${s.pill} ${className}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full text-[0.9375rem] ${sizeCls} ${s.pill} ${className}`}>
       <span className={`size-2.5 rounded-full ${s.dot}`} aria-hidden />
       {s.label}
     </span>
@@ -334,9 +337,9 @@ function StatusPill({ status, className = "" }: { status: ListingStatus; classNa
 
 function Meta({ icon: Icon, children }: { icon: typeof Eye; children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-3">
-      <Icon className="size-5 shrink-0" strokeWidth={1.6} aria-hidden />
-      <span className="min-w-0">{children}</span>
+    <li className="flex items-center gap-2.5">
+      <Icon className="size-[1.125rem] shrink-0" strokeWidth={1.6} aria-hidden />
+      <span className="min-w-0 whitespace-nowrap">{children}</span>
     </li>
   );
 }
@@ -510,7 +513,7 @@ function InquiriesTab({ sp, inquiries, listings }: { sp: SP; inquiries: BoardInq
                       {i.undelivered && i.status === "new" && <Undelivered />}
                     </td>
                     <td className="border-l border-border px-4 py-5 text-[1.0625rem]">{i.place}</td>
-                    <td className="border-l border-border px-4 py-5 text-[1.0625rem] text-muted-foreground">{i.whenLabel}</td>
+                    <td className="whitespace-nowrap border-l border-border px-4 py-5 text-[1.0625rem] text-muted-foreground">{i.whenLabel}</td>
                     <td className="border-l border-border px-4 py-5">
                       <InquiryActions layout="table" inquiry={i} />
                     </td>
