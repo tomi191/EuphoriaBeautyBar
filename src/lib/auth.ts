@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "@better-auth/passkey";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { blockInactiveStaffSession } from "@/lib/staff-login-guard";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -43,6 +44,15 @@ export const auth = betterAuth({
     max: 60,
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          await blockInactiveStaffSession(session.userId);
+        },
+      },
     },
   },
   session: {

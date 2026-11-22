@@ -6,6 +6,10 @@ const m = vi.hoisted(() => ({
   getSession: vi.fn(),
   resourcesFindFirst: vi.fn(),
   clientsFindMany: vi.fn(),
+  bookingsFindMany: vi.fn(),
+  offersFindMany: vi.fn(),
+  itemsFindMany: vi.fn(),
+  hoursFindMany: vi.fn(),
   del: vi.fn(),
   deleteWhere: vi.fn(),
   upd: vi.fn(),
@@ -24,6 +28,10 @@ vi.mock("@/lib/db", async () => {
       query: {
         resources: { findFirst: m.resourcesFindFirst },
         clients: { findMany: m.clientsFindMany },
+        bookings: { findMany: m.bookingsFindMany },
+        resourceServices: { findMany: m.offersFindMany },
+        serviceItems: { findMany: m.itemsFindMany },
+        resourceWorkingHours: { findMany: m.hoursFindMany },
       },
       delete: (t: unknown) => {
         m.del(t);
@@ -64,6 +72,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   m.deleteWhere.mockResolvedValue(undefined);
   m.updateWhere.mockResolvedValue(undefined);
+  m.bookingsFindMany.mockResolvedValue([]);
+  // По подразбиране r1 е „готов": своя активна услуга (видима) + един работен ден.
+  m.offersFindMany.mockResolvedValue([{ resourceId: "r1", serviceItemId: "s1" }]);
+  m.itemsFindMany.mockResolvedValue([{ id: "s1" }]);
+  m.hoursFindMany.mockResolvedValue([{ resourceId: "r1", openTime: "09:00", closeTime: "18:00" }]);
 });
 
 describe("requireStaff", () => {
@@ -123,6 +136,21 @@ describe("изключване от админа", () => {
     expect(m.updateSet).toHaveBeenCalledWith(schema.resources, { telegramChatId: null, telegramLinkToken: null });
   });
 
+  it("изключване с бъдещи часове връща колко са (нищо не се отказва)", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", userId: "u1", active: false });
+    m.bookingsFindMany.mockResolvedValue([{ id: "b1" }, { id: "b2" }, { id: "b3" }]);
+    await expect(updateResource("r1", input)).resolves.toEqual({ futureBookings: 3 });
+    expect(m.del).not.toHaveBeenCalledWith(schema.bookings);
+    expect(m.updateSet).not.toHaveBeenCalledWith(schema.bookings, expect.anything());
+  });
+
+  it("при включване не брои часове", async () => {
+    m.getSession.mockResolvedValue(admin);
+    await expect(updateResource("r1", { ...input, active: true })).resolves.toEqual({ futureBookings: 0 });
+    expect(m.bookingsFindMany).not.toHaveBeenCalled();
+  });
+
   it("само админ може да изключва", async () => {
     m.getSession.mockResolvedValue(staffSession);
     await expect(updateResource("r1", input)).rejects.toThrow("REDIRECT:/admin/login");
@@ -156,6 +184,22 @@ describe("createPublicBooking", () => {
     m.resourcesFindFirst.mockResolvedValue(undefined);
     const res = await createPublicBooking(booking);
     expect(res.ok).toBe(false);
+    expect(m.clientsFindMany).not.toHaveBeenCalled();
+  });
+
+  it("отказва запис към активен, но неготов изпълнител (без своя услуга)", async () => {
+    m.resourcesFindFirst.mockResolvedValue({ active: true });
+    m.offersFindMany.mockResolvedValue([]);
+    const res = await createPublicBooking(booking);
+    expect(res).toMatchObject({ ok: false, error: expect.stringContaining("още не приема онлайн записи") });
+    expect(m.clientsFindMany).not.toHaveBeenCalled();
+  });
+
+  it("отказва запис към активен, но неготов изпълнител (без работно време)", async () => {
+    m.resourcesFindFirst.mockResolvedValue({ active: true });
+    m.hoursFindMany.mockResolvedValue([]);
+    const res = await createPublicBooking(booking);
+    expect(res).toMatchObject({ ok: false, error: expect.stringContaining("още не приема онлайн записи") });
     expect(m.clientsFindMany).not.toHaveBeenCalled();
   });
 

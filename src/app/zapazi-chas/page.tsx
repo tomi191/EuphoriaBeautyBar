@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { getClosedDates } from "@/lib/booking/closures";
+import { getReadiness, isReady } from "@/lib/booking/readiness";
 import {
   PublicBookingForm,
   type PublicServiceOpt,
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BookingPage() {
-  const [cats, items, resources, gallery, offerings] = await Promise.all([
+  const [cats, items, activeResources, gallery, offerings] = await Promise.all([
     db.query.serviceCategories.findMany(),
     db.query.serviceItems.findMany({
       where: (s, { eq }) => eq(s.bookableOnline, true),
@@ -32,6 +33,10 @@ export default async function BookingPage() {
     db.query.galleryImages.findMany({ orderBy: (g, { asc }) => [asc(g.sortOrder)] }),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
   ]);
+
+  // Само готови изпълнители (своя услуга + работно време): нов не излиза, преди да е готов.
+  const readiness = await getReadiness(activeResources.map((r) => r.id));
+  const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
 
   const closed = await getClosedDates();
   const catById = new Map(cats.map((c) => [c.id, c]));

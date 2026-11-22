@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { createResource, updateResource, type ResourceInput } from "@/lib/actions/resources";
 import type { Resource } from "@/lib/db/schema";
+import { futureBookingsLabel } from "@/lib/booking/future-bookings";
 
 const selectCls =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -24,6 +26,7 @@ const KINDS: Array<{ value: "hair" | "nails" | "cosmetics"; label: string }> = [
 ];
 
 export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; initial?: Resource }) {
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -40,8 +43,16 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
     const payload: ResourceInput = { name, kind, color: color || null, image: image.trim() || null, bio: bio.trim() || null, active };
     try {
       if (initial) {
-        await updateResource(initial.id, payload);
+        const { futureBookings } = await updateResource(initial.id, payload);
         toast.success("Изпълнителят е обновен.");
+        if (futureBookings > 0) {
+          const href = `/admin/bookings?resource=${initial.id}&upcoming=1`;
+          const label = futureBookingsLabel(futureBookings, name);
+          toast.warning(label.text, {
+            duration: 20000,
+            action: { label: label.see.charAt(0).toUpperCase() + label.see.slice(1), onClick: () => router.push(href) },
+          });
+        }
       } else {
         await createResource(payload);
         toast.success("Изпълнителят е добавен.");

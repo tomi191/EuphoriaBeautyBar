@@ -12,10 +12,10 @@ import { Logo } from "@/components/brand/logo";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { BiometricLoginButton } from "@/components/staff/biometric-login-button";
 
-/** requireStaff пренасочва изключен изпълнител тук с ?inactive=1. */
-function InactiveNotice() {
+/** requireStaff пренасочва изключен изпълнител тук с ?inactive=1; при отказан вход идва `forced`. */
+function InactiveNotice({ forced }: { forced: boolean }) {
   const params = useSearchParams();
-  if (params.get("inactive") !== "1") return null;
+  if (!forced && params.get("inactive") !== "1") return null;
   return (
     <p role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
       Достъпът до приложението е спрян. Обади се в салона.
@@ -28,13 +28,16 @@ export default function StaffLoginPage() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  const [inactive, setInactive] = React.useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     const { error } = await authClient.signIn.email({ email, password });
     if (error) {
-      toast.error("Грешен имейл или парола");
+      // STAFF_INACTIVE идва от blockInactiveStaffSession (src/lib/staff-login-guard.ts): сесия не е създадена.
+      if (error.code === "STAFF_INACTIVE") setInactive(true);
+      else toast.error("Грешен имейл или парола");
       setSubmitting(false);
       return;
     }
@@ -50,7 +53,7 @@ export default function StaffLoginPage() {
         <p className="mb-6 text-center text-sm text-muted-foreground">Вход за екипа</p>
         {/* useSearchParams иска Suspense, иначе статичната страница не се сглобява. */}
         <React.Suspense fallback={null}>
-          <InactiveNotice />
+          <InactiveNotice forced={inactive} />
         </React.Suspense>
         <InstallBanner />
         <BiometricLoginButton />

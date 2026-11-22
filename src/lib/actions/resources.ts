@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { auth } from "@/lib/auth";
+import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -73,6 +74,14 @@ export async function updateResource(id: string, input: ResourceInput) {
     .where(eq(schema.resources.id, id));
   if (!d.active) await revokeStaffAccess(id);
   revalidate();
+  if (d.active) return { futureBookings: 0 };
+  // Часовете му не се отказват и клиентите не се уведомяват сами: решава админът, затова му казваме колко са.
+  const future = await db.query.bookings.findMany({
+    where: (b, { and, eq, gt, inArray }) =>
+      and(eq(b.resourceId, id), gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
+    columns: { id: true },
+  });
+  return { futureBookings: future.length };
 }
 
 const staffSchema = z.object({

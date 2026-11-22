@@ -52,7 +52,9 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
     setSavingHours(true);
     try {
       // Само custom (редактираните/собствени) дни → останалите остават на салонното време.
-      const toSave = rows.filter((r) => r.custom);
+      // Без нито един свой ден (нов изпълнител) „Запази" записва показаните дни като негови:
+      // без собствено работно време изпълнителят не е „готов" и не излиза пред клиентите.
+      const toSave = rows.some((r) => r.custom) ? rows.filter((r) => r.custom) : rows;
       // allSettled (не all): частичен провал не бива да оставя графика полузаписан без
       // да се знае кои дни са минали → отчитаме поименно неуспелите.
       const payload = (r: DayHours, force: boolean) => ({
