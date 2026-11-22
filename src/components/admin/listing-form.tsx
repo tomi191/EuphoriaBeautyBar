@@ -479,7 +479,7 @@ export function ListingForm({
             Място
           </h2>
           <div
-            className="space-y-4 lg:mt-3 lg:flex lg:flex-wrap lg:gap-3 lg:space-y-0"
+            className="space-y-4 lg:mt-3 lg:flex lg:gap-3 lg:space-y-0"
             role="radiogroup"
             aria-label="Място"
           >
@@ -494,7 +494,7 @@ export function ListingForm({
                   aria-checked={selected}
                   onClick={() => chooseCategory(c)}
                   className={cn(
-                    "flex min-h-[5.5rem] w-full items-center gap-6 rounded-lg border bg-background/60 px-6 text-left text-lg transition-colors hover:border-foreground/60 lg:min-h-12 lg:w-auto lg:min-w-44 lg:justify-center lg:gap-3 lg:px-5 lg:text-base",
+                    "flex min-h-[5.5rem] w-full items-center gap-6 rounded-lg border bg-background/60 px-6 text-left text-lg transition-colors hover:border-foreground/60 lg:min-h-12 lg:w-auto lg:flex-1 lg:justify-center lg:whitespace-nowrap lg:gap-3 lg:px-5 lg:text-base",
                     selected
                       ? "border-2 border-foreground px-[23px] lg:px-[19px]"
                       : "border-border",
@@ -542,7 +542,7 @@ export function ListingForm({
                 <p className="inline-flex rounded-lg bg-secondary px-4 py-2.5 text-[1.0625rem] lg:hidden">
                   {category.title}
                 </p>
-                <ul className="mt-4 lg:mt-2">
+                <ul className="mt-4 lg:mt-2 lg:pl-7">
                   {category.services.map((s) => (
                     <li key={s.id}>
                       <CheckRow
@@ -583,7 +583,7 @@ export function ListingForm({
             >
               Предимства
             </h2>
-            <ul className="lg:mt-2">
+            <ul className="lg:mt-2 lg:pl-7">
               {catalog.map((b) => (
                 <li key={b.key}>
                   <CheckRow
@@ -603,7 +603,7 @@ export function ListingForm({
               {custom.map((text, i) => (
                 <li
                   key={`${i}-${text}`}
-                  className="flex min-h-12 items-center gap-4 lg:min-h-10"
+                  className="flex min-h-12 items-center gap-4 lg:min-h-8"
                 >
                   <span
                     className="grid size-[22px] shrink-0 place-items-center rounded-[5px] bg-foreground text-background"
@@ -618,7 +618,7 @@ export function ListingForm({
                     type="button"
                     onClick={() => setCustom(custom.filter((_, j) => j !== i))}
                     aria-label={`Махни реда „${text}“`}
-                    className="grid size-12 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    className="grid size-12 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground lg:size-8"
                   >
                     <X className="size-5" />
                   </button>
@@ -708,7 +708,7 @@ export function ListingForm({
                   <img
                     src={shownImage}
                     alt="Снимката на мястото"
-                    className="aspect-[4/3] w-full object-cover"
+                    className="aspect-[4/3] w-full object-cover lg:aspect-[3/1]"
                   />
                   {uploading && (
                     <div className="absolute inset-0 grid place-items-center bg-background/70 text-base">
@@ -876,7 +876,7 @@ export function ListingForm({
         <div className="rounded-[20px] border border-border bg-background lg:mt-3">
           <PreviewFrame
             data={previewData}
-            className="h-[calc(100svh-22rem)] min-h-[22rem] rounded-t-[19px] lg:h-[calc(100svh-17rem)] lg:min-h-[30rem]"
+            className="h-[calc(100svh-25.5rem)] min-h-[20rem] rounded-t-[19px] lg:h-[calc(100svh-17rem)] lg:min-h-[30rem]"
           />
           <div className="hidden space-y-2 p-4 lg:block">
             {error && (
@@ -961,7 +961,7 @@ function CheckRow({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-h-12 cursor-pointer items-center gap-4 text-[1.0625rem] lg:min-h-10 lg:text-lg">
+    <label className="flex min-h-12 cursor-pointer items-center gap-4 text-[1.0625rem] lg:min-h-8 lg:text-lg">
       <input
         type="checkbox"
         checked={checked}

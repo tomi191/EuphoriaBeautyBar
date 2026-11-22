@@ -21,9 +21,10 @@ export function ListingPreviewFrame() {
   }, []);
 
   if (!data) return null;
-  // Прегледът само се гледа: бутоните на обявата не се натискат оттук.
+  // Прегледът само се гледа: бутоните на обявата не се натискат оттук, а лепкавата лента
+  // «Изпрати запитване» не се рисува, защото закрива обявата в малката рамка (кадрите №12 и №18 я нямат).
   return (
-    <div className="pointer-events-none select-none" inert>
+    <div className="pointer-events-none select-none [&_[data-rental-bar]]:hidden" inert>
       <ListingView data={data} />
     </div>
   );
