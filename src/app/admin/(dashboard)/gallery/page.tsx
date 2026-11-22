@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 import { PageHeader } from "@/components/admin/page-header";
 import { GalleryUploadForm } from "@/components/admin/gallery-upload-form";
 import { GalleryImageCard } from "@/components/admin/gallery-image-card";
 
 export default async function AdminGalleryPage() {
   const [images, resources] = await Promise.all([
-    db.query.galleryImages.findMany({ orderBy: (g, { asc }) => [asc(g.sortOrder)] }),
+    // Само снимките на сайта: чакащите от специалистите нямат публичен файл (екранът им е отделен).
+    listPublicGalleryImages(),
     db.query.resources.findMany({
       where: (r, { eq }) => eq(r.active, true),
       orderBy: (r, { asc }) => [asc(r.sortOrder)],

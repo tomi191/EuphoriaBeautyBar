@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { GalleryGrid } from "@/components/gallery/gallery-grid";
 import { BlurText } from "@/components/reactbits/blur-text";
-import { db } from "@/lib/db";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 
 export const metadata: Metadata = {
   title: "Галерия",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function GalleryPage() {
   // Живее в БД (не в статичния seed файл) — админът качва/трие снимки от /admin/gallery
   // и action-ът revalidate-ва тази страница.
-  const images = await db.query.galleryImages.findMany({ orderBy: (g, { asc }) => [asc(g.sortOrder)] });
+  const images = await listPublicGalleryImages();
 
   return (
     <>

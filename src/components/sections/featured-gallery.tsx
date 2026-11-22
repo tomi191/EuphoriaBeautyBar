@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
-import { db } from "@/lib/db";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 
 /**
  * FeaturedGallery — секция „резултати" на началната страница. Изведена нагоре,
@@ -10,10 +10,7 @@ import { db } from "@/lib/db";
  * от БД (нови качвания от админа застават най-отпред); пълната галерия е на /galeriya.
  */
 export async function FeaturedGallery() {
-  const shots = await db.query.galleryImages.findMany({
-    orderBy: (g, { asc }) => [asc(g.sortOrder)],
-    limit: 6,
-  });
+  const shots = await listPublicGalleryImages({ limit: 6 });
 
   return (
     <section id="gallery" className="relative overflow-hidden bg-background py-20 lg:py-28">
