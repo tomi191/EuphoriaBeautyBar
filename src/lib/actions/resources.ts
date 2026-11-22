@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { auth } from "@/lib/auth";
+import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -48,11 +49,55 @@ export async function createResource(input: ResourceInput) {
 export async function updateResource(id: string, input: ResourceInput) {
   await requireAdmin();
   const d = resourceSchema.parse(input);
+  // „Активен" е само видимостта пред клиентите. Скрит изпълнител пази входа, Telegram и известията.
   await db
     .update(schema.resources)
     .set({ name: d.name, kind: d.kind, color: d.color ?? null, image: d.image ?? null, bio: d.bio ?? null, active: d.active, updatedAt: new Date() })
     .where(eq(schema.resources.id, id));
   revalidate();
+}
+
+/**
+ * Край на сътрудничеството: скрива изпълнителя, откача и изтрива входа му (сесии, парола,
+ * passkey), разкача Telegram и трие push абонаментите. Часовете и оборотът остават: сочат
+ * към изпълнителя, не към входа (bookings.createdBy е само текст, без връзка). Имейлът се
+ * освобождава → при връщане админът му прави нов вход с бутона „Вход". Вход на админ не
+ * се трие (Снежана може да е и изпълнител), само се откача.
+ * НЕ се експортира: в "use server" файл всеки export е публично извикваем action.
+ */
+async function endStaffAccess(resourceId: string) {
+  const resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, resourceId) });
+  if (!resource) return false;
+  await db
+    .update(schema.resources)
+    .set({ active: false, userId: null, telegramChatId: null, telegramLinkToken: null, updatedAt: new Date() })
+    .where(eq(schema.resources.id, resourceId));
+  await db.delete(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.resourceId, resourceId));
+  const userId = resource.userId;
+  if (userId) {
+    const u = await db.query.user.findFirst({ where: (x, { eq }) => eq(x.id, userId), columns: { role: true } });
+    if (u && u.role !== "admin") {
+      // Изрично, без да разчитаме на cascade в живата база: първо сесиите и паролата, после самия вход.
+      await db.delete(schema.session).where(eq(schema.session.userId, userId));
+      await db.delete(schema.passkey).where(eq(schema.passkey.userId, userId));
+      await db.delete(schema.account).where(eq(schema.account.userId, userId));
+      await db.delete(schema.user).where(eq(schema.user.id, userId));
+    }
+  }
+  return true;
+}
+
+/** „Приключи сътрудничеството" от прозореца на изпълнителя. Нищо не се отказва; връща колко бъдещи часа има. */
+export async function endCooperation(id: string) {
+  await requireAdmin();
+  if (!(await endStaffAccess(id))) return { ok: false as const, error: "Изпълнителят не е намерен." };
+  revalidate();
+  const future = await db.query.bookings.findMany({
+    where: (b, { and, eq, gt, inArray }) =>
+      and(eq(b.resourceId, id), gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
+    columns: { id: true },
+  });
+  return { ok: true as const, futureBookings: future.length };
 }
 
 const staffSchema = z.object({
@@ -127,8 +172,9 @@ export async function deleteResource(id: string) {
   try {
     await db.delete(schema.resources).where(eq(schema.resources.id, id));
   } catch {
-    // FK restrict — има записани часове за този изпълнител; деактивирай вместо изтриване
-    await db.update(schema.resources).set({ active: false, updatedAt: new Date() }).where(eq(schema.resources.id, id));
+    // FK restrict — има записани часове за този изпълнител; вместо изтриване приключва
+    // сътрудничеството (скрит, без вход), историята на часовете остава.
+    await endStaffAccess(id);
   }
   revalidate();
 }

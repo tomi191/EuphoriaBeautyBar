@@ -76,6 +76,15 @@ export async function setMyWorkingHours(input: z.infer<typeof hoursSchema>) {
   }
   revalidatePath("/staff/hours");
   revalidatePath("/zapazi-chas");
+  // Работното време решава дали изпълнителят е „готов" → цените му влизат/излизат от каталога.
+  revalidatePath("/uslugi");
+  revalidatePath("/uslugi/[slug]", "page");
+  revalidatePath("/uslugi/boyadisvane-na-kosa-varna");
+  revalidatePath("/uslugi/kichuri-varna");
+  revalidatePath("/uslugi/pochistvane-na-litse-varna");
+  revalidatePath("/uslugi/kola-maska-varna");
+  revalidatePath("/uslugi/vezhdi-i-migli-varna");
+  revalidatePath("/");
   return { ok: true as const };
 }
 

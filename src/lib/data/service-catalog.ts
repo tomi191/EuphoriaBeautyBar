@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import type { ServiceCategory, ServiceItem, Currency } from "@/lib/data/services";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { slugify } from "@/lib/utils";
 
 /**
@@ -99,7 +100,7 @@ function publicPrice(base: PriceParts, offers: PriceParts[], includeBase: boolea
 }
 
 export async function getServiceCatalog(): Promise<ServiceCategory[]> {
-  const [cats, items, offers, resources] = await Promise.all([
+  const [cats, items, offers, activeResources] = await Promise.all([
     db.query.serviceCategories.findMany({
       where: (c, { eq }) => eq(c.active, true),
       orderBy: (c, { asc }) => [asc(c.sortOrder)],
@@ -112,6 +113,9 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
   // Оферта на ДЕАКТИВИРАН изпълнител не е публична цена: човекът вече не работи в
   // салона, а редовете му остават (за да не се губят при връщане). Без този филтър
   // ценоразписът показваше цените на напуснала маникюристка (одит №7).
+  // Същото за неготов изпълнител (без своя услуга): още не е пред клиентите.
+  const readiness = await getReadiness(activeResources.map((r) => r.id));
+  const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
   const activeResourceIds = new Set(resources.map((r) => r.id));
   const liveOffers = offers.filter((o) => activeResourceIds.has(o.resourceId));
 

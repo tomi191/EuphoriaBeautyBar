@@ -8,6 +8,7 @@ import { getDaySlots, isStartBookable, type DaySlot } from "@/lib/booking/slots"
 import { sofiaDateStr } from "@/lib/booking/time";
 import { formatServicePrice } from "@/lib/booking/price";
 import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
+import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
 import { notifyResource, notifyAdmin } from "@/lib/notify";
@@ -84,6 +85,19 @@ export async function createPublicBooking(input: PublicBookingInput) {
     return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Провери въведените данни." };
   }
   const data = parsed.data;
+
+  // Изключен (напуснал) изпълнител е скрит от формата, но директна заявка може да го подаде.
+  const performer = await db.query.resources.findFirst({
+    where: (r, { eq }) => eq(r.id, data.resourceId),
+    columns: { active: true },
+  });
+  if (!performer?.active) {
+    return { ok: false as const, error: "Този специалист вече не приема онлайн записи. Избери друг или се обади в салона." };
+  }
+  // Нов изпълнител без своя услуга е скрит от формата; същото и тук.
+  if (!isReady((await getReadiness([data.resourceId])).get(data.resourceId))) {
+    return { ok: false as const, error: "Този специалист още не приема онлайн записи. Избери друг или се обади в салона." };
+  }
 
   const since = new Date(Date.now() - RL_WINDOW_MIN * 60000);
   const rlClients = await db.query.clients.findMany({

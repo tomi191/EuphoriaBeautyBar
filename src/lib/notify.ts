@@ -1,6 +1,8 @@
+import { db } from "@/lib/db";
 import { sendPushToResource } from "@/lib/push";
 import { sendTelegramToResource, sendTelegramToAdmin, type InlineKeyboard } from "@/lib/telegram";
 import { sofiaDateStr } from "@/lib/booking/time";
+import { isEnded } from "@/lib/booking/ended";
 import { siteConfig } from "@/lib/site";
 
 export interface NotifyPayload {
@@ -31,6 +33,12 @@ export interface NotifyResult {
  * канал — повикващият може да го запише (bookings.notify_log) за диагностика.
  */
 export async function notifyResource(resourceId: string, payload: NotifyPayload): Promise<NotifyResult> {
+  // Приключил изпълнител (сътрудничеството е спряно) не получава нищо. Скритият получава всичко.
+  const res = await db.query.resources.findFirst({
+    where: (r, { eq }) => eq(r.id, resourceId),
+    columns: { active: true, userId: true },
+  });
+  if (!res || isEnded(res)) return { push: { sent: 0, failed: 0 }, telegram: false };
   const lines = [`<b>${escapeHtml(payload.title)}</b>`, escapeHtml(payload.body)];
   if (payload.clientPhone) {
     lines.push(`📞 <a href="tel:${digits(payload.clientPhone)}">${escapeHtml(payload.clientPhone)}</a>`);

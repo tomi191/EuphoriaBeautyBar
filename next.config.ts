@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion"],
+    // По подразбиране server action приема до 1 MB → снимка от телефона падаше с
+    // „Грешка при качване.“. 6 MB покрива 5 MB файл + обвивката на формата.
+    serverActions: { bodySizeLimit: "6mb" },
   },
   images: {
     formats: ["image/avif", "image/webp"],

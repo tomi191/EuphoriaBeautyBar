@@ -8,6 +8,8 @@ import { BookingForm } from "@/components/admin/booking-form";
 import { BookingRowActions } from "@/components/admin/booking-row-actions";
 import { sofiaWallToUtc, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
+import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
+import { isEnded } from "@/lib/booking/ended";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Чака", cls: "bg-secondary text-muted-foreground" },
@@ -28,16 +30,19 @@ function shiftDate(d: string, days: number) {
 export default async function AdminBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; resource?: string }>;
+  searchParams: Promise<{ date?: string; resource?: string; upcoming?: string }>;
 }) {
   const sp = await searchParams;
   const date = sp.date ?? sofiaDateStr(new Date());
   const resourceFilter = sp.resource && sp.resource !== "all" ? sp.resource : null;
+  // ?upcoming=1: всички предстоящи часове (на приключил изпълнител), не само за един ден.
+  const upcoming = sp.upcoming === "1" && !!resourceFilter;
 
-  const resources = await db.query.resources.findMany({
-    where: (r, { eq }) => eq(r.active, true),
-    orderBy: (r, { asc }) => [asc(r.sortOrder), asc(r.name)],
+  // Скритите и приключилите също: часовете им не бива да изчезват от погледа (филтър + име в таблицата).
+  const allResources = await db.query.resources.findMany({
+    orderBy: (r, { asc, desc }) => [desc(r.active), asc(r.sortOrder), asc(r.name)],
   });
+  const resources = allResources.filter((r) => r.active); // нов час само към активен
 
   // услуги за формата
   const [cats, items] = await Promise.all([
@@ -57,8 +62,10 @@ export default async function AdminBookingsPage({
   const dayStart = sofiaWallToUtc(date, "00:00");
   const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
   const dayBookings = await db.query.bookings.findMany({
-    where: (b, { and, gte, lt, eq }) => {
-      const conds = [gte(b.startAt, dayStart), lt(b.startAt, dayEnd)];
+    where: (b, { and, gte, gt, lt, eq, inArray }) => {
+      const conds = upcoming
+        ? [gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)]
+        : [gte(b.startAt, dayStart), lt(b.startAt, dayEnd)];
       if (resourceFilter) conds.push(eq(b.resourceId, resourceFilter));
       return and(...conds);
     },
@@ -70,7 +77,7 @@ export default async function AdminBookingsPage({
     ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) })
     : [];
   const clientMap = new Map(clientRows.map((c) => [c.id, c]));
-  const resMap = new Map(resources.map((r) => [r.id, r]));
+  const resMap = new Map(allResources.map((r) => [r.id, r]));
 
   const dateLabel = new Intl.DateTimeFormat("bg-BG", {
     timeZone: "Europe/Sofia",
@@ -109,7 +116,9 @@ export default async function AdminBookingsPage({
               <ChevronLeft className="size-4" />
             </Link>
           </Button>
-          <span className="min-w-48 text-center font-medium capitalize">{dateLabel}</span>
+          <span className={"min-w-48 text-center font-medium" + (upcoming ? "" : " capitalize")}>
+            {upcoming ? `Предстоящи часове при ${resMap.get(resourceFilter!)?.name ?? ""}` : dateLabel}
+          </span>
           <Button asChild variant="outline" size="sm">
             <Link href={`/admin/bookings?date=${shiftDate(date, 1)}${qResource}`}>
               <ChevronRight className="size-4" />
@@ -122,7 +131,7 @@ export default async function AdminBookingsPage({
       </div>
 
       {/* филтър по изпълнител */}
-      {resources.length > 1 && (
+      {allResources.length > 1 && (
         <div className="mb-4 flex flex-wrap gap-1.5">
           <Link
             href={`/admin/bookings?date=${date}`}
@@ -133,7 +142,7 @@ export default async function AdminBookingsPage({
           >
             Всички
           </Link>
-          {resources.map((r) => (
+          {allResources.map((r) => (
             <Link
               key={r.id}
               href={`/admin/bookings?date=${date}&resource=${r.id}`}
@@ -143,6 +152,7 @@ export default async function AdminBookingsPage({
               }
             >
               {r.name}
+              {!r.active && <span className="opacity-70"> · {isEnded(r) ? "приключил" : "скрит"}</span>}
             </Link>
           ))}
         </div>
@@ -168,6 +178,11 @@ export default async function AdminBookingsPage({
               return (
                 <TableRow key={b.id} className="group">
                   <TableCell className="font-mono text-sm">
+                    {upcoming && (
+                      <span className="block text-xs text-muted-foreground">
+                        {sofiaDateStr(b.startAt).slice(8, 10)}.{sofiaDateStr(b.startAt).slice(5, 7)}
+                      </span>
+                    )}
                     {sofiaTimeLabel(b.startAt)}–{sofiaTimeLabel(b.endAt)}
                   </TableCell>
                   <TableCell className="whitespace-normal text-sm font-medium">{b.serviceName}</TableCell>
@@ -181,7 +196,12 @@ export default async function AdminBookingsPage({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{resMap.get(b.resourceId)?.name ?? "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {resMap.get(b.resourceId)?.name ?? "—"}
+                    {resMap.get(b.resourceId)?.active === false && (
+                      <span className="block text-xs">{isEnded(resMap.get(b.resourceId)!) ? "приключил" : "скрит"}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     <span className="tabular-nums">{createdAtLabel(b.createdAt)}</span>
                     <span className="mt-0.5 block">

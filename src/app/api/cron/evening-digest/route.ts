@@ -5,6 +5,7 @@ import { notifyResource } from "@/lib/notify";
 import { sendTelegramToAdmin } from "@/lib/telegram";
 import { sendOpsAlert } from "@/lib/email/booking";
 import { sofiaDateStr, sofiaTimeLabel, sofiaWallToUtc } from "@/lib/booking/time";
+import { isEnded } from "@/lib/booking/ended";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
   const dayEnd = new Date(dayStart.getTime() + 24 * 3600000);
 
   const [resources, bookings] = await Promise.all([
-    db.query.resources.findMany({ where: (r, { eq }) => eq(r.active, true) }),
+    db.query.resources.findMany(),
     db.query.bookings.findMany({
       where: (b, { and, gte, lt, inArray }) =>
         and(gte(b.startAt, dayStart), lt(b.startAt, dayEnd), inArray(b.status, ["confirmed", "pending", "arrived"])),
@@ -42,7 +43,29 @@ export async function GET(req: Request) {
   // Сглоби целите, после изпрати ПАРАЛЕЛНО. Сериен await в цикъл рискуваше Vercel function
   // timeout при повече изпълнители → последните оставаха без известие, а endpoint-ът пак
   // връщаше „успех". Сега броим реалната доставка.
+  // Приключил изпълнител не получава известия, но часовете му утре не бива да изчезнат:
+  // отиват при собственика с бележка. Нищо не се отказва и на клиента не се пише сами.
+  // Скритият (работи, само не приема онлайн записи) получава сводката си като всеки друг.
+  const orphaned = resources
+    .filter((r) => isEnded(r) && (byResource.get(r.id)?.length ?? 0) > 0)
+    .map((r) => {
+      const starts = byResource.get(r.id)!;
+      const n = starts.length;
+      return `${r.name} (сътрудничеството е приключено): утре ${n} ${n === 1 ? "час" : "часа"}, първият в ${sofiaTimeLabel(starts[0])}`;
+    });
+  let inactiveDelivered = false;
+  if (orphaned.length > 0) {
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const advice = "Часовете не са отказани и клиентите не са уведомени. Виж ги в График и реши какво става с тях.";
+    const tg = await sendTelegramToAdmin(
+      `<b>Утрешни часове при приключил специалист</b>\n${orphaned.map(esc).join("\n")}\n${esc(advice)}`,
+    ).catch(() => false);
+    const mail = await sendOpsAlert("Утрешни часове при приключил специалист", [...orphaned, advice]).catch(() => false);
+    inactiveDelivered = tg || mail; // в отговора на крона: стигнало ли е до собственика
+  }
+
   const targets = resources
+    .filter((r) => !isEnded(r))
     .map((r) => {
       const starts = byResource.get(r.id);
       if (!starts || starts.length === 0) return null;
@@ -80,5 +103,5 @@ export async function GET(req: Request) {
     ]).catch(() => false);
   }
 
-  return NextResponse.json({ ok: true, notified, silent });
+  return NextResponse.json({ ok: true, notified, silent, inactive: orphaned, inactiveDelivered });
 }
