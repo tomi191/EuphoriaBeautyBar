@@ -18,8 +18,9 @@ import {
 } from "@/lib/rental/listing-rules";
 
 /*
- * Обявата за място под наем: само администратор. Наем и цена няма като поле (думата на
- * собственика, 22.11.2026: наемът не е публичен). Facebook не се вика оттук.
+ * Обявата за място под наем: само администратор. Наемът (сумата на месец) се вижда в обявата
+ * само при включен ключ «показвай в обявата» (визия №18); по подразбиране ключът е изключен.
+ * Facebook не се вика оттук.
  */
 
 const rp = schema.rentalPositions;
@@ -98,9 +99,18 @@ const updateSchema = z.object({
   /** Само махане (null). Нова снимка идва през uploadListingImage. */
   image: z.null().optional(),
   adminNote: z.string().max(2000).nullable().optional(),
+  /** Наемът на месец в €: цифри, по желание с десетични (300, 300,50); празно или null = няма сума. */
+  rentText: z
+    .string()
+    .trim()
+    .regex(/^(\d{1,6}([.,]\d{1,2})?)?$/)
+    .nullable()
+    .optional(),
+  /** Ключът «показвай в обявата». */
+  rentPublic: z.boolean().optional(),
 });
 
-/** Обновява услугите, предимствата, бележката за администратора; image: null маха снимката. */
+/** Обновява услугите, предимствата, бележката, наема и ключа му; image: null маха снимката. */
 export async function updateListing(id: string, input: z.input<typeof updateSchema>) {
   await requireAdmin();
   if (!idSchema.safeParse(id).success) return fail("Обявата не е намерена.");
@@ -127,6 +137,12 @@ export async function updateListing(id: string, input: z.input<typeof updateSche
   if (d.benefits) set.benefits = [...new Set(d.benefits)];
   if (d.adminNote !== undefined) set.adminNote = d.adminNote?.trim() ? d.adminNote.trim() : null;
   if (d.image === null) set.image = null;
+  if (d.rentText !== undefined) set.rentText = d.rentText ? d.rentText : null;
+  if (d.rentPublic !== undefined) set.rentPublic = d.rentPublic;
+  // Включен ключ без сума не се пази (текстът на Саиф за грешката, част 4).
+  const rentPublic = set.rentPublic ?? row.rentPublic;
+  const rentText = set.rentText !== undefined ? set.rentText : row.rentText;
+  if (rentPublic && !rentText) return fail("Въведи сума или изключи ключа.");
 
   await db.update(rp).set(set).where(eq(rp.id, id));
   if (d.image === null && row.image) await removeStoredImage(row.image);

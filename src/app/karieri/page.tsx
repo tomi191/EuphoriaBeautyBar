@@ -7,6 +7,7 @@ import { getOpenListings, type PublicListing } from "@/lib/data/rental-listings"
 import { positionForCategory } from "@/lib/rental/listing-rules";
 import { LIST_INTRO, RENTAL_FALLBACK_IMAGE } from "@/lib/rental/public-copy";
 import { siteConfig } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
 const LIST_TITLE = "Места под наем за самостоятелни специалисти";
 
@@ -46,13 +47,19 @@ export default async function RentalListPage() {
 
   return (
     <>
-      <section className="relative overflow-hidden">
+      {/* На телефон секцията пълни екрана: долният край на сайта не влиза в първия екран. */}
+      <section
+        className={cn(
+          "relative overflow-hidden lg:min-h-0",
+          empty ? "min-h-[calc(100svh-5rem-var(--rental-bar-h)-env(safe-area-inset-bottom))]" : "min-h-[calc(100svh-5rem)]",
+        )}
+      >
         <ListMobileLine className="lg:hidden" />
-        <div className="mx-auto grid max-w-7xl px-4 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-x-10 lg:px-8">
+        <div className="mx-auto grid max-w-7xl px-4 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,1fr)] lg:gap-x-8 lg:px-8">
           <div className="relative z-10 pt-8 pb-14 lg:pt-[6.5rem] lg:pb-24">
             <h1 className="text-[2.375rem] font-medium leading-[0.98] lg:text-[5.75rem] lg:leading-[0.97]">
-              <span className="block max-w-[10ch]">Места под наем</span>
-              <span className="mt-3 block font-serif text-[1.65rem] font-normal italic leading-[1.1] tracking-normal text-primary lg:mt-4 lg:text-[3.1rem]">
+              <span className="block lg:max-w-[10ch]">Места под наем</span>
+              <span className="mt-3 block font-serif text-[1.65rem] font-normal italic leading-[1.1] tracking-normal text-primary lg:mt-4 lg:text-[3rem]">
                 за самостоятелни специалисти
               </span>
             </h1>
@@ -60,7 +67,7 @@ export default async function RentalListPage() {
               <p className="mt-6 max-w-[46ch] text-base leading-relaxed lg:mt-10 lg:text-xl">{LIST_INTRO}</p>
             )}
 
-            <h2 className="mt-12 text-[1.75rem] font-medium lg:mt-16 lg:text-[3.25rem]">Свободни места</h2>
+            <h2 className={cn(empty ? "mt-8" : "mt-12", "text-[1.75rem] font-medium lg:mt-16 lg:text-[3.25rem]")}>Свободни места</h2>
             {empty ? (
               <div className="mt-5 lg:mt-8">
                 <p className="font-serif text-[1.6rem] italic leading-tight text-primary lg:text-[2.25rem]">
@@ -70,7 +77,7 @@ export default async function RentalListPage() {
                 <RentalCallButtons className="mt-10 hidden lg:flex" />
               </div>
             ) : (
-              <ul className="mt-4 text-[1.125rem] lg:mt-6 lg:text-[1.75rem]">
+              <ul className="mt-4 text-base lg:mt-6 lg:text-[1.75rem]">
                 {rows.map((r) => (
                   <MenuLinkRow key={r.key} href={r.href} left={r.left} right={r.right} label={r.label} />
                 ))}

@@ -47,6 +47,9 @@ const base = {
   adminNote: SECRET,
   filledByResourceId: "r-secret",
   fbPostId: "123_456",
+  // Наемът: по подразбиране ключът е изключен.
+  rentText: "777",
+  rentPublic: false,
 };
 
 beforeEach(() => {
@@ -114,6 +117,22 @@ describe("публичните четения на обявите", () => {
     expect(await getListingBySlug("nyama")).toBeNull();
     m.results.push([{ ...base, status: "filled", active: false, serviceIds: [] }]);
     expect((await getListingBySlug(base.slug))?.status).toBe("filled");
+  });
+
+  it("наемът: при изключен ключ сумата не излиза; при включен излиза", async () => {
+    m.results.push([base], []);
+    const [hidden] = await getOpenListings();
+    m.results.push([base]);
+    const hiddenOne = await getListingBySlug(base.slug);
+    expect(hidden.rent).toBeNull();
+    expect(hiddenOne?.rent).toBeNull();
+    expect(JSON.stringify([hidden, hiddenOne])).not.toContain("777");
+
+    m.results.push([{ ...base, rentPublic: true, serviceIds: [] }]);
+    expect((await getListingBySlug(base.slug))?.rent).toBe("777");
+    // Включен ключ без сума: няма какво да се покаже.
+    m.results.push([{ ...base, rentPublic: true, rentText: null, serviceIds: [] }]);
+    expect((await getListingBySlug(base.slug))?.rent).toBeNull();
   });
 
   it("има ли отворена обява", async () => {

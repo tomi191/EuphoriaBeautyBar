@@ -49,12 +49,13 @@ export function RentalCallButtons({ className }: { className?: string }) {
 /**
  * Долната лента на телефон: заменя общата (MobileCallBar се скрива на /karieri). `data-rental-bar`
  * дава на обвивката в layout-а място отдолу, за да не закрива лентата края на страницата.
+ * Височината е в `--rental-bar-h` (globals.css): от нея смятат и героят на обявата, и полето в layout-а.
  */
 export function RentalCallBar() {
   return (
     <div
       data-rental-bar
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-border/60 bg-background/95 px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(var(--rental-bar-h)+env(safe-area-inset-bottom))] grid-cols-2 content-center gap-2 border-t border-border/60 bg-background/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       <CallLink className="h-[52px] px-3 text-base" />
       <ViberLink className="h-[52px] px-3 text-base" />

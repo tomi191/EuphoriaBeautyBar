@@ -35,27 +35,22 @@ function clipPath(s: Shape) {
   );
 }
 
-// Обявата, телефон (посока-Б-390.png): снимката долу вдясно, линията прави извивка към десния
-// ръб и влиза в арката.
-const LISTING_MOBILE: Shape = {
-  // Арката е по-ниско от кадъра (там телефонът е къс): курсивът и адресът стоят вляво над нея.
-  vb: [270, 500],
-  img: [0, 236, 257, 500],
-  clip: [["M", 0, 500], ["L", 0, 345], ["C", 0, 280, 55, 236, 120, 236], ["L", 224, 236], ["Q", 257, 236, 257, 269], ["L", 257, 500], ["Z"]],
-  lines: [
-    [["M", -8, 500], ["L", -8, 345], ["C", -8, 272, 50, 228, 120, 228], ["L", 224, 228], ["Q", 265, 228, 265, 269], ["L", 265, 500]],
-    [["M", -900, 0.75], ["L", 172, 0.75], ["C", 228, 0.75, 262, 30, 262, 80], ["C", 262, 140, 236, 175, 206, 190], ["C", 190, 198, 184, 212, 184, 228]],
-  ],
-};
+// Обявата, телефон (посока-Б-390.png): линията от горната лента прави извивка към десния ръб и
+// влиза в арката. Арката на телефон е с border-radius (расте на височина до лентата, без да се
+// изкривява), затова тук е само линията; виж ListingMobileLine.
+const LISTING_MOBILE_LINE: Cmd[] = [
+  ["M", -900, 0.75], ["L", 172, 0.75], ["C", 228, 0.75, 262, 30, 262, 80], ["C", 262, 140, 236, 175, 206, 190], ["C", 190, 198, 184, 212, 184, 228],
+];
 
 // Обявата, компютър (Б-обява-1440.png): дясната колона, линията слиза от горната лента в
-// широката извивка на арката.
+// широката извивка на арката. Правите страни са по-дълги от кадъра (860 вместо 800): долният
+// край на арката е на нивото на долния край на бутоните и с реда за започващите (кривите са същите).
 const LISTING_DESKTOP: Shape = {
-  vb: [785, 800],
-  img: [58, 14, 770, 788],
-  clip: [["M", 78, 788], ["Q", 58, 788, 58, 768], ["L", 58, 430], ["C", 58, 240, 200, 14, 450, 14], ["L", 680, 14], ["Q", 770, 14, 770, 104], ["L", 770, 768], ["Q", 770, 788, 750, 788], ["Z"]],
+  vb: [785, 860],
+  img: [58, 14, 770, 848],
+  clip: [["M", 78, 848], ["Q", 58, 848, 58, 828], ["L", 58, 430], ["C", 58, 240, 200, 14, 450, 14], ["L", 680, 14], ["Q", 770, 14, 770, 104], ["L", 770, 828], ["Q", 770, 848, 750, 848], ["Z"]],
   lines: [
-    [["M", 70, 799], ["Q", 47, 799, 47, 776], ["L", 47, 430], ["C", 47, 232, 194, 3, 450, 3], ["L", 680, 3], ["Q", 781, 3, 781, 104], ["L", 781, 776], ["Q", 781, 799, 758, 799], ["Z"]],
+    [["M", 70, 859], ["Q", 47, 859, 47, 836], ["L", 47, 430], ["C", 47, 232, 194, 3, 450, 3], ["L", 680, 3], ["Q", 781, 3, 781, 104], ["L", 781, 836], ["Q", 781, 859, 758, 859], ["Z"]],
     [["M", -1400, 0.75], ["L", 0, 0.75], ["C", 75, 0.75, 144, 148, 174.1, 118.4]],
   ],
 };
@@ -63,16 +58,16 @@ const LISTING_DESKTOP: Shape = {
 // Списъкът, компютър (Б-списък-1440.png): общ кадър на салона, линията от горната лента слиза по
 // десния край на арката.
 const LIST_DESKTOP: Shape = {
-  vb: [900, 1043],
-  img: [38, 83, 880, 1043],
-  clip: [["M", 38, 1043], ["L", 38, 520], ["C", 38, 262, 262, 83, 520, 83], ["L", 600, 83], ["C", 760, 83, 880, 200, 880, 330], ["L", 880, 1043], ["Z"]],
+  vb: [900, 1200],
+  img: [38, 83, 880, 1200],
+  clip: [["M", 38, 1200], ["L", 38, 520], ["C", 38, 262, 262, 83, 520, 83], ["L", 600, 83], ["C", 760, 83, 880, 200, 880, 330], ["L", 880, 1200], ["Z"]],
   lines: [
-    [["M", 25, 1043], ["L", 25, 520], ["C", 25, 252, 256, 70, 520, 70], ["L", 600, 70], ["C", 770, 70, 895, 192, 895, 330], ["L", 895, 1043]],
+    [["M", 25, 1200], ["L", 25, 520], ["C", 25, 252, 256, 70, 520, 70], ["L", 600, 70], ["C", 770, 70, 895, 192, 895, 330], ["L", 895, 1200]],
     [["M", -1400, 0.75], ["L", 560, 0.75], ["C", 770, 0.75, 895, 130, 895, 300]],
   ],
 };
 
-const SHAPES = { listingMobile: LISTING_MOBILE, listingDesktop: LISTING_DESKTOP, listDesktop: LIST_DESKTOP };
+const SHAPES = { listingDesktop: LISTING_DESKTOP, listDesktop: LIST_DESKTOP };
 type ShapeName = keyof typeof SHAPES;
 
 function Lines({ shape, className }: { shape: Shape; className?: string }) {
@@ -112,15 +107,19 @@ interface FigureProps {
   className?: string;
 }
 
-/** Обявата: една снимка, формата се сменя на lg (на телефон долу вдясно, на компютър дясна колона). */
+/**
+ * Обявата: една снимка, формата се сменя на lg. На телефон височината идва от реда на мрежата
+ * (арката стига до долната лента), а формата е border-radius; на компютър: дясна колона с
+ * пропорцията на кадъра и рязане по кривата.
+ */
 export function ListingArchFigure({ src, alt, priority, className }: FigureProps) {
   return (
-    <div className={cn("relative aspect-[270/500] lg:aspect-[785/800]", className)}>
-      <ClipDefs names={["listingMobile", "listingDesktop"]} />
+    <div className={cn("relative lg:aspect-[785/860]", className)}>
+      <ClipDefs names={["listingDesktop"]} />
       <div
         className={cn(
-          "absolute left-0 top-[47.2%] h-[52.8%] w-[95.185%] [clip-path:url(#arch-listingMobile)]",
-          "lg:left-[7.389%] lg:top-[1.75%] lg:h-[96.75%] lg:w-[90.701%] lg:[clip-path:url(#arch-listingDesktop)]",
+          "absolute inset-x-1 top-1 bottom-0 overflow-hidden rounded-tl-[52%_30vw] rounded-tr-[7vw]",
+          "lg:inset-auto lg:left-[7.389%] lg:top-[1.628%] lg:h-[96.977%] lg:w-[90.701%] lg:overflow-visible lg:rounded-none lg:[clip-path:url(#arch-listingDesktop)]",
         )}
       >
         <Image
@@ -128,22 +127,44 @@ export function ListingArchFigure({ src, alt, priority, className }: FigureProps
           alt={alt}
           fill
           priority={priority}
-          sizes="(min-width: 1024px) 640px, 70vw"
+          sizes="(min-width: 1024px) 640px, 72vw"
           className="object-cover"
         />
       </div>
-      <Lines shape={LISTING_MOBILE} className="lg:hidden" />
+      {/* Рамката около снимката на телефон: 4 px от нея, без долна страна (снимката слиза под лентата). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-tl-[calc(52%+4px)_calc(30vw+4px)] rounded-tr-[calc(7vw+4px)] border-[1.5px] border-b-0 border-primary/55 lg:hidden"
+      />
       <Lines shape={LISTING_DESKTOP} className="hidden lg:block" />
     </div>
+  );
+}
+
+/**
+ * Обявата на телефон: линията от долния ръб на горната лента до горния край на арката. Стои в
+ * първия ред на мрежата (до текста) и се разтяга с височината му (preserveAspectRatio="none").
+ */
+export function ListingMobileLine({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 270 228"
+      preserveAspectRatio="none"
+      className={cn("pointer-events-none overflow-visible text-primary/55", className)}
+      fill="none"
+    >
+      <path d={path(LISTING_MOBILE_LINE)} stroke="currentColor" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+    </svg>
   );
 }
 
 /** Списъкът: само на компютър. */
 export function ListArchFigure({ src, alt, priority, className }: FigureProps) {
   return (
-    <div className={cn("relative aspect-[900/1043]", className)}>
+    <div className={cn("relative aspect-[900/1200]", className)}>
       <ClipDefs names={["listDesktop"]} />
-      <div className="absolute left-[4.222%] top-[7.958%] h-[92.042%] w-[93.556%] [clip-path:url(#arch-listDesktop)]">
+      <div className="absolute left-[4.222%] top-[6.917%] h-[93.083%] w-[93.556%] [clip-path:url(#arch-listDesktop)]">
         <Image src={src} alt={alt} fill priority={priority} sizes="560px" className="object-cover" />
       </div>
       <Lines shape={LIST_DESKTOP} />

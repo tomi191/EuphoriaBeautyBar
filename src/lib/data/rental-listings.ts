@@ -1,7 +1,8 @@
 /**
  * Публичните четения на обявите за място под наем (/karieri, /karieri/<slug>, /za-nas).
  * Колоните се изброяват една по една и изходът се сглобява ръчно: admin_note, filled_by_resource_id
- * и полетата за Facebook НИКОГА не излизат оттук (тест: rental-listings.test.ts).
+ * и полетата за Facebook НИКОГА не излизат оттук; сумата на наема излиза само при включен ключ
+ * «показвай в обявата» (тест: rental-listings.test.ts).
  */
 import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
@@ -26,6 +27,8 @@ export interface PublicListing {
   /** Старите полета (стар ред): описанието и уменията, писани на ръка. */
   description: string;
   skills: string[];
+  /** Наемът на месец в € («300»); null, когато ключът «показвай в обявата» е изключен или няма сума. */
+  rent: string | null;
 }
 
 // Публикувана: новото състояние или стар ред без състояние, който е активен.
@@ -43,6 +46,8 @@ const publicColumns = {
   publishedAt: rp.publishedAt,
   description: rp.description,
   skills: rp.skills,
+  rentText: rp.rentText,
+  rentPublic: rp.rentPublic,
   catId: sc.id,
   catSlug: sc.slug,
   catTitle: sc.title,
@@ -61,6 +66,8 @@ type Row = {
   publishedAt: Date | null;
   description: string;
   skills: string[] | null;
+  rentText: string | null;
+  rentPublic: boolean;
   catId: string | null;
   catSlug: string | null;
   catTitle: string | null;
@@ -98,6 +105,7 @@ function toPublic(r: Row, services: Map<string, { id: string; name: string; grou
     publishedAt: r.publishedAt,
     description: r.description,
     skills: r.skills ?? [],
+    rent: r.rentPublic && r.rentText ? r.rentText : null,
   };
 }
 

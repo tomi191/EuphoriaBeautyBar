@@ -219,6 +219,9 @@ export const rentalPositions = pgTable(
     filledAt: ts("filled_at"),
     fbPostId: text("fb_post_id"),
     fbPostedAt: ts("fb_posted_at"),
+    // Наемът на месец (сумата в €) и ключът «показвай в обявата». Изключен ключ → сумата не излиза публично.
+    rentText: text("rent_text"),
+    rentPublic: boolean("rent_public").notNull().default(false),
   },
   (t) => [
     uniqueIndex("rental_positions_slug_uq").on(t.slug),

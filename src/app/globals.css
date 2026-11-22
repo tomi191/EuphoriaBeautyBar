@@ -69,6 +69,8 @@
 
 :root {
   --radius: 0.75rem;
+  /* Долната лента на обявите за място под наем (без полето на телефона отдолу): героят и полето в layout-а смятат от нея. */
+  --rental-bar-h: 4.3125rem;
 
   /* Warm cream основа — beauty salon усещане, не tech */
   --background: oklch(0.975 0.01 75);         /* warm cream */

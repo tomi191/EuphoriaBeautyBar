@@ -98,8 +98,8 @@ async function archPhoto(src: string | null): Promise<string | null> {
 export interface RentalOgParams {
   /** «Място под наем за маникюрист» или «Места под наем». */
   title: string;
-  /** Курсивът под заглавието. */
-  subtitle: string;
+  /** Курсивът под заглавието; масив = всеки елемент на свой ред (иначе пренасянето реже, където падне). */
+  subtitle: string | readonly string[];
   /** Снимката (път от public/ или адрес от хранилището). */
   image: string | null;
 }
@@ -117,14 +117,18 @@ export async function renderRentalOg({ title, subtitle, image }: RentalOgParams)
         <img src={LINES} width={1200} height={630} style={{ position: "absolute", left: 0, top: 0 }} alt="" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={LOGO} width={150} height={129} style={{ position: "absolute", left: 28, top: 22 }} alt="" />
-        <div style={{ position: "absolute", left: 32, top: 156, width: 590, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontFamily: MANROPE, fontWeight: 500, fontSize: 84, lineHeight: 1.02, letterSpacing: -2, color: INK }}>
+        <div style={{ position: "absolute", left: 32, top: 172, width: 590, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontFamily: MANROPE, fontWeight: 500, fontSize: 84, lineHeight: 0.9, letterSpacing: -2, color: INK }}>
             {title}
           </div>
-          <div style={{ display: "flex", marginTop: 26, fontFamily: ITALIC, fontSize: 50, lineHeight: 1.1, color: SAGE }}>
-            {subtitle}
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 20, fontFamily: ITALIC, fontSize: 50, lineHeight: 1.1, color: SAGE }}>
+            {(typeof subtitle === "string" ? [subtitle] : subtitle).map((line) => (
+              <div key={line} style={{ display: "flex" }}>
+                {line}
+              </div>
+            ))}
           </div>
-          <div style={{ display: "flex", marginTop: 30, fontFamily: MANROPE, fontWeight: 500, fontSize: 24, letterSpacing: 1.5, color: MUTED }}>
+          <div style={{ display: "flex", marginTop: 24, fontFamily: MANROPE, fontWeight: 500, fontSize: 24, letterSpacing: 1.5, color: MUTED }}>
             кв. Левски, Варна
           </div>
         </div>

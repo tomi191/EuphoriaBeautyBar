@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils";
  * Редът от «бар менюто» (визия №12): вляво текст, точки, вдясно курсив в основния цвят.
  * Без рамки и карти (бележката на Канопус за Б-обява-1440).
  */
-export function MenuRow({ left, right, className }: { left: string; right: string; className?: string }) {
+export function MenuRow({ left, right, className }: { left: string; right: ReactNode; className?: string }) {
   return (
     <li className={cn("grid grid-cols-[auto_minmax(1.5rem,1fr)_auto] items-baseline gap-3", className)}>
       <span className="min-w-0">{left}</span>
@@ -47,11 +48,11 @@ export function MenuLinkRow({ href, left, right, label }: { href: string; left: 
 /** «Как става»: редове на вертикална линия с точки (без номера). */
 export function StepLine({ steps, className }: { steps: string[]; className?: string }) {
   return (
-    <ol className={cn("relative space-y-6 pl-10", className)}>
-      <span aria-hidden className="absolute bottom-1 left-[0.4rem] top-2 w-px bg-primary/60" />
+    <ol className={cn("relative space-y-4 pl-10 lg:space-y-8", className)}>
+      <span aria-hidden className="absolute bottom-1 left-[3.5px] top-2 w-px bg-primary/60" />
       {steps.map((s) => (
         <li key={s} className="relative">
-          <span aria-hidden className="absolute -left-10 top-[0.45em] size-3.5 rounded-full bg-primary/70" />
+          <span aria-hidden className="absolute -left-10 top-[0.5em] size-2 rounded-full bg-primary/70" />
           {s}
         </li>
       ))}

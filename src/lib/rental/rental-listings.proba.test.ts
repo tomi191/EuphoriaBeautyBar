@@ -108,6 +108,28 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     expect(reopened).toMatchObject({ status: "published", active: true, filledByResourceId: null, filledAt: null, adminNote: SECRET });
   });
 
+  it("наемът: ключът е изключен по подразбиране, сумата излиза само при включен", async () => {
+    const cat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.slug, "manikyur-i-pedikyur") });
+    const d = await A.createListingDraft({ categoryId: cat!.id });
+    if (!d.ok) throw new Error("черновата не стана");
+    ids.push(d.id);
+    expect(await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) })).toMatchObject({ rentText: null, rentPublic: false });
+
+    expect(await A.updateListing(d.id, { rentText: " 645 " })).toEqual({ ok: true });
+    expect((await A.updateListing(d.id, { rentText: "много" })).ok).toBe(false);
+    expect(await A.publishListing(d.id)).toEqual({ ok: true, status: "published" });
+    const hidden = await R.getListingBySlug(d.slug);
+    expect(hidden?.rent).toBeNull();
+    expect(JSON.stringify([hidden, await R.getOpenListings()])).not.toContain("645");
+
+    expect(await A.updateListing(d.id, { rentPublic: true })).toEqual({ ok: true });
+    expect((await R.getListingBySlug(d.slug))?.rent).toBe("645");
+    // Включен ключ без сума не се пази.
+    expect(await A.updateListing(d.id, { rentText: "" })).toEqual({ ok: false, error: "Въведи сума или изключи ключа." });
+    expect(await A.updateListing(d.id, { rentPublic: false, rentText: null })).toEqual({ ok: true });
+    expect((await R.getListingBySlug(d.slug))?.rent).toBeNull();
+  });
+
   it("стар ред: спиране и отваряне вървят, публикуване не (няма категория)", async () => {
     expect((await A.publishListing(`${T}-legacy`)).ok).toBe(false);
     expect(await A.pauseListing(`${T}-legacy`)).toEqual({ ok: true, status: "paused" });

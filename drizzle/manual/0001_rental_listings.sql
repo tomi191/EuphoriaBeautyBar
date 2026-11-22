@@ -16,7 +16,10 @@ ALTER TABLE rental_positions
   ADD COLUMN IF NOT EXISTS published_at timestamptz,
   ADD COLUMN IF NOT EXISTS filled_at timestamptz,
   ADD COLUMN IF NOT EXISTS fb_post_id text,
-  ADD COLUMN IF NOT EXISTS fb_posted_at timestamptz;
+  ADD COLUMN IF NOT EXISTS fb_posted_at timestamptz,
+  -- Наемът (визия №18): сумата на месец и ключът «показвай в обявата», изключен по подразбиране.
+  ADD COLUMN IF NOT EXISTS rent_text text,
+  ADD COLUMN IF NOT EXISTS rent_public boolean NOT NULL DEFAULT false;
 
 CREATE UNIQUE INDEX IF NOT EXISTS rental_positions_slug_uq ON rental_positions (slug);
 CREATE INDEX IF NOT EXISTS rental_positions_status_idx ON rental_positions (status);
