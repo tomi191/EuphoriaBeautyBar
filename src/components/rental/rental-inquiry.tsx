@@ -262,7 +262,7 @@ export function RentalInquiryProvider({
 
             {view === "form" ? (
               <form noValidate onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col lg:block lg:overflow-y-auto">
-                <div className="min-h-0 flex-1 overflow-y-auto px-[1.875rem] pt-10 pb-6 lg:overflow-visible lg:px-8 lg:pt-14 lg:pb-0">
+                <div className="min-h-0 flex-1 overflow-y-auto px-[1.875rem] pt-6 pb-6 lg:overflow-visible lg:px-8 lg:pt-14 lg:pb-0">
                   <DialogPrimitive.Title
                     ref={titleRef}
                     tabIndex={-1}
@@ -342,12 +342,12 @@ export function RentalInquiryProvider({
                       <textarea
                         id="inq-message"
                         name="message"
-                        rows={3}
+                        rows={2}
                         maxLength={INQUIRY_LIMITS.message}
                         placeholder={C.messagePlaceholder}
                         value={fields.message}
                         onChange={(e) => set("message", e.target.value)}
-                        className={cn(fieldBox, "mt-2 block min-h-[5rem] resize-y py-3 leading-snug")}
+                        className={cn(fieldBox, "mt-2 block min-h-16 resize-y py-3 leading-snug lg:min-h-[5rem]")}
                       />
                     </div>
 

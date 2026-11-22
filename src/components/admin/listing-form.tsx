@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Camera,
   Check,
+  ChevronDown,
   Droplet,
   Hand,
   ImageIcon,
@@ -148,6 +149,31 @@ export function ListingForm({
   const [custom, setCustom] = React.useState<string[]>(
     listing?.customBenefits ?? [],
   );
+  // Стъпка «Предимства»: видими са отметнатите (и щракнатите, докато списъкът не се затвори),
+  // останалите са зад реда «Още N предимства» (присъдата на дизайнера, П1).
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [pinnedKeys, setPinnedKeys] = React.useState<string[]>(() =>
+    fresh ? DEFAULT_BENEFITS : (listing?.benefits ?? []),
+  );
+  const hiddenBenefits = catalog.filter((b) => !pinnedKeys.includes(b.key)).length;
+  // Щракането не мести редове: видимите се пресмятат наново само при «По-малко».
+  const benefitRows = (rows: typeof catalog) =>
+    rows.map((b) => (
+      <li key={b.key}>
+        <CheckRow
+          checked={benefitKeys.includes(b.key)}
+          onChange={(on) =>
+            setBenefitKeys(
+              on
+                ? [...benefitKeys, b.key]
+                : benefitKeys.filter((k) => k !== b.key),
+            )
+          }
+        >
+          {b.left} {b.right}
+        </CheckRow>
+      </li>
+    ));
   const [customDraft, setCustomDraft] = React.useState("");
   const [customError, setCustomError] = React.useState<string | null>(null);
   const [image, setImage] = React.useState(listing?.image ?? null);
@@ -435,11 +461,11 @@ export function ListingForm({
           </div>
           <div className="mt-3 flex items-center gap-4">
             <div
-              className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary"
+              className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"
               aria-hidden
             >
               <div
-                className="h-full rounded-full bg-mint transition-[width]"
+                className="h-full rounded-full bg-primary/50 transition-[width]"
                 style={{ width: `${(step / 6) * 100}%` }}
               />
             </div>
@@ -584,22 +610,40 @@ export function ListingForm({
               Предимства
             </h2>
             <ul className="lg:mt-2 lg:pl-7">
-              {catalog.map((b) => (
-                <li key={b.key}>
-                  <CheckRow
-                    checked={benefitKeys.includes(b.key)}
-                    onChange={(on) =>
-                      setBenefitKeys(
-                        on
-                          ? [...benefitKeys, b.key]
-                          : benefitKeys.filter((k) => k !== b.key),
-                      )
-                    }
-                  >
-                    {b.left} {b.right}
-                  </CheckRow>
-                </li>
-              ))}
+              {benefitRows(catalog.filter((b) => pinnedKeys.includes(b.key)))}
+            </ul>
+            {moreOpen && (
+              <ul id="benefits-more" className="lg:pl-7">
+                {benefitRows(catalog.filter((b) => !pinnedKeys.includes(b.key)))}
+              </ul>
+            )}
+            {hiddenBenefits > 0 && (
+              <button
+                type="button"
+                aria-expanded={moreOpen}
+                aria-controls="benefits-more"
+                onClick={() => {
+                  // При затваряне остават видими само отметнатите.
+                  if (moreOpen) setPinnedKeys(benefitKeys);
+                  setMoreOpen(!moreOpen);
+                }}
+                className="flex h-12 w-full items-center justify-between pl-[38px] text-left text-[1.0625rem] text-foreground lg:pl-[66px] lg:text-lg"
+              >
+                {moreOpen
+                  ? "По-малко"
+                  : hiddenBenefits === 1
+                    ? "Още 1 предимство"
+                    : `Още ${hiddenBenefits} предимства`}
+                <ChevronDown
+                  className={cn(
+                    "size-5 text-muted-foreground transition-transform",
+                    moreOpen && "rotate-180",
+                  )}
+                  aria-hidden
+                />
+              </button>
+            )}
+            <ul className="lg:pl-7">
               {custom.map((text, i) => (
                 <li
                   key={`${i}-${text}`}
@@ -782,7 +826,6 @@ export function ListingForm({
                   inputMode="decimal"
                   autoComplete="off"
                   value={rentText}
-                  placeholder="300"
                   maxLength={9}
                   onChange={(e) => {
                     setRentText(e.target.value);
@@ -810,14 +853,19 @@ export function ListingForm({
                 <span
                   className={cn(
                     "relative h-8 w-14 shrink-0 rounded-full transition-colors",
-                    rentPublic ? "bg-foreground" : "bg-muted-foreground/25",
+                    rentPublic
+                      ? "bg-foreground"
+                      : "border-2 border-muted-foreground bg-transparent",
                   )}
                   aria-hidden
                 >
+                  {/* Изключен: рамка и малко тъмно топче (контраст над 3:1), като в Material 3. */}
                   <span
                     className={cn(
-                      "absolute top-1 size-6 rounded-full bg-background shadow transition-[left]",
-                      rentPublic ? "left-7" : "left-1",
+                      "absolute rounded-full transition-[left]",
+                      rentPublic
+                        ? "left-7 top-1 size-6 bg-background shadow"
+                        : "left-1.5 top-1.5 size-4 bg-muted-foreground",
                     )}
                   />
                 </span>
@@ -827,9 +875,12 @@ export function ListingForm({
               id="rent-switch-note"
               className="mt-1 text-sm text-muted-foreground lg:mt-2"
             >
+              <span className="font-medium text-foreground">
+                {rentPublic ? "Включено:" : "Изключено:"}
+              </span>{" "}
               {rentPublic
-                ? `Включено: в обявата пише „Наем · ${rentText.trim() || "…"} € на месец“.`
-                : "Изключено: наемът не се вижда в обявата. Уговаряте го лично или по телефон."}
+                ? `в обявата пише „Наем · ${rentText.trim() || "…"} € на месец“.`
+                : "наемът не се вижда в обявата. Уговаряте го лично или по телефон."}
             </p>
             {rentError && (
               <p role="alert" className="mt-2 text-sm text-destructive">
@@ -961,12 +1012,12 @@ function CheckRow({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-h-12 cursor-pointer items-center gap-4 text-[1.0625rem] lg:min-h-8 lg:text-lg">
+    <label className="flex min-h-12 cursor-pointer items-start gap-4 py-2 text-[1.0625rem] lg:min-h-8 lg:py-0.5 lg:text-lg">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-[22px] shrink-0 cursor-pointer accent-foreground"
+        className="mt-[3px] size-[22px] shrink-0 cursor-pointer accent-foreground"
       />
       <span>{children}</span>
     </label>
@@ -1042,7 +1093,14 @@ function PreviewFrame({
 
   const scale = box.w > 0 ? box.w / 390 : 1;
   return (
-    <div ref={boxRef} className={cn("relative overflow-hidden", className)}>
+    <div
+      ref={boxRef}
+      // Мек преход долу: личи, че обявата продължава, без срязан наполовина ред над бутона.
+      className={cn(
+        "relative overflow-hidden [mask-image:linear-gradient(to_bottom,#000_calc(100%-32px),transparent)]",
+        className,
+      )}
+    >
       <iframe
         ref={frameRef}
         src="/admin/listing-preview"
