@@ -105,7 +105,7 @@ export default async function BookingPage() {
   });
 
   return (
-    <section className="bg-cream pt-32 pb-20 lg:pt-40">
+    <section className="bg-cream pt-8 pb-12 md:pt-32 md:pb-20 lg:pt-40">
       <div className="mx-auto max-w-2xl px-4 lg:px-8">
         <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Запазване онлайн</p>
         <h1 className="font-display text-4xl font-medium md:text-5xl">Запази час</h1>
@@ -114,7 +114,7 @@ export default async function BookingPage() {
             ? "Избери услуга, изпълнител и свободен час. Ще получиш потвърждение на имейла."
             : "В момента онлайн записването не е налично. Обади се или ни пиши във Viber."}
         </p>
-        <p className="mt-3 mb-8 text-sm text-muted-foreground">
+        <p className="mt-3 mb-6 md:mb-8 text-sm text-muted-foreground">
           Плащането е в салона: в брой, с карта или през Revolut. Запазването е без депозит.
         </p>
         {services.length > 0 && <PublicBookingForm services={services} performers={performers} closedDates={closed} />}
