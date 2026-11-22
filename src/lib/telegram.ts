@@ -94,9 +94,14 @@ export async function sendTelegramToResource(resourceId: string, text: string, k
   return sendTelegram(res.telegramChatId, text, keyboard);
 }
 
-/** Намира изпълнителя по свързан Telegram chat (за командите /today и callback навигацията). */
+/**
+ * Намира изпълнителя по свързан Telegram chat (за командите /today и callback навигацията).
+ * Изключен изпълнител не се връща → не вижда графика, дори chat-ът да е още свързан.
+ */
 export async function findResourceByChatId(chatId: string | number) {
-  return db.query.resources.findFirst({ where: (r, { eq: e }) => e(r.telegramChatId, String(chatId)) });
+  return db.query.resources.findFirst({
+    where: (r, { and, eq: e }) => and(e(r.telegramChatId, String(chatId)), e(r.active, true)),
+  });
 }
 
 // ── Админ канал (собственикът получава ВСИЧКИ нови онлайн записи/откази) ──

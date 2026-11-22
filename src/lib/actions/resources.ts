@@ -45,6 +45,25 @@ export async function createResource(input: ResourceInput) {
   return { id };
 }
 
+/**
+ * Изключен изпълнител губи достъпа веднага: затваря сесиите му, разкача Telegram (и
+ * неизползвания код за свързване) и трие push абонаментите му. Акаунтът и userId остават →
+ * при повторно включване влиза със същата парола и свързва Telegram наново от профила.
+ * НЕ се експортира: в "use server" файл всеки export е публично извикваем action.
+ */
+async function revokeStaffAccess(resourceId: string) {
+  const resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, resourceId) });
+  if (!resource) return;
+  if (resource.userId) {
+    await db.delete(schema.session).where(eq(schema.session.userId, resource.userId));
+  }
+  await db
+    .update(schema.resources)
+    .set({ telegramChatId: null, telegramLinkToken: null })
+    .where(eq(schema.resources.id, resourceId));
+  await db.delete(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.resourceId, resourceId));
+}
+
 export async function updateResource(id: string, input: ResourceInput) {
   await requireAdmin();
   const d = resourceSchema.parse(input);
@@ -52,6 +71,7 @@ export async function updateResource(id: string, input: ResourceInput) {
     .update(schema.resources)
     .set({ name: d.name, kind: d.kind, color: d.color ?? null, image: d.image ?? null, bio: d.bio ?? null, active: d.active, updatedAt: new Date() })
     .where(eq(schema.resources.id, id));
+  if (!d.active) await revokeStaffAccess(id);
   revalidate();
 }
 
@@ -129,6 +149,7 @@ export async function deleteResource(id: string) {
   } catch {
     // FK restrict — има записани часове за този изпълнител; деактивирай вместо изтриване
     await db.update(schema.resources).set({ active: false, updatedAt: new Date() }).where(eq(schema.resources.id, id));
+    await revokeStaffAccess(id);
   }
   revalidate();
 }

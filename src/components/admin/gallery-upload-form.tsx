@@ -21,9 +21,10 @@ interface Prepared {
 /**
  * Свива изображението в браузъра до MAX_EDGE px по дългата страна и го кодира като WebP
  * (по-малък storage + по-бърза галерия — grid-ът сервира файловете unoptimized).
- * Ако браузърът не може да кодира WebP (стар Safari), качва оригинала.
+ * Ако браузърът не може да кодира WebP (Safari), пресъздава я като JPEG: пресъздаването през
+ * canvas маха EXIF (местоположение, модел на телефона). Ползва се и за профилната снимка.
  */
-async function prepareFile(file: File): Promise<Prepared> {
+export async function prepareFile(file: File): Promise<Prepared> {
   const bitmap = await createImageBitmap(file);
   const originalWidth = bitmap.width;
   const originalHeight = bitmap.height;
@@ -42,6 +43,12 @@ async function prepareFile(file: File): Promise<Prepared> {
     const name = file.name.replace(/\.[^.]+$/, "") + ".webp";
     const webp = new File([blob], name, { type: "image/webp" });
     return { file: webp, width, height, previewUrl: URL.createObjectURL(webp) };
+  }
+  const jpegBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+  if (jpegBlob && jpegBlob.type === "image/jpeg") {
+    const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    const jpeg = new File([jpegBlob], name, { type: "image/jpeg" });
+    return { file: jpeg, width, height, previewUrl: URL.createObjectURL(jpeg) };
   }
   // Fallback (браузър без WebP encode): качваме оригинала → размерите са оригиналните.
   return { file, width: originalWidth, height: originalHeight, previewUrl: URL.createObjectURL(file) };

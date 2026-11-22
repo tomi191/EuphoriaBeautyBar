@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -11,6 +11,17 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/brand/logo";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { BiometricLoginButton } from "@/components/staff/biometric-login-button";
+
+/** requireStaff пренасочва изключен изпълнител тук с ?inactive=1. */
+function InactiveNotice() {
+  const params = useSearchParams();
+  if (params.get("inactive") !== "1") return null;
+  return (
+    <p role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-center text-sm text-destructive">
+      Достъпът до приложението е спрян. Обади се в салона.
+    </p>
+  );
+}
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -37,6 +48,10 @@ export default function StaffLoginPage() {
           <Logo width={120} height={120} className="h-28 w-auto" href={null} />
         </div>
         <p className="mb-6 text-center text-sm text-muted-foreground">Вход за екипа</p>
+        {/* useSearchParams иска Suspense, иначе статичната страница не се сглобява. */}
+        <React.Suspense fallback={null}>
+          <InactiveNotice />
+        </React.Suspense>
         <InstallBanner />
         <BiometricLoginButton />
         <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-8">

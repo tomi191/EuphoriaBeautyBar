@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { updateStaffProfile } from "@/lib/actions/staff";
 import { uploadStaffPhoto } from "@/lib/actions/staff-photo";
+import { prepareFile } from "@/components/admin/gallery-upload-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,14 +58,24 @@ export function StaffProfileForm({
     const file = e.target.files?.[0];
     e.target.value = ""; // позволи повторен избор на същия файл
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Снимката е над 5 MB.");
-      return;
-    }
     setUploading(true);
     try {
+      // Смаляване в браузъра (~1600 px, WebP/JPEG): по-малко за пращане и без EXIF/GPS.
+      let upload: File;
+      try {
+        const prepared = await prepareFile(file);
+        URL.revokeObjectURL(prepared.previewUrl);
+        upload = prepared.file;
+      } catch {
+        toast.error("Файлът не може да бъде прочетен като снимка. Избери JPG, PNG или WebP.");
+        return;
+      }
+      if (upload.size > 5 * 1024 * 1024) {
+        toast.error("Снимката е твърде голяма (над 5 MB). Избери по-малка.");
+        return;
+      }
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", upload);
       const res = await uploadStaffPhoto(fd);
       if (res.ok) {
         setImage(res.url);
