@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sofiaDateStr } from "@/lib/booking/time";
+import { humanDay } from "@/lib/booking/day-label";
 
 /**
  * Споделен inline месечен календар за избор/навигация по дата (YYYY-MM-DD,
@@ -40,6 +41,8 @@ export interface BookingCalendarProps {
   allowPast?: boolean;
   /** Дати (YYYY-MM-DD), които да са заключени (напр. салонни празници). */
   disabledDates?: readonly string[];
+  /** Не рисувай изминалите дни (седмиците преди днешната падат, дните преди днес са празни). */
+  hidePast?: boolean;
   className?: string;
 }
 
@@ -51,6 +54,7 @@ export function BookingCalendar({
   monthsBehind = 0,
   allowPast = false,
   disabledDates,
+  hidePast = false,
   className,
 }: BookingCalendarProps) {
   // „Днес" по Sofia — изчислено веднъж на mount (стабилно при re-render).
@@ -73,6 +77,14 @@ export function BookingCalendar({
     return { y: Math.floor(abs / 12), m: abs % 12 };
   });
 
+  // Датата се смени отвън (напр. първият свободен ден е в следващия месец) → покажи месеца ѝ.
+  React.useEffect(() => {
+    if (!value) return;
+    const [y, m] = value.split("-").map(Number);
+    const abs = Math.min(maxNavAbs, Math.max(minNavAbs, y * 12 + (m - 1)));
+    setView((v) => (v.y * 12 + v.m === abs ? v : { y: Math.floor(abs / 12), m: abs % 12 }));
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const viewAbs = view.y * 12 + view.m;
   const canPrev = viewAbs > minNavAbs;
   const canNext = viewAbs < maxNavAbs;
@@ -84,10 +96,19 @@ export function BookingCalendar({
 
   const lead = firstWeekdayMon(view.y, view.m);
   const total = daysInMonth(view.y, view.m);
-  const cells: (number | null)[] = [
+  let cells: (number | null)[] = [
     ...Array<null>(lead).fill(null),
     ...Array.from({ length: total }, (_, i) => i + 1),
   ];
+  if (hidePast) {
+    // Изминалите дни не се рисуват: цели седмици преди днешната падат, а дните
+    // преди днес в нейния ред остават празни клетки (колоните пазят деня от седмицата).
+    const firstShown = cells.findIndex((d) => d !== null && dayKey(view.y, view.m, d) >= floor);
+    if (firstShown > 0) {
+      const rowStart = firstShown - (firstShown % 7);
+      cells = [...Array<null>(firstShown - rowStart).fill(null), ...cells.slice(firstShown)];
+    }
+  }
   const closedSet = disabledDates && disabledDates.length ? new Set(disabledDates) : null;
 
   return (
@@ -137,7 +158,7 @@ export function BookingCalendar({
               type="button"
               disabled={disabled}
               onClick={() => onChange(k)}
-              aria-label={closed ? `${k} (затворено)` : k}
+              aria-label={closed ? `${humanDay(k)}, затворено` : humanDay(k)}
               aria-pressed={selected}
               title={closed ? "Затворено" : undefined}
               className={

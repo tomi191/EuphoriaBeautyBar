@@ -17,9 +17,16 @@ export function MobileCallBar() {
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
   // Обявите за място под наем имат своя лента («Обади се» и «Пиши във Viber»), RentalCallBar.
   if (pathname.startsWith("/karieri")) return null;
+  // На самата страница за записване бутонът „Запиши час“ би водил към нея: остават „Обади се“ и Viber.
+  const onBookingPage = pathname === "/zapazi-chas";
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[1fr_1fr_1.3fr] border-t border-border/60 bg-background/95 backdrop-blur lg:hidden">
+    <div
+      className={
+        "fixed inset-x-0 bottom-0 z-40 grid border-t border-border/60 bg-background/95 backdrop-blur lg:hidden " +
+        (onBookingPage ? "grid-cols-2" : "grid-cols-[1fr_1fr_1.3fr]")
+      }
+    >
       <a
         href={`tel:${siteConfig.contact.phone}`}
         className="flex min-h-12 items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-foreground"
@@ -32,12 +39,14 @@ export function MobileCallBar() {
       >
         <MessageCircle className="size-4" /> Viber
       </a>
+      {!onBookingPage && (
       <Link
         href="/zapazi-chas"
         className="flex min-h-12 items-center justify-center gap-1.5 border-l border-border/60 bg-foreground py-3.5 text-sm font-medium text-background"
       >
         <Calendar className="size-4" /> Запиши час
       </Link>
+      )}
     </div>
   );
 }

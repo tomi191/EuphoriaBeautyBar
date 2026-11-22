@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getDaySlots, isStartBookable, type DaySlot } from "@/lib/booking/slots";
 import { sofiaDateStr } from "@/lib/booking/time";
+import { findFirstFreeDay } from "@/lib/booking/day-label";
 import { formatServicePrice } from "@/lib/booking/price";
 import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
@@ -35,6 +36,27 @@ export async function fetchPublicSlots(
   const res = await getDaySlots({ resourceId, durationMin, bufferMin, dateStr, minNoticeMin: 60, allowParallel });
   if (!res) return { open: null, close: null, slots: [] };
   return res;
+}
+
+/** Колко дни напред се търси първият свободен ден (текстът на формата казва същото число). */
+const FIRST_FREE_RANGE_DAYS = 60;
+
+/**
+ * Първият ден от днес нататък, в който има свободен (или паралелен) час за
+ * специалиста и общото време. Ползва същата сметка като графика във формата
+ * (`fetchPublicSlots`), ден по ден; няма такъв в 60 дни → null.
+ */
+export async function fetchFirstFreeDay(
+  resourceId: string,
+  durationMin: number,
+  bufferMin: number,
+  allowParallel = false,
+): Promise<string | null> {
+  if (!resourceId || !durationMin || durationMin <= 0) return null;
+  return findFirstFreeDay(sofiaDateStr(new Date()), FIRST_FREE_RANGE_DAYS, async (dateStr) => {
+    const res = await fetchPublicSlots(resourceId, dateStr, durationMin, bufferMin, allowParallel);
+    return res.slots.some((s) => s.status === "free" || s.status === "parallel");
+  });
 }
 
 /** Потвърждава имейла на клиент по token (от линка в потвърждението). */
