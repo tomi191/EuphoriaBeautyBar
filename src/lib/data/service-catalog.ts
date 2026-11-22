@@ -113,7 +113,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
   // Оферта на ДЕАКТИВИРАН изпълнител не е публична цена: човекът вече не работи в
   // салона, а редовете му остават (за да не се губят при връщане). Без този филтър
   // ценоразписът показваше цените на напуснала маникюристка (одит №7).
-  // Същото за неготов изпълнител (без своя услуга или без работно време): още не е пред клиентите.
+  // Същото за неготов изпълнител (без своя услуга): още не е пред клиентите.
   const readiness = await getReadiness(activeResources.map((r) => r.id));
   const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
   const activeResourceIds = new Set(resources.map((r) => r.id));

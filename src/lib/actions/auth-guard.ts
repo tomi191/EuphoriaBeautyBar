@@ -33,9 +33,5 @@ export async function requireStaff() {
     // Логнат, но няма вързан изпълнител — няма достъп до работническото приложение.
     redirect("/staff/login?no_resource=1");
   }
-  if (!resource.active) {
-    // Изключен от салона (край на наема) — губи достъпа веднага, дори със жива сесия.
-    redirect("/staff/login?inactive=1");
-  }
   return { session, resource };
 }

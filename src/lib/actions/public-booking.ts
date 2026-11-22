@@ -94,7 +94,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
   if (!performer?.active) {
     return { ok: false as const, error: "Този специалист вече не приема онлайн записи. Избери друг или се обади в салона." };
   }
-  // Нов изпълнител без своя услуга или работно време е скрит от формата; същото и тук.
+  // Нов изпълнител без своя услуга е скрит от формата; същото и тук.
   if (!isReady((await getReadiness([data.resourceId])).get(data.resourceId))) {
     return { ok: false as const, error: "Този специалист още не приема онлайн записи. Избери друг или се обади в салона." };
   }

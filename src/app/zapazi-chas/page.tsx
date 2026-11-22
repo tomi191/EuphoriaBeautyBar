@@ -34,7 +34,7 @@ export default async function BookingPage() {
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
   ]);
 
-  // Само готови изпълнители (своя услуга + работно време): нов не излиза, преди да е готов.
+  // Само готови изпълнители (поне една своя услуга): нов не излиза, преди да е готов.
   const readiness = await getReadiness(activeResources.map((r) => r.id));
   const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
 

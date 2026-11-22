@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { getReadiness, notReadyLabel } from "@/lib/booking/readiness";
 import { FUTURE_STATUSES, futureBookingsLabel } from "@/lib/booking/future-bookings";
+import { isEnded } from "@/lib/booking/ended";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/admin/page-header";
@@ -21,16 +22,13 @@ export default async function AdminResourcesPage() {
   const resources = await db.query.resources.findMany({
     orderBy: (r, { asc }) => [asc(r.sortOrder), asc(r.name)],
   });
-  // Активен, но неготов → етикет какво липсва; изключен с бъдещи часове → връзка към тях.
+  // Активен, но неготов → етикет какво липсва; приключил с бъдещи часове → връзка към тях.
+  // Бъдещите часове на всеки → потвърждението при „Приключи сътрудничеството" ги показва.
   const readiness = await getReadiness(resources.filter((r) => r.active).map((r) => r.id));
-  const inactiveIds = resources.filter((r) => !r.active).map((r) => r.id);
-  const future = inactiveIds.length
-    ? await db.query.bookings.findMany({
-        where: (b, { and, gt, inArray }) =>
-          and(inArray(b.resourceId, inactiveIds), gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
-        columns: { resourceId: true },
-      })
-    : [];
+  const future = await db.query.bookings.findMany({
+    where: (b, { and, gt, inArray }) => and(gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
+    columns: { resourceId: true },
+  });
   const futureCount = new Map<string, number>();
   for (const b of future) futureCount.set(b.resourceId, (futureCount.get(b.resourceId) ?? 0) + 1);
 
@@ -74,7 +72,7 @@ export default async function AdminResourcesPage() {
                         {notReadyLabel(readiness.get(r.id)!)}
                       </span>
                     )}
-                    {!r.active && (futureCount.get(r.id) ?? 0) > 0 && (
+                    {isEnded(r) && (futureCount.get(r.id) ?? 0) > 0 && (
                       <span className="mt-1 block max-w-44 whitespace-normal text-xs font-normal text-foreground">
                         {futureBookingsLabel(futureCount.get(r.id)!, r.name).text}:{" "}
                         <Link href={`/admin/bookings?resource=${r.id}&upcoming=1`} className="underline underline-offset-2">
@@ -98,13 +96,14 @@ export default async function AdminResourcesPage() {
                       }
                     >
                       <span className={"size-1.5 rounded-full " + (r.active ? "bg-foreground" : "bg-muted-foreground")} />
-                      {r.active ? "Активен" : "Скрит"}
+                      {r.active ? "Активен" : isEnded(r) ? "Приключил" : "Скрит"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
                       <ResourceForm
                         initial={r}
+                        futureBookings={futureCount.get(r.id) ?? 0}
                         trigger={
                           <Button variant="outline" size="sm">
                             Редакция

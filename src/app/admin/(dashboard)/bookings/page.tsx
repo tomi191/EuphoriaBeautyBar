@@ -9,6 +9,7 @@ import { BookingRowActions } from "@/components/admin/booking-row-actions";
 import { sofiaWallToUtc, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
 import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
+import { isEnded } from "@/lib/booking/ended";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   pending: { label: "Чака", cls: "bg-secondary text-muted-foreground" },
@@ -34,10 +35,10 @@ export default async function AdminBookingsPage({
   const sp = await searchParams;
   const date = sp.date ?? sofiaDateStr(new Date());
   const resourceFilter = sp.resource && sp.resource !== "all" ? sp.resource : null;
-  // ?upcoming=1: всички предстоящи часове (на изключен изпълнител), не само за един ден.
+  // ?upcoming=1: всички предстоящи часове (на приключил изпълнител), не само за един ден.
   const upcoming = sp.upcoming === "1" && !!resourceFilter;
 
-  // Изключените също: часовете им не бива да изчезват от погледа (филтър + име в таблицата).
+  // Скритите и приключилите също: часовете им не бива да изчезват от погледа (филтър + име в таблицата).
   const allResources = await db.query.resources.findMany({
     orderBy: (r, { asc, desc }) => [desc(r.active), asc(r.sortOrder), asc(r.name)],
   });
@@ -151,7 +152,7 @@ export default async function AdminBookingsPage({
               }
             >
               {r.name}
-              {!r.active && <span className="opacity-70"> · изключен</span>}
+              {!r.active && <span className="opacity-70"> · {isEnded(r) ? "приключил" : "скрит"}</span>}
             </Link>
           ))}
         </div>
@@ -197,7 +198,9 @@ export default async function AdminBookingsPage({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {resMap.get(b.resourceId)?.name ?? "—"}
-                    {resMap.get(b.resourceId)?.active === false && <span className="block text-xs">изключен</span>}
+                    {resMap.get(b.resourceId)?.active === false && (
+                      <span className="block text-xs">{isEnded(resMap.get(b.resourceId)!) ? "приключил" : "скрит"}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     <span className="tabular-nums">{createdAtLabel(b.createdAt)}</span>

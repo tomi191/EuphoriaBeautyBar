@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,10 @@ import { LabelWithHint } from "@/components/ui/field-hint";
 import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { createResource, updateResource, type ResourceInput } from "@/lib/actions/resources";
+import { createResource, updateResource, endCooperation, type ResourceInput } from "@/lib/actions/resources";
 import type { Resource } from "@/lib/db/schema";
 import { futureBookingsLabel } from "@/lib/booking/future-bookings";
+import { isEnded } from "@/lib/booking/ended";
 
 const selectCls =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -25,10 +26,20 @@ const KINDS: Array<{ value: "hair" | "nails" | "cosmetics"; label: string }> = [
   { value: "cosmetics", label: "Лице / Козметика" },
 ];
 
-export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; initial?: Resource }) {
-  const router = useRouter();
+export function ResourceForm({
+  trigger,
+  initial,
+  futureBookings = 0,
+}: {
+  trigger: React.ReactNode;
+  initial?: Resource;
+  futureBookings?: number; // бъдещи часове (за потвърждението при приключване)
+}) {
   const [open, setOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [confirmEnd, setConfirmEnd] = React.useState(false);
+  const [ending, setEnding] = React.useState(false);
+  const ended = !!initial && isEnded(initial);
 
   const [name, setName] = React.useState(initial?.name ?? "");
   const [kind, setKind] = React.useState<"hair" | "nails" | "cosmetics">((initial?.kind as "hair" | "nails" | "cosmetics") ?? "hair");
@@ -43,16 +54,8 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
     const payload: ResourceInput = { name, kind, color: color || null, image: image.trim() || null, bio: bio.trim() || null, active };
     try {
       if (initial) {
-        const { futureBookings } = await updateResource(initial.id, payload);
+        await updateResource(initial.id, payload);
         toast.success("Изпълнителят е обновен.");
-        if (futureBookings > 0) {
-          const href = `/admin/bookings?resource=${initial.id}&upcoming=1`;
-          const label = futureBookingsLabel(futureBookings, name);
-          toast.warning(label.text, {
-            duration: 20000,
-            action: { label: label.see.charAt(0).toUpperCase() + label.see.slice(1), onClick: () => router.push(href) },
-          });
-        }
       } else {
         await createResource(payload);
         toast.success("Изпълнителят е добавен.");
@@ -64,6 +67,29 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
       setSubmitting(false);
     }
   }
+
+  async function handleEnd() {
+    if (!initial) return;
+    setEnding(true);
+    try {
+      const res = await endCooperation(initial.id);
+      if (res.ok) {
+        toast.success(`Сътрудничеството с ${initial.name} е приключено.`);
+        setActive(false); // иначе следващото „Запази" щеше да го покаже пак
+        setConfirmEnd(false);
+        setOpen(false);
+      } else {
+        toast.error(res.error);
+      }
+    } catch {
+      toast.error("Грешка при приключването.");
+    } finally {
+      setEnding(false);
+    }
+  }
+
+  const future = futureBookingsLabel(futureBookings, initial?.name ?? "");
+  const upcomingHref = initial ? `/admin/bookings?resource=${initial.id}&upcoming=1` : "";
 
   return (
     <>
@@ -129,6 +155,51 @@ export function ResourceForm({ trigger, initial }: { trigger: React.ReactNode; i
               <Label htmlFor="res-active" className="cursor-pointer">Активен (приема записвания)</Label>
               <Switch id="res-active" checked={active} onCheckedChange={setActive} />
             </div>
+            {initial && ended && (
+              <p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                Сътрудничеството е приключено и {initial.name} няма вход. Ако се върне, създай му нов вход с бутона
+                „Вход“ в списъка и включи „Активен“.
+              </p>
+            )}
+            {initial && !ended && !confirmEnd && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmEnd(true)}
+                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                Приключи сътрудничеството
+              </Button>
+            )}
+            {initial && !ended && confirmEnd && (
+              <div role="alert" className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                <p>
+                  {initial.name} губи входа в приложението, Telegram и известията и изчезва от сайта. Историята на часовете и
+                  оборотът остават.
+                </p>
+                <p className="font-medium">
+                  {futureBookings > 0 ? (
+                    <>
+                      {future.text}. {futureBookings === 1 ? "Не се отказва сам." : "Не се отказват сами."}{" "}
+                      <Link href={upcomingHref} className="underline underline-offset-2">
+                        {future.see.charAt(0).toUpperCase() + future.see.slice(1)}
+                      </Link>
+                    </>
+                  ) : (
+                    "Няма бъдещи часове."
+                  )}
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmEnd(false)}>
+                    Отказ
+                  </Button>
+                  <Button type="button" variant="destructive" size="sm" disabled={ending} onClick={handleEnd}>
+                    {ending ? <><Loader2 className="size-4 animate-spin" /> Приключване</> : "Да, приключи"}
+                  </Button>
+                </div>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                 Отказ

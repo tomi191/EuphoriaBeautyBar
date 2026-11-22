@@ -96,11 +96,12 @@ export async function sendTelegramToResource(resourceId: string, text: string, k
 
 /**
  * Намира изпълнителя по свързан Telegram chat (за командите /today и callback навигацията).
- * Изключен изпълнител не се връща → не вижда графика, дори chat-ът да е още свързан.
+ * Приключил изпълнител (скрит и без вход) не се връща, дори chat-ът да е останал; скритият вижда графика си.
  */
 export async function findResourceByChatId(chatId: string | number) {
   return db.query.resources.findFirst({
-    where: (r, { and, eq: e }) => and(e(r.telegramChatId, String(chatId)), e(r.active, true)),
+    where: (r, { and, or, eq: e, isNotNull }) =>
+      and(e(r.telegramChatId, String(chatId)), or(e(r.active, true), isNotNull(r.userId))),
   });
 }
 
