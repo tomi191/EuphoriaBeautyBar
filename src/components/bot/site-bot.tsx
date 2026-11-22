@@ -53,6 +53,8 @@ export function SiteBot() {
 
   // Като SiteHeader: ботът е само за публичните страници.
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
+  // Обявите за място под наем са за специалисти, не за клиенти; там е лентата RentalCallBar.
+  if (pathname.startsWith("/karieri")) return null;
 
   async function send(text: string) {
     const message = text.trim();

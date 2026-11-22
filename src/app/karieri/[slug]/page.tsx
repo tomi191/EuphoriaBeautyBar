@@ -73,6 +73,18 @@ export default async function ListingPage({ params }: Props) {
 
   const filled = listing.status === "filled";
   const benefits = await withLiveRating(listing.benefits);
+  // На телефон снимката лежи под текста (една клетка), затова там блокът е под снимката, а не до нея.
+  const filledNotice = (
+    <div className="mt-8 lg:mt-10">
+      <p className="text-lg font-medium">Мястото вече е заето.</p>
+      <Link
+        href="/karieri"
+        className="mt-4 inline-flex h-14 items-center gap-2 rounded-full bg-foreground px-6 text-lg font-medium text-background hover:bg-foreground/90"
+      >
+        Виж свободните места <ArrowRight className="size-5" aria-hidden />
+      </Link>
+    </div>
+  );
 
   return (
     <>
@@ -87,15 +99,7 @@ export default async function ListingPage({ params }: Props) {
             </p>
             <p className="mt-5 text-sm tracking-[0.06em] text-muted-foreground lg:mt-8 lg:text-lg">кв. Левски, Варна</p>
             {filled ? (
-              <div className="mt-8 lg:mt-10">
-                <p className="text-lg font-medium">Мястото вече е заето.</p>
-                <Link
-                  href="/karieri"
-                  className="mt-4 inline-flex h-14 items-center gap-2 rounded-full bg-foreground px-6 text-lg font-medium text-background hover:bg-foreground/90"
-                >
-                  Виж свободните места <ArrowRight className="size-5" aria-hidden />
-                </Link>
-              </div>
+              <div className="hidden lg:block">{filledNotice}</div>
             ) : (
               <RentalCallButtons className="mt-10 hidden lg:flex" />
             )}
@@ -106,6 +110,7 @@ export default async function ListingPage({ params }: Props) {
             priority
             className="w-[69%] justify-self-end [grid-area:1/1] lg:col-start-2 lg:w-full lg:[grid-area:auto]"
           />
+          {filled && <div className="lg:hidden">{filledNotice}</div>}
         </div>
       </section>
 
