@@ -16,11 +16,10 @@ export const runtime = "nodejs";
 const inputSchema = z.object({ message: z.string().min(1).max(500) });
 
 async function buildContext(): Promise<BotContext> {
-  const [catalog, faq, positions, rentalOpenRow] = await Promise.all([
+  const [catalog, faq, positions] = await Promise.all([
     getServiceCatalog(),
     getFaqItems().catch(() => []),
     db.query.rentalPositions.findMany({ where: (p, { eq }) => eq(p.active, true), columns: { title: true } }),
-    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "rental_open") }),
   ]);
 
   const services: BotService[] = catalog.flatMap((c) =>
@@ -41,7 +40,8 @@ async function buildContext(): Promise<BotContext> {
   return {
     services,
     faq: faq.map((f) => ({ question: f.question, answer: f.answer })),
-    rentalOpen: rentalOpenRow ? Boolean(rentalOpenRow.value) : true,
+    // Отдаваме ли място = има ли публикувана обява (старият общ ключ rental_open вече не се чете).
+    rentalOpen: positions.length > 0,
     positions,
   };
 }

@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { and, count, desc, eq, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -24,7 +25,7 @@ import {
 /*
  * Запитванията от обявата «Място под наем».
  * submitRentalInquiry е за гости (без вход). Другите три са само за администратор (за списъка в
- * администрацията, следващата част). Запитванията никога не излизат в публичните страници.
+ * администрацията, «Места под наем» → «Запитвания»). Запитванията никога не излизат в публичните страници.
  */
 
 const ri = schema.rentalInquiries;
@@ -61,8 +62,13 @@ export async function submitRentalInquiry(input: z.input<typeof submitSchema>): 
   if (!parsed.success) return { ok: false, error: INQUIRY_COPY.errSend };
   const data = parsed.data;
 
-  // Капанът е попълнен: робот. Отговаряме като при успех и не пишем нищо.
-  if (data.website && data.website.trim() !== "") return { ok: true };
+  // Капанът е попълнен: робот. Отговаряме като при успех и не пишем запитване, но оставяме ред в
+  // лога без лични данни (ако браузър попълни полето вместо човек, да личи, че се е случило).
+  if (data.website && data.website.trim() !== "") {
+    const ip = await clientIpHash();
+    console.info("[rental-inquiry] капанът е попълнен: запитване не е записано (адрес %s)", ip ? ip.slice(0, 8) : "няма");
+    return { ok: true };
+  }
 
   const checked = validateInquiry(data);
   if (!checked.ok) return { ok: false, fieldErrors: checked.errors };
@@ -113,18 +119,23 @@ export async function submitRentalInquiry(input: z.input<typeof submitSchema>): 
   if (inserted.length === 0) return { ok: true };
 
   const position = listing.category ? positionForCategory(listing.category.slug) : "специалист";
-  const log = await notifyRentalInquiry({ id, position, name: v.name, phone: v.phone, message: v.message });
-  try {
-    await db.update(ri).set({ notifyLog: { ...log } }).where(eq(ri.id, id));
-  } catch (e) {
-    // Записът вече е направен; губи се само дневникът на известието, затова грешката отива в лога.
-    console.error("[rental-inquiry] %s: notify_log не се записа:", id, e instanceof Error ? e.message : String(e));
-  }
+  // Известието тръгва след отговора към госта: бавен Telegram не го задържа (и има свой таймаут).
+  after(() => notifyAndLog({ id, position, name: v.name, phone: v.phone, message: v.message }));
   revalidatePath("/admin/positions");
   return { ok: true };
 }
 
-/* ── Само за администратор (списъкът в администрацията, следващата част) ── */
+async function notifyAndLog(i: Parameters<typeof notifyRentalInquiry>[0]) {
+  const log = await notifyRentalInquiry(i);
+  try {
+    await db.update(ri).set({ notifyLog: { ...log } }).where(eq(ri.id, i.id));
+  } catch (e) {
+    // Записът вече е направен; губи се само дневникът на известието, затова грешката отива в лога.
+    console.error("[rental-inquiry] %s: notify_log не се записа:", i.id, e instanceof Error ? e.message : String(e));
+  }
+}
+
+/* ── Само за администратор (раздел «Запитвания» в «Места под наем») ── */
 
 export interface AdminInquiry {
   id: string;
@@ -138,9 +149,11 @@ export interface AdminInquiry {
   createdAt: Date;
   status: "new" | "handled";
   handledAt: Date | null;
-  /** Грешката на известието (Telegram), ако е имало; null = тръгнало или нямаше свързан чат. */
+  /** Грешката на известието (Telegram), ако е имало; null = тръгнало. */
   notifyError: string | null;
   notifyTargets: number | null;
+  /** false = известието не стигна до нито един получател; null = дневникът липсва. */
+  notifyDelivered: boolean | null;
 }
 
 /** Запитванията, най-новите първи; по желание само за едно място и/или едно състояние. */
@@ -173,8 +186,13 @@ export async function listRentalInquiries(filter?: {
     .orderBy(desc(ri.createdAt))
     .limit(500);
   return rows.map(({ notifyLog, ...r }) => {
-    const log = notifyLog as { error?: string; targets?: number } | null;
-    return { ...r, notifyError: log?.error ?? null, notifyTargets: log?.targets ?? null };
+    const log = notifyLog as { error?: string; targets?: number; telegram?: { ok: boolean }[] } | null;
+    return {
+      ...r,
+      notifyError: log?.error ?? null,
+      notifyTargets: log?.targets ?? null,
+      notifyDelivered: log ? (log.telegram ?? []).some((t) => t.ok) : null,
+    };
   });
 }
 

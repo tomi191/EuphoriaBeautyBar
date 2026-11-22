@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { ListArchFigure, ListMobileLine } from "@/components/rental/arch-figure";
 import { MenuLinkRow } from "@/components/rental/bar-menu";
 import { RentalCallBar, RentalCallButtons } from "@/components/rental/rental-contact";
-import { db } from "@/lib/db";
 import { getOpenListings, type PublicListing } from "@/lib/data/rental-listings";
 import { positionForCategory } from "@/lib/rental/listing-rules";
 import { LIST_INTRO, RENTAL_FALLBACK_IMAGE } from "@/lib/rental/public-copy";
@@ -36,13 +35,8 @@ function row(l: PublicListing) {
 }
 
 export default async function RentalListPage() {
-  const [listings, rentalOpenRow] = await Promise.all([
-    getOpenListings(),
-    db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "rental_open") }),
-  ]);
-  // Общият превключвател в администрацията («отдаваме ли място под наем») остава в сила.
-  const rentalOpen = rentalOpenRow ? Boolean(rentalOpenRow.value) : true;
-  const rows = rentalOpen ? listings.map(row) : [];
+  // Истината са състоянията на обявите: списъкът е празен, когато няма публикувана обява.
+  const rows = (await getOpenListings()).map(row);
   const empty = rows.length === 0;
 
   return (

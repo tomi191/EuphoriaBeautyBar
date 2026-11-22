@@ -77,6 +77,22 @@ describe("Facebook: публикуване на обява", () => {
     expect(t).toEqual({ status: "error", reason: "timeout" });
   });
 
+  it("таймаутът покрива и тялото: заглавките идват, тялото спира по средата", async () => {
+    const stall = vi.fn(
+      async (_url: string, init: RequestInit) =>
+        ({
+          ok: true,
+          status: 200,
+          json: () =>
+            new Promise((_, reject) => init.signal!.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))),
+        }) as unknown as Response,
+    );
+    const started = Date.now();
+    const r = await postListingToFacebookPage(input, { env, timeoutMs: 30, fetchImpl: stall as unknown as typeof fetch });
+    expect(r).toEqual({ status: "error", reason: "timeout" });
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+
   it("връзката трябва да е публичен https адрес", async () => {
     const f = vi.fn();
     for (const link of ["http://www.euphoriabeauty.eu/karieri/x", "https://localhost:3000/karieri/x", "не е адрес"]) {

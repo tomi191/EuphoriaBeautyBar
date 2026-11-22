@@ -57,6 +57,12 @@ export async function notifyRentalInquiry(i: {
   try {
     const chats = await inquiryChats();
     log.targets = chats.length;
+    if (chats.length === 0) {
+      // Нищо не е свързано: запитването е само в администрацията. Не е доставено, затова е грешка.
+      log.error = "Няма свързан Telegram: запитването е само в администрацията.";
+      console.error("[rental-inquiry] %s: известието не стигна до никого (няма свързан Telegram)", i.id);
+      return log;
+    }
     const text = inquiryTelegramLines(i).map(esc).join("\n");
     const results = await Promise.allSettled(chats.map((c) => sendTelegram(c.chatId, text)));
     log.telegram = chats.map((c, n) => ({

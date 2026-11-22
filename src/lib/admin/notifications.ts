@@ -90,7 +90,7 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
         title: INQUIRY_BELL_TITLE,
         detail: inquiryBellDetail({ name: i.name, phone: i.phone, position: slug ? positionForCategory(slug) : "специалист" }),
         at: i.createdAt.toISOString(),
-        href: "/admin/positions",
+        href: "/admin/positions?tab=inquiries",
       });
     }
   }

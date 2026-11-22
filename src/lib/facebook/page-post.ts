@@ -65,16 +65,19 @@ export async function postListingToFacebookPage(
       signal: controller.signal,
     });
   } catch (e) {
-    return { status: "error", reason: controller.signal.aborted ? "timeout" : `network:${(e as Error)?.name ?? "Error"}` };
-  } finally {
     clearTimeout(timer);
+    return { status: "error", reason: controller.signal.aborted ? "timeout" : `network:${(e as Error)?.name ?? "Error"}` };
   }
 
+  // Тялото се чете още под таймаута: Facebook може да прати заглавките и да спре по средата.
   let body: { id?: unknown; error?: { code?: unknown; error_subcode?: unknown } } | null = null;
   try {
     body = await res.json();
   } catch {
+    if (controller.signal.aborted) return { status: "error", reason: "timeout" };
     body = null;
+  } finally {
+    clearTimeout(timer);
   }
 
   if (res.ok && typeof body?.id === "string" && body.id) {

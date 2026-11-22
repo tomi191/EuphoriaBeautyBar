@@ -11,6 +11,17 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": currentIp }) }));
 vi.mock("next/navigation", () => ({ redirect: (u: string) => { throw new Error(`REDIRECT:${u}`); } }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+// after(): известието тръгва след отговора към госта. В пробата задачите се събират и се чакат изрично.
+const afterTasks: (() => unknown)[] = [];
+vi.mock("next/server", async (orig) => ({
+  ...(await orig<typeof import("next/server")>()),
+  after: (fn: () => unknown) => {
+    afterTasks.push(fn);
+  },
+}));
+const flushAfter = async () => {
+  await Promise.all(afterTasks.splice(0).map((fn) => fn()));
+};
 
 const T = `pinq-${Date.now()}`;
 const SECRET_NOTE = `БЕЛЕЖКА-${T}`;
@@ -70,6 +81,7 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
 
   afterAll(async () => {
     if (!db) return;
+    await flushAfter();
     const { like } = await import("drizzle-orm");
     await db.delete(schema.rentalPositions).where(like(schema.rentalPositions.id, `${T}%`)); // запитванията с каскада
     await db.delete(schema.serviceCategories).where(like(schema.serviceCategories.id, `${T}%`));
@@ -78,15 +90,24 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
 
   it("валидно запитване: един ред с каноничния телефон, съгласието и състояние «ново»", async () => {
     currentIp = "10.0.1.1";
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const r = await A.submitRentalInquiry(form({ phone: "0888 000 001", message: "Завърших курс." }));
     expect(r).toEqual({ ok: true });
+    // Отговорът към госта не чака известието: дневникът се пише след него.
+    expect((await rowsFor("+359888000001"))[0].notifyLog).toBeNull();
+    await flushAfter();
     const rows = await rowsFor("+359888000001");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ positionId: `${T}-p1`, name: "Проба Тест", specialty: "Маникюр", message: "Завърших курс.", status: "new", handledAt: null });
     expect(rows[0].consentAt).toBeInstanceOf(Date);
     expect(rows[0].ipHash).toMatch(/^[0-9a-f]{32}$/);
-    // Без ключ за Telegram и без свързан чат: нищо не тръгва, а дневникът го казва.
+    // Без ключ за Telegram и без свързан чат: нищо не тръгва; това е грешка в дневника, в лога и в списъка.
     expect(rows[0].notifyLog).toMatchObject({ targets: 0, telegram: [] });
+    expect(String((rows[0].notifyLog as { error?: string }).error)).toMatch(/Няма свързан Telegram/);
+    expect(errSpy.mock.calls.some((c) => String(c[0]).includes("не стигна до никого"))).toBe(true);
+    errSpy.mockRestore();
+    const listed = (await A.listRentalInquiries({ positionId: `${T}-p1` })).find((i) => i.phone === "+359888000001");
+    expect(listed?.notifyDelivered).toBe(false);
   });
 
   it.each(["12345", "0888 12a 456", "+44 20 7946 0958", ""])("невалиден телефон %j: грешка по полето, без ред", async (phone) => {
@@ -106,9 +127,16 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
 
   it("капанът: отговорът е «готово», а ред няма", async () => {
     currentIp = "10.0.1.4";
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
     const r = await A.submitRentalInquiry(form({ phone: "0888 000 004", website: "http://spam.example" }));
     expect(r).toEqual({ ok: true });
     expect(await rowsFor("+359888000004")).toHaveLength(0);
+    // Ред в лога, но без лични данни (име, телефон, съобщение, адрес).
+    const lines = infoSpy.mock.calls.map((c) => c.join(" "));
+    infoSpy.mockRestore();
+    const trap = lines.find((l) => l.includes("[rental-inquiry] капанът"));
+    expect(trap).toBeDefined();
+    expect(trap).not.toMatch(/Проба|0888|359888000004|10\.0\.1\.4|spam/);
   });
 
   it("двойно изпращане (същият ключ, едновременно и после): един ред", async () => {
@@ -152,6 +180,7 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
 
   it("известието пада: записът остава, грешката е в дневника и в лога, камбанката го показва", async () => {
     currentIp = "10.0.1.8";
+    await flushAfter(); // известията на предишните проби тръгват преди чатът да е свързан
     const { eq } = await import("drizzle-orm");
     const key = "telegram_admin_chat_id";
     const before = await db.query.siteSettings.findFirst({ where: (s, { eq: e }) => e(s.key, key) });
@@ -172,6 +201,7 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
     try {
       const r = await A.submitRentalInquiry(form({ phone: "0888 000 008", message: "Без <html> & знаци" }));
       expect(r).toEqual({ ok: true });
+      await flushAfter();
     } finally {
       fetchSpy.mockRestore();
       process.env.TELEGRAM_BOT_TOKEN = oldToken;
@@ -196,6 +226,36 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
     // Списъкът за администрацията показва грешката.
     const list = await A.listRentalInquiries({ positionId: `${T}-p1` });
     expect(list.find((i) => i.phone === "+359888000008")?.notifyError).toMatch(/Telegram не тръгна/);
+  });
+
+  it("«Места под наем»: обявите със състоянието и броя, заетото с името, недоставеното с предупреждение", async () => {
+    await flushAfter();
+    const { eq } = await import("drizzle-orm");
+    const { loadRentalBoard, whenLabel } = await import("@/lib/admin/rental-board");
+    const now = new Date();
+    await db.insert(schema.resources).values({ id: `${T}-r`, name: "Елена Димитрова", kind: "cosmetics", active: true, sortOrder: 0, createdAt: now, updatedAt: now });
+    await db.update(schema.rentalPositions).set({ filledByResourceId: `${T}-r` }).where(eq(schema.rentalPositions.id, `${T}-p2`));
+    try {
+      const board = await loadRentalBoard();
+      const p1 = board.listings.find((l) => l.id === `${T}-p1`)!;
+      expect(p1).toMatchObject({ place: "Маникюрист", status: "published", rentPublic: false, fbPostUrl: null, filledBy: null });
+      expect(p1.dateLabel).toMatch(/^Публикувана на \d{2}\.\d{2}$/);
+      expect(p1.inquiries).toBeGreaterThan(5);
+      const p2 = board.listings.find((l) => l.id === `${T}-p2`)!;
+      expect(p2).toMatchObject({ status: "filled", filledBy: { id: `${T}-r`, firstName: "Елена" } });
+      expect(board.resources.map((r) => r.id)).toContain(`${T}-r`);
+      // Запитването без свързан Telegram: недоставено, мястото е «Маникюрист», телефонът за показване.
+      const lone = board.inquiries.find((i) => i.phone === "+359888000001")!;
+      expect(lone).toMatchObject({ place: "Маникюрист", phoneLabel: "0888 000 001", status: "new", undelivered: true });
+      expect(lone.whenLabel).toMatch(/^днес, \d{2}:\d{2}$/);
+      // Наемът и бележката не влизат в данните на екрана.
+      expect(JSON.stringify(board)).not.toContain(SECRET_NOTE);
+      expect(JSON.stringify(board)).not.toContain("777");
+      expect(whenLabel(new Date(now.getTime() - 24 * 3600 * 1000), now)).toMatch(/^вчера, /);
+    } finally {
+      await db.update(schema.rentalPositions).set({ filledByResourceId: null }).where(eq(schema.rentalPositions.id, `${T}-p2`));
+      await db.delete(schema.resources).where(eq(schema.resources.id, `${T}-r`));
+    }
   });
 
   it("функциите за администрацията: списък по място и състояние, «обработено», «изтрий»", async () => {

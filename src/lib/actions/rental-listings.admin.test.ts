@@ -25,6 +25,9 @@ import {
   uploadListingImage,
 } from "@/lib/actions/rental-listings";
 import ListingPreviewPage from "@/app/admin/listing-preview/page";
+import { deleteInquiry, listRentalInquiries, markInquiryHandled } from "@/lib/actions/rental-inquiries";
+import { loadRentalBoard } from "@/lib/admin/rental-board";
+import AdminRentalPage from "@/app/admin/(dashboard)/positions/page";
 
 const calls: [string, () => Promise<unknown>][] = [
   ["createListingDraft", () => createListingDraft({ categoryId: "c1" })],
@@ -35,6 +38,12 @@ const calls: [string, () => Promise<unknown>][] = [
   ["reopenListing", () => reopenListing("l1")],
   ["uploadListingImage", () => uploadListingImage("l1", new FormData())],
   ["прегледът /admin/listing-preview", () => ListingPreviewPage()],
+  // «Места под наем»: списъкът и запитванията (визия №19)
+  ["страницата «Места под наем»", () => AdminRentalPage({ searchParams: Promise.resolve({ tab: "inquiries" }) })],
+  ["loadRentalBoard", () => loadRentalBoard()],
+  ["listRentalInquiries", () => listRentalInquiries()],
+  ["markInquiryHandled («Обадих се»)", () => markInquiryHandled("i1")],
+  ["deleteInquiry («Изтрий»)", () => deleteInquiry("i1")],
 ];
 
 describe("формата «Нова обява»: само администратор", () => {
