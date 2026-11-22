@@ -73,7 +73,7 @@ export default async function RentalListPage() {
                 <p className="font-serif text-[1.6rem] italic leading-tight text-primary lg:text-[2.25rem]">
                   В момента няма свободни места.
                 </p>
-                <p className="mt-4 text-base lg:text-xl">Когато се освободи, обявата ще се появи тук.</p>
+                <p className="mt-4 text-pretty text-base lg:text-xl">Когато се освободи, обявата ще се появи тук.</p>
                 <RentalCallButtons className="mt-10 hidden lg:flex" />
               </div>
             ) : (

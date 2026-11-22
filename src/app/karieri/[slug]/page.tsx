@@ -116,7 +116,7 @@ export default async function ListingPage({ params }: Props) {
             <p className="mt-4 font-serif text-[1.3rem] italic leading-[1.12] text-primary lg:mt-6 lg:text-[2.6rem]">
               <span className="block">{LISTING_SUBTITLE[0]}</span> <span className="block">{LISTING_SUBTITLE[1]}</span>
             </p>
-            <p className="mt-4 max-w-[17rem] text-[0.95rem] leading-snug lg:mt-6 lg:max-w-none lg:text-xl">{LISTING_BEGINNERS}</p>
+            <p className="mt-4 max-w-[17rem] text-[0.95rem] leading-snug text-muted-foreground lg:mt-6 lg:max-w-none lg:text-xl">{LISTING_BEGINNERS}</p>
             <p className="mt-5 text-sm tracking-[0.06em] text-muted-foreground lg:mt-8 lg:text-lg">кв. Левски, Варна</p>
             {filled ? (
               <div className="hidden lg:block">{filledNotice}</div>
@@ -146,7 +146,7 @@ export default async function ListingPage({ params }: Props) {
         </div>
         <div>
           <h2 className="text-[1.75rem] font-medium leading-[1.1] lg:text-[3.25rem]">Как става</h2>
-          <StepLine steps={LISTING_STEPS} className="mt-6 text-[0.95rem] leading-snug lg:mt-9 lg:text-2xl" />
+          <StepLine steps={LISTING_STEPS} className="mt-4 text-[0.95rem] leading-snug lg:mt-9 lg:text-2xl" />
         </div>
       </section>
 

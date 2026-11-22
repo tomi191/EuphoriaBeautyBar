@@ -48,11 +48,11 @@ export function MenuLinkRow({ href, left, right, label }: { href: string; left: 
 /** «Как става»: редове на вертикална линия с точки (без номера). */
 export function StepLine({ steps, className }: { steps: string[]; className?: string }) {
   return (
-    <ol className={cn("relative space-y-4 pl-10 lg:space-y-8", className)}>
-      <span aria-hidden className="absolute bottom-1 left-[3.5px] top-2 w-px bg-primary/60" />
+    <ol className={cn("relative space-y-4 text-pretty pl-6 lg:space-y-8 lg:pl-10", className)}>
+      <span aria-hidden className="absolute bottom-1 left-[3.5px] top-2 w-px bg-primary/60 lg:left-[7px] lg:w-0.5" />
       {steps.map((s) => (
         <li key={s} className="relative">
-          <span aria-hidden className="absolute -left-10 top-[0.5em] size-2 rounded-full bg-primary/70" />
+          <span aria-hidden className="absolute -left-6 top-[0.5em] size-2 rounded-full bg-primary/70 lg:-left-10 lg:top-[0.35em] lg:size-4" />
           {s}
         </li>
       ))}

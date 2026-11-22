@@ -23,7 +23,7 @@ function CallLink({ className }: { className?: string }) {
   );
 }
 
-function ViberLink({ className }: { className?: string }) {
+function ViberLink({ className, short }: { className?: string; short?: boolean }) {
   return (
     <a
       href={siteConfig.social.viber}
@@ -31,7 +31,13 @@ function ViberLink({ className }: { className?: string }) {
       className={cn(base, "border border-foreground/25 bg-background text-foreground hover:bg-secondary", className)}
     >
       <MessageCircle className="size-5" strokeWidth={1.6} aria-hidden />
-      Пиши във Viber
+      {short ? (
+        <span>
+          <span className="max-[379px]:hidden">Пиши във </span>Viber
+        </span>
+      ) : (
+        "Пиши във Viber"
+      )}
     </a>
   );
 }
@@ -57,8 +63,8 @@ export function RentalCallBar() {
       data-rental-bar
       className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(var(--rental-bar-h)+env(safe-area-inset-bottom))] grid-cols-2 content-center gap-2 border-t border-border/60 bg-background/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
-      <CallLink className="h-[52px] px-3 text-base" />
-      <ViberLink className="h-[52px] px-3 text-base" />
+      <CallLink className="h-[52px] gap-2 whitespace-nowrap px-2 text-base" />
+      <ViberLink short className="h-[52px] gap-2 whitespace-nowrap px-2 text-base" />
     </div>
   );
 }
