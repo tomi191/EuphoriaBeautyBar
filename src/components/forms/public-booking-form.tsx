@@ -1,19 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Clock, Phone, Search, type LucideIcon } from "lucide-react";
+import { CalendarCheck, Loader2, Images, Scissors, Droplets, Hand, Sparkles, Check, X, Phone, Search, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createPublicBooking, fetchPublicSlots } from "@/lib/actions/public-booking";
+import { createPublicBooking, fetchFirstFreeDay, fetchPublicSlots } from "@/lib/actions/public-booking";
 import type { DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice, priceVaries } from "@/lib/booking/price";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { serviceImageFor } from "@/lib/booking/length-icon";
 import { siteConfig } from "@/lib/site";
+import { searchServices } from "@/lib/booking/service-search";
+import { capitalize, humanDay, onHumanDay } from "@/lib/booking/day-label";
+import { formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
 
 const SALON_PHONE = siteConfig.contact.phone;
+const SALON_PHONE_DISPLAY = siteConfig.contact.phoneFormatted;
 
 export interface PublicServiceOpt {
   id: string;
@@ -140,6 +144,12 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const [done, setDone] = React.useState<{ when: string; service: string; who: string } | null>(null);
   const [lightbox, setLightbox] = React.useState<PerformerOpt | null>(null);
   const [serviceQuery, setServiceQuery] = React.useState("");
+  // Изборът на услуга се свива в един ред; „Смени“, „Промени“ и „Добави още услуга“ го отварят пак.
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  // Денят е избран от клиентката (тогава не го сменяме сами) или от нас (първият свободен).
+  const [dateTouched, setDateTouched] = React.useState(false);
+  const [autoPicked, setAutoPicked] = React.useState(false);
+  const [firstFree, setFirstFree] = React.useState<{ key: string; day: string | null; failed: boolean } | null>(null);
 
   // Избрани услуги (в реда на добавяне) — поддържа няколко последователни услуги в един визит.
   const selectedServices = React.useMemo(
@@ -149,6 +159,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const activeKind = selectedServices[0]?.kind ?? "";
   const hasSelection = selectedServices.length > 0;
   const serviceNamesLabel = selectedServices.map((s) => s.name).join(" + ");
+  const showPicker = !hasSelection || pickerOpen;
 
   const categories = React.useMemo(() => uniq(services.map((s) => s.category)), [services]);
   const groups = React.useMemo(
@@ -196,14 +207,8 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     [categories, services, isOnlineBookable],
   );
 
-  // Търсачка по име: пряк път за хора, които знаят какво искат („балаяж", „гел лак").
-  const normalizedQuery = serviceQuery.trim().toLowerCase();
-  const searchResults = React.useMemo(() => {
-    if (normalizedQuery.length < 2) return [];
-    return services
-      .filter((s) => s.name.toLowerCase().includes(normalizedQuery) || s.groupTitle.toLowerCase().includes(normalizedQuery))
-      .slice(0, 8);
-  }, [services, normalizedQuery]);
+  // Търсачка: пряк път за хора, които знаят какво искат („балаяж", „гел лак"); дума по дума и със синоними.
+  const searchResults = React.useMemo(() => searchServices(services, serviceQuery), [services, serviceQuery]);
 
   /** Избор от търсачката: избира услугата И премества навигацията в нейната категория/вид. */
   function pickFromSearch(s: PublicServiceOpt) {
@@ -213,6 +218,25 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
       setGroupTitle(s.groupTitle);
       setServiceQuery("");
     }
+    setPickerOpen(false);
+  }
+
+  /** Избор от списъка на вида: след него изборът се свива в един ред. */
+  function pickFromList(s: PublicServiceOpt) {
+    toggleService(s);
+    setPickerOpen(false);
+  }
+
+  /** „Смени“ при една услуга: махаме я и отваряме същия вид за нов избор. */
+  function changeService() {
+    setSelectedIds([]);
+    setPickerOpen(true);
+  }
+
+  function pickDate(d: string) {
+    setDate(d);
+    setDateTouched(true);
+    setAutoPicked(false);
   }
 
   // Добавя/маха услуга. Всички избрани трябва да са за един изпълнител (същия kind).
@@ -260,11 +284,44 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     setPerformerId((cur) => (avail.some((p) => p.id === cur) ? cur : avail.length === 1 ? avail[0].id : ""));
   }, [activeKind]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Първият ден със свободен час за избраните услуги и специалист (същата сметка като графика).
+  const firstFreeKey = hasSelection && performerId && !isOffline ? `${performerId}|${totalDuration}|${totalBuffer}` : "";
+  React.useEffect(() => {
+    if (!firstFreeKey) {
+      setFirstFree(null);
+      return;
+    }
+    let cancelled = false;
+    fetchFirstFreeDay(performerId, totalDuration, totalBuffer, true)
+      .then((day) => !cancelled && setFirstFree({ key: firstFreeKey, day, failed: false }))
+      .catch(() => !cancelled && setFirstFree({ key: firstFreeKey, day: null, failed: true }));
+    return () => {
+      cancelled = true;
+    };
+  }, [firstFreeKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const firstFreeReady = !!firstFreeKey && firstFree?.key === firstFreeKey;
+  const firstFreeDay = firstFreeReady ? firstFree?.day ?? null : null;
+
+  // Докато клиентката не е избрала ден сама, календарът отваря на първия свободен ден.
+  React.useEffect(() => {
+    if (dateTouched || !firstFreeDay) return;
+    setDate(firstFreeDay);
+    setAutoPicked(true);
+  }, [firstFreeDay, dateTouched]);
+  // Графикът чака първия свободен ден, за да не мигне днешният (затворен) ден.
+  const waitingFirstFree = !dateTouched && (!firstFreeReady || (!!firstFreeDay && date !== firstFreeDay));
+
   // Зареди дневния график за избрания изпълнител и сумарната продължителност.
   React.useEffect(() => {
     if (!hasSelection || !performerId || !date || isOffline) {
       setSlots([]);
       setDayClosed(false);
+      return;
+    }
+    if (waitingFirstFree) {
+      setSlots([]);
+      setDayClosed(false);
+      setLoadingSlots(true);
       return;
     }
     let cancelled = false;
@@ -285,13 +342,13 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     return () => {
       cancelled = true;
     };
-  }, [performerId, date, totalDuration, totalBuffer, isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [performerId, date, totalDuration, totalBuffer, isOffline, waitingFirstFree]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!hasSelection || !performerId || !slot || !consent) {
-      setError("Избери поне една услуга, изпълнител, час и приеми условията.");
+      setError("Избери поне една услуга, специалист, час и приеми условията.");
       return;
     }
     setSubmitting(true);
@@ -343,10 +400,32 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   }
 
   const singlePerformer = availablePerformers.length === 1;
+  const noPerformer = hasSelection && availablePerformers.length === 0;
+  const today = todayStr();
+  const currentYear = Number(today.slice(0, 4));
+  const canAddMore = services.some((s) => s.kind === activeKind && !selectedIds.includes(s.id) && isOnlineBookable(s));
+  const phoneOnlyInGroup = groupItems.some((s) => !isOnlineBookable(s));
+  const queryLabel = serviceQuery.trim().length > 24 ? `${serviceQuery.trim().slice(0, 24)}…` : serviceQuery.trim();
+
+  // Под затворен или пълен ден: бутон към най-близкия свободен ден (или защо го няма).
+  const nearestDay = !firstFreeReady ? null : firstFree?.failed ? (
+    <p className="mt-2 text-sm text-muted-foreground">
+      Не успяхме да потърсим следващ ден. Избери от календара или се обади на {SALON_PHONE_DISPLAY}.
+    </p>
+  ) : !firstFreeDay ? (
+    <p className="mt-2 text-sm text-muted-foreground">
+      Не намерихме свободен ден в следващите 60 дни. Обади се на {SALON_PHONE_DISPLAY}.
+    </p>
+  ) : firstFreeDay !== date ? (
+    <Button type="button" variant="outline" onClick={() => pickDate(firstFreeDay)} className="mt-2 h-11 w-full rounded-full">
+      Най-близък свободен ден: {humanDay(firstFreeDay, { short: true, currentYear })}
+    </Button>
+  ) : null;
 
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-6 md:p-8">
+        {showPicker && (<>
         {/* Търсачка — пряк път през 70+ услуги, без да минаваш категория → вид */}
         <div className="space-y-2">
           <div className="relative">
@@ -355,7 +434,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               type="search"
               value={serviceQuery}
               onChange={(e) => setServiceQuery(e.target.value)}
-              placeholder="Намери услуга — напр. балаяж, гел лак, педикюр…"
+              placeholder="Напр. балаяж, боядисване"
               aria-label="Търси услуга по име"
               className="h-11 pl-10 text-base"
             />
@@ -372,6 +451,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                     type="button"
                     disabled={disabled}
                     onClick={() => pickFromSearch(s)}
+                    aria-label={phoneOnly ? `${s.name}, само по телефон` : undefined}
                     className={
                       "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors " +
                       (selected
@@ -390,12 +470,11 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                         <span className="block truncate text-sm font-medium">{s.name}</span>
                         <span className="block truncate text-xs text-muted-foreground">
                           {s.category} · {s.groupTitle}
-                          {phoneOnly
-                            ? ` · само по телефон: ${SALON_PHONE}`
-                            : disabled
-                              ? " · записва се отделно от вече избраните"
-                              : ""}
+                          {!phoneOnly && disabled ? " · записва се отделно от вече избраните" : ""}
                         </span>
+                        {phoneOnly && (
+                          <span className="block truncate text-xs text-muted-foreground">Само по телефон: {SALON_PHONE_DISPLAY}</span>
+                        )}
                       </span>
                     </span>
                     <span className="whitespace-nowrap font-display text-sm font-medium text-primary">
@@ -409,7 +488,8 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           )}
           {serviceQuery.trim().length >= 2 && searchResults.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Няма услуга с това име — виж категориите долу или се обади на {SALON_PHONE}.
+              Няма резултат за „{queryLabel}“. Пробвай друга дума или избери категория по-долу. Не е тук? Обади се:{" "}
+              {SALON_PHONE_DISPLAY}.
             </p>
           )}
         </div>
@@ -473,13 +553,15 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             <div className="space-y-1.5">
               {groupItems.map((s) => {
                 const selected = selectedIds.includes(s.id);
-                const disabled = hasSelection && !selected && s.kind !== activeKind;
+                const phoneOnly = !isOnlineBookable(s);
+                const disabled = (phoneOnly && !selected) || (hasSelection && !selected && s.kind !== activeKind);
                 return (
                   <button
                     key={s.id}
                     type="button"
                     disabled={disabled}
-                    onClick={() => toggleService(s)}
+                    onClick={() => pickFromList(s)}
+                    aria-label={phoneOnly ? `${s.name}, само по телефон` : undefined}
                     className={
                       "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors " +
                       (selected
@@ -502,7 +584,10 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={serviceImageFor(s.name, s.groupTitle)!} alt={s.name} className="size-10 shrink-0 rounded-lg object-cover" />
                       )}
-                      <span className="font-medium leading-tight">{s.name}</span>
+                      <span className="min-w-0">
+                        <span className="block font-medium leading-tight">{s.name}</span>
+                        {phoneOnly && <span className="block text-xs text-muted-foreground">Само по телефон</span>}
+                      </span>
                     </span>
                     <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
                       {s.durationMin} мин · {formatPrice(s)}
@@ -511,21 +596,64 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                 );
               })}
             </div>
+            {phoneOnlyInGroup && (
+              <p className="text-sm text-muted-foreground">
+                Сивите услуги се записват по телефона:{" "}
+                <a href={`tel:${SALON_PHONE}`} className="font-medium text-foreground underline underline-offset-2">
+                  {SALON_PHONE_DISPLAY}
+                </a>
+                .
+              </p>
+            )}
           </div>
         )}
+        </>)}
 
-        {/* Обобщение на избраните услуги + общо време + disclaimer */}
+        {/* Избраното, свито в един ред: услуга · цена · време, или сборът при няколко */}
         {hasSelection && (
           <div className="rounded-lg border border-border bg-secondary/40 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm font-medium">
-                Избрани {selectedServices.length > 1 ? `услуги (${selectedServices.length})` : "услуга"}
-              </span>
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
-                <Clock className="size-3.5" /> ~{totalDuration} мин
-              </span>
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 pt-0.5 text-sm leading-snug">
+                {selectedServices.length === 1 ? (
+                  <>
+                    <span className="font-medium">{selectedServices[0].name}</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {" "}· {formatPrice(resolveOffering(selectedServices[0], performer))} · {formatDurationShort(totalDuration)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium">{selectedServices.length} услуги</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {" "}· {sumPriceLabel(selectedServices.map((s) => resolveOffering(s, performer)))} ·{" "}
+                      {formatDurationShort(totalDuration)}
+                    </span>
+                  </>
+                )}
+              </p>
+              {selectedServices.length === 1 ? (
+                <button
+                  type="button"
+                  onClick={changeService}
+                  aria-label="Смени услугата"
+                  className="-my-2.5 inline-flex min-h-11 shrink-0 items-center px-2 text-sm font-medium text-primary underline underline-offset-2"
+                >
+                  Смени
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen((o) => !o)}
+                  aria-label="Промени избраните услуги"
+                  aria-expanded={pickerOpen}
+                  className="-my-2.5 inline-flex min-h-11 shrink-0 items-center px-2 text-sm font-medium text-primary underline underline-offset-2"
+                >
+                  Промени
+                </button>
+              )}
             </div>
-            <ul className="space-y-1.5">
+            {selectedServices.length > 1 && (
+            <ul className="mt-2 space-y-1.5">
               {selectedServices.map((s) => (
                 <li key={s.id} className="flex items-center gap-2 text-sm">
                   <button
@@ -541,23 +669,33 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                 </li>
               ))}
             </ul>
-            <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">
+            )}
+            {canAddMore && !pickerOpen && (
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="-mb-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-2"
+              >
+                Добави още услуга
+              </button>
+            )}
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
               {selectedServices.some((s) => priceVaries(resolveOffering(s, performer)))
-                ? "Цените са ориентировъчни. Крайната сума зависи от обема на работата и използваните продукти - уточнява се на място."
+                ? "Цените са ориентировъчни. Крайната сума зависи от обема на работата и използваните продукти и се уточнява на място."
                 : "Цените са ориентировъчни и може да варират според обема на работата и използваните продукти."}
             </p>
           </div>
         )}
 
-        {hasSelection && availablePerformers.length === 0 && (
+        {noPerformer && (
           <p className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
-            Няма изпълнител, който да предлага всички избрани услуги заедно. Махни някоя услуга или се обади да уточним.
+            Никой специалист не прави всички избрани услуги в един час. Остави една или се обади на {SALON_PHONE_DISPLAY}.
           </p>
         )}
 
         {hasSelection && availablePerformers.length > 0 && (
           <div className="space-y-2">
-            <Label>{singlePerformer ? "Изпълнител" : "Избери изпълнител"}</Label>
+            <Label>{singlePerformer ? "Специалист" : "Избери специалист"}</Label>
             <div className="grid gap-2.5 sm:grid-cols-2">
               {availablePerformers.map((p) => {
                 const selected = performerId === p.id;
@@ -614,7 +752,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               {performer?.name} приема часове за „{offlineService?.name}" по телефона
             </p>
             <p className="text-sm text-muted-foreground">
-              Тази услуга не се записва онлайн при този изпълнител. Обади се, за да запазиш час.
+              Тази услуга не се записва онлайн при този специалист. Обади се, за да запазиш час.
             </p>
             <Button asChild size="lg" className="h-12 w-full rounded-full bg-foreground text-background hover:bg-primary">
               <a href={`tel:${contactPhone.replace(/\s/g, "")}`}>
@@ -622,17 +760,21 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               </a>
             </Button>
           </div>
-        ) : (
+        ) : noPerformer ? null : (
         <div className="space-y-2">
           <Label>Дата</Label>
-          <BookingCalendar value={date} onChange={setDate} disabledDates={closedDates} />
+          <BookingCalendar value={date} onChange={pickDate} disabledDates={closedDates} hidePast />
+          {autoPicked && hasSelection && performerId && (
+            <p className="text-sm text-muted-foreground">Избрахме най-близкия свободен ден.</p>
+          )}
         </div>
         )}
 
         {!isOffline && (<>
+        {!noPerformer && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Час</Label>
+            <Label>{hasSelection && performerId && date ? `Час за ${humanDay(date, { short: true, currentYear })}` : "Час"}</Label>
             {performerId && !loadingSlots && !dayClosed && slots.length > 0 && (
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -653,23 +795,32 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           {!hasSelection ? (
             <p className="text-sm text-muted-foreground">Първо избери услуга.</p>
           ) : !performerId ? (
-            <p className="text-sm text-muted-foreground">Избери изпълнител, за да видиш графика.</p>
+            <p className="text-sm text-muted-foreground">Избери специалист, за да видиш графика.</p>
           ) : loadingSlots ? (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Зареждам графика…
             </p>
           ) : dayClosed ? (
-            <p className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
-              Салонът е затворен на тази дата. Избери друг ден.
-            </p>
+            <div>
+              <p className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
+                {capitalize(onHumanDay(date, currentYear))}, салонът е затворен.
+              </p>
+              {nearestDay}
+            </div>
           ) : slots.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Няма свободни часове за тази дата. Пробвай друг ден или се обади.</p>
+            <div>
+              <p className="text-sm text-muted-foreground">Няма свободни часове {onHumanDay(date, currentYear)}.</p>
+              {nearestDay}
+            </div>
           ) : (
             <>
               {slots.every((s) => s.status !== "free" && s.status !== "parallel") && (
-                <p className="mb-2 rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
-                  Всички часове за деня са заети или минали. Пробвай друг ден.
-                </p>
+                <div className="mb-2">
+                  <p className="rounded-lg border border-border bg-secondary/50 p-3 text-sm text-muted-foreground">
+                    {date === today ? "Днес няма повече свободни часове." : `Няма свободни часове ${onHumanDay(date, currentYear)}.`}
+                  </p>
+                  {nearestDay}
+                </div>
               )}
               <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
                 {slots.map((s) => {
@@ -730,6 +881,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             </>
           )}
         </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
