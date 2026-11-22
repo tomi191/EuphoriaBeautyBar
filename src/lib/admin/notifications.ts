@@ -1,9 +1,11 @@
 import { db } from "@/lib/db";
 import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+import { positionForCategory } from "@/lib/rental/listing-rules";
+import { INQUIRY_BELL_TITLE, inquiryBellDetail } from "@/lib/rental/inquiry-rules";
 
 export type AdminNotification = {
   id: string;
-  kind: "new_online" | "cancelled";
+  kind: "new_online" | "cancelled" | "rental_inquiry";
   title: string;
   detail: string;
   at: string;
@@ -16,7 +18,7 @@ const dayMonth = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", da
 
 export async function loadAdminNotifications(): Promise<AdminNotificationsState> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [rows, seenRow] = await Promise.all([
+  const [rows, seenRow, inquiries] = await Promise.all([
     db.query.bookings.findMany({
       where: (b, { or, and, gte, eq, isNotNull }) =>
         or(
@@ -27,6 +29,13 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
       limit: 200,
     }),
     db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, SEEN_KEY) }),
+    // Запитванията от обявите за място под наем (идват от самата таблица, без изпращане).
+    db.query.rentalInquiries.findMany({
+      where: (r, { gte }) => gte(r.createdAt, since),
+      orderBy: (r, { desc }) => [desc(r.createdAt)],
+      limit: 50,
+      columns: { id: true, name: true, phone: true, createdAt: true, positionId: true },
+    }),
   ]);
 
   const clientIds = [...new Set(rows.map((b) => b.clientId).filter(Boolean))] as string[];
@@ -61,6 +70,27 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
         detail: `${b.serviceName} · ${when}`,
         at: b.cancelledAt.toISOString(),
         href,
+      });
+    }
+  }
+  if (inquiries.length) {
+    const positionIds = [...new Set(inquiries.map((i) => i.positionId))];
+    const positions = await db.query.rentalPositions.findMany({
+      where: (p, { inArray }) => inArray(p.id, positionIds),
+      columns: { id: true, categoryId: true },
+    });
+    const categories = await db.query.serviceCategories.findMany({ columns: { id: true, slug: true } });
+    const catSlug = new Map(categories.map((c) => [c.id, c.slug]));
+    const posMap = new Map(positions.map((p) => [p.id, p.categoryId ? catSlug.get(p.categoryId) : undefined]));
+    for (const i of inquiries) {
+      const slug = posMap.get(i.positionId);
+      items.push({
+        id: `${i.id}:rental_inquiry`,
+        kind: "rental_inquiry",
+        title: INQUIRY_BELL_TITLE,
+        detail: inquiryBellDetail({ name: i.name, phone: i.phone, position: slug ? positionForCategory(slug) : "специалист" }),
+        at: i.createdAt.toISOString(),
+        href: "/admin/positions",
       });
     }
   }

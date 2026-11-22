@@ -230,6 +230,36 @@ export const rentalPositions = pgTable(
   ],
 );
 
+// Запитванията от обявата (миграция drizzle/manual/0001_rental_listings.sql). Лични данни: само за
+// администратора, трият се сами 6 месеца след created_at (lib/rental/inquiry-purge.ts).
+export const rentalInquiries = pgTable(
+  "rental_inquiries",
+  {
+    id: text("id").primaryKey(),
+    positionId: text("position_id")
+      .notNull()
+      .references(() => rentalPositions.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    phone: text("phone").notNull(), // каноничен вид +359…
+    specialty: text("specialty"),
+    message: text("message"),
+    consentAt: ts("consent_at").notNull(),
+    createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
+    status: text("status").notNull().default("new").$type<"new" | "handled">(),
+    handledAt: ts("handled_at"),
+    clientToken: text("client_token").notNull(), // двойно натискане → един ред
+    ipHash: text("ip_hash"),
+    notifyLog: jsonb("notify_log").$type<Record<string, unknown>>(),
+  },
+  (t) => [
+    uniqueIndex("rental_inquiries_client_token_uq").on(t.clientToken),
+    index("rental_inquiries_position_idx").on(t.positionId),
+    index("rental_inquiries_created_idx").on(t.createdAt),
+    index("rental_inquiries_phone_created_idx").on(t.phone, t.createdAt),
+    index("rental_inquiries_ip_created_idx").on(t.ipHash, t.createdAt),
+  ],
+);
+
 /* ──────────────────────────────────────
  * Booking система
  * ────────────────────────────────────── */
@@ -397,6 +427,7 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type GalleryImage = typeof galleryImages.$inferSelect;
 export type GoogleReview = typeof googleReviews.$inferSelect;
 export type RentalPosition = typeof rentalPositions.$inferSelect;
+export type RentalInquiry = typeof rentalInquiries.$inferSelect;
 export type Resource = typeof resources.$inferSelect;
 export type WorkingHour = typeof workingHours.$inferSelect;
 export type ResourceService = typeof resourceServices.$inferSelect;

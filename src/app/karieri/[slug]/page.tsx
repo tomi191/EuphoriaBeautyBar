@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { ListingArchFigure, ListingMobileLine } from "@/components/rental/arch-figure";
 import { MenuRow, StepLine } from "@/components/rental/bar-menu";
-import { RentalCallBar, RentalCallButtons } from "@/components/rental/rental-contact";
+import { InquiryBar, InquiryButtons, RentalInquiryProvider } from "@/components/rental/rental-inquiry";
 import { db } from "@/lib/db";
 import { siteConfig } from "@/lib/site";
 import { getListingBySlug, getOpenListings } from "@/lib/data/rental-listings";
 import type { RentalBenefit } from "@/lib/rental/benefits";
+import { specialtyForCategory } from "@/lib/rental/inquiry-rules";
 import {
   LISTING_BEGINNERS,
   LISTING_CONTRACT_ANSWER,
@@ -98,7 +99,7 @@ export default async function ListingPage({ params }: Props) {
   );
 
   return (
-    <>
+    <RentalInquiryProvider slug={slug} listingTitle={listing.title} specialty={specialtyForCategory(listing.category?.slug)}>
       <section className="relative overflow-hidden">
         {/* На телефон героят е висок колкото екрана без шапката и лентата: арката стига до лентата. */}
         <div
@@ -120,7 +121,7 @@ export default async function ListingPage({ params }: Props) {
             {filled ? (
               <div className="hidden lg:block">{filledNotice}</div>
             ) : (
-              <RentalCallButtons className="mt-10 hidden lg:flex" />
+              <InquiryButtons className="mt-10 hidden lg:flex" />
             )}
           </div>
           <ListingArchFigure
@@ -154,10 +155,10 @@ export default async function ListingPage({ params }: Props) {
         <p className="mt-4 max-w-[34ch] text-[1.125rem] leading-snug lg:mt-6 lg:max-w-[40ch] lg:text-[2.25rem]">
           {LISTING_CONTRACT_ANSWER}
         </p>
-        {!filled && <RentalCallButtons className="mt-10 hidden lg:flex" />}
+        {!filled && <InquiryButtons className="mt-10 hidden lg:flex" />}
       </section>
 
-      {!filled && <RentalCallBar />}
-    </>
+      {!filled && <InquiryBar />}
+    </RentalInquiryProvider>
   );
 }

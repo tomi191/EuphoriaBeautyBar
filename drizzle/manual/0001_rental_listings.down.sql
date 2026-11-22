@@ -1,7 +1,10 @@
 -- Връщане на 0001_rental_listings.sql. ВНИМАНИЕ: трие данните на обявите в новите колони
 -- (категория, услуги, адрес, снимка, предимства, бележка, състояние, заета от, Facebook, наем).
 -- Старите колони и редове остават. Преди това върни кода, който чете новите колони.
+-- Трие и всички запитвания от обявите (таблицата rental_inquiries).
 BEGIN;
+
+DROP TABLE IF EXISTS rental_inquiries;
 
 DROP INDEX IF EXISTS rental_positions_filled_by_idx;
 DROP INDEX IF EXISTS rental_positions_status_idx;

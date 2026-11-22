@@ -25,4 +25,43 @@ CREATE UNIQUE INDEX IF NOT EXISTS rental_positions_slug_uq ON rental_positions (
 CREATE INDEX IF NOT EXISTS rental_positions_status_idx ON rental_positions (status);
 CREATE INDEX IF NOT EXISTS rental_positions_filled_by_idx ON rental_positions (filled_by_resource_id);
 
+-- Запитванията от обявата (№8 Б2г): лични данни на кандидата, трият се сами след 6 месеца
+-- (дневната задача sync-reviews). Само за администратора; никога в публичните четения.
+CREATE TABLE IF NOT EXISTS rental_inquiries (
+  id text PRIMARY KEY,
+  position_id text NOT NULL REFERENCES rental_positions(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  phone text NOT NULL,
+  specialty text,
+  message text,
+  consent_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'handled')),
+  handled_at timestamptz,
+  -- Ключ от формата: двойно натискане дава един ред.
+  client_token text NOT NULL,
+  -- Отпечатък на адреса на мрежата (sha256 със сол), само за ограничението на честотата.
+  ip_hash text,
+  -- Какво е станало с известията (Telegram): грешката остава тук и в лога.
+  notify_log jsonb
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS rental_inquiries_client_token_uq ON rental_inquiries (client_token);
+CREATE INDEX IF NOT EXISTS rental_inquiries_position_idx ON rental_inquiries (position_id);
+CREATE INDEX IF NOT EXISTS rental_inquiries_created_idx ON rental_inquiries (created_at);
+CREATE INDEX IF NOT EXISTS rental_inquiries_phone_created_idx ON rental_inquiries (phone, created_at);
+CREATE INDEX IF NOT EXISTS rental_inquiries_ip_created_idx ON rental_inquiries (ip_hash, created_at);
+
+-- Като другите таблици (gotchas, 15.10.2026): без достъп през публичния ключ на Supabase.
+ALTER TABLE rental_inquiries ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    EXECUTE 'REVOKE ALL ON rental_inquiries FROM anon';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    EXECUTE 'REVOKE ALL ON rental_inquiries FROM authenticated';
+  END IF;
+END $$;
+
 COMMIT;
