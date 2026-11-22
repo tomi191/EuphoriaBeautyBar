@@ -29,6 +29,8 @@ export interface PublicListing {
   skills: string[];
   /** Наемът на месец в € («300»); null, когато ключът «показвай в обявата» е изключен или няма сума. */
   rent: string | null;
+  /** Своите редове на Снежана (до 60 знака): в менюто без дясна част. */
+  customBenefits: string[];
 }
 
 // Публикувана: новото състояние или стар ред без състояние, който е активен.
@@ -48,6 +50,7 @@ const publicColumns = {
   skills: rp.skills,
   rentText: rp.rentText,
   rentPublic: rp.rentPublic,
+  customBenefits: rp.customBenefits,
   catId: sc.id,
   catSlug: sc.slug,
   catTitle: sc.title,
@@ -68,6 +71,7 @@ type Row = {
   skills: string[] | null;
   rentText: string | null;
   rentPublic: boolean;
+  customBenefits: string[] | null;
   catId: string | null;
   catSlug: string | null;
   catTitle: string | null;
@@ -106,6 +110,7 @@ function toPublic(r: Row, services: Map<string, { id: string; name: string; grou
     description: r.description,
     skills: r.skills ?? [],
     rent: r.rentPublic && r.rentText ? r.rentText : null,
+    customBenefits: r.customBenefits ?? [],
   };
 }
 
@@ -141,4 +146,14 @@ export async function getListingBySlug(slug: string): Promise<PublicListing | nu
 export async function hasOpenListings(): Promise<boolean> {
   const rows = await db.select({ id: rp.id }).from(rp).where(isPublished).limit(1);
   return rows.length > 0;
+}
+
+/** Оценката на салона идва от отзивите в базата (думата на Саиф, т. 11); без тях остава текстът от списъка. */
+export async function withLiveRating<T extends { key: string; left: string; right: string }>(benefits: T[]): Promise<T[]> {
+  if (!benefits.some((b) => b.key === "google-rating")) return benefits;
+  const row = await db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, "google_reviews_summary") });
+  const rating = (row?.value as { rating?: number } | undefined)?.rating;
+  if (!rating) return benefits;
+  const value = rating.toLocaleString("bg-BG", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return benefits.map((b) => (b.key === "google-rating" ? { ...b, left: `Салон с оценка ${value}` } : b));
 }

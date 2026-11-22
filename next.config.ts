@@ -54,6 +54,11 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
+      {
+        // Прегледът на обявата се показва в рамка във формата «Нова обява» (само от същия сайт).
+        source: "/admin/listing-preview",
+        headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }],
+      },
     ];
   },
   async redirects() {

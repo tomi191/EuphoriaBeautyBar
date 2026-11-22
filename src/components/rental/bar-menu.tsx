@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
  * Редът от «бар менюто» (визия №12): вляво текст, точки, вдясно курсив в основния цвят.
  * Без рамки и карти (бележката на Канопус за Б-обява-1440).
  */
-export function MenuRow({ left, right, className }: { left: string; right: ReactNode; className?: string }) {
+export function MenuRow({ left, right, className }: { left: string; right?: ReactNode; className?: string }) {
+  // Свой ред на Снежана: само текстът, без точки и без дясна част.
+  if (right === undefined) return <li className={className}>{left}</li>;
   return (
     <li className={cn("grid grid-cols-[auto_minmax(1.5rem,1fr)_auto] items-baseline gap-3", className)}>
       <span className="min-w-0">{left}</span>

@@ -11,6 +11,7 @@ DROP INDEX IF EXISTS rental_positions_status_idx;
 DROP INDEX IF EXISTS rental_positions_slug_uq;
 
 ALTER TABLE rental_positions
+  DROP COLUMN IF EXISTS custom_benefits,
   DROP COLUMN IF EXISTS rent_public,
   DROP COLUMN IF EXISTS rent_text,
   DROP COLUMN IF EXISTS fb_posted_at,

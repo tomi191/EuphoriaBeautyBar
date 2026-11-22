@@ -1,9 +1,9 @@
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/admin/page-header";
-import { PositionForm } from "@/components/admin/position-form";
 import { RentalOpenToggle } from "@/components/admin/rental-open-toggle";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { deletePosition } from "@/lib/actions/positions";
@@ -21,13 +21,11 @@ export default async function AdminPositionsPage() {
         title="Места под наем"
         subtitle="Свободни работни места в салона, видими на страницата Кариери (/karieri)."
         action={
-          <PositionForm
-            trigger={
-              <Button className="bg-foreground text-background hover:bg-foreground/90">
-                <Plus className="size-4" /> Нова позиция
-              </Button>
-            }
-          />
+          <Button asChild className="bg-foreground text-background hover:bg-foreground/90">
+            <Link href="/admin/positions/new">
+              <Plus className="size-4" /> Нова обява
+            </Link>
+          </Button>
         }
       />
 
@@ -78,14 +76,9 @@ export default async function AdminPositionsPage() {
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap sticky right-0 z-[1] bg-background group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))] shadow-[-10px_0_10px_-10px_rgba(0,0,0,0.18)] lg:shadow-none">
                     <div className="flex justify-end gap-1">
-                      <PositionForm
-                        initial={p}
-                        trigger={
-                          <Button variant="outline" size="sm">
-                            Редакция
-                          </Button>
-                        }
-                      />
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/admin/positions/${p.id}`}>Редакция</Link>
+                      </Button>
                       <DeleteButton action={deleteAction} />
                     </div>
                   </TableCell>

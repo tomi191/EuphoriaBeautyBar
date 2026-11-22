@@ -19,7 +19,9 @@ ALTER TABLE rental_positions
   ADD COLUMN IF NOT EXISTS fb_posted_at timestamptz,
   -- Наемът (визия №18): сумата на месец и ключът «показвай в обявата», изключен по подразбиране.
   ADD COLUMN IF NOT EXISTS rent_text text,
-  ADD COLUMN IF NOT EXISTS rent_public boolean NOT NULL DEFAULT false;
+  ADD COLUMN IF NOT EXISTS rent_public boolean NOT NULL DEFAULT false,
+  -- Свои редове в «Какво получаваш» (№8 Б3б): текстът на Снежана, до 60 знака на ред.
+  ADD COLUMN IF NOT EXISTS custom_benefits jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE UNIQUE INDEX IF NOT EXISTS rental_positions_slug_uq ON rental_positions (slug);
 CREATE INDEX IF NOT EXISTS rental_positions_status_idx ON rental_positions (status);

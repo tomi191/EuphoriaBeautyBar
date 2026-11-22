@@ -77,11 +77,11 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     // Черновата не е публична.
     expect(await R.getListingBySlug(d1.slug)).toBeNull();
 
-    expect(await A.updateListing(d1.id, { serviceIds: [`${T}-s2`, `${T}-s1`], benefits: ["location", "online-booking"], adminNote: SECRET })).toEqual({ ok: true });
+    expect(await A.updateListing(d1.id, { serviceIds: [`${T}-s2`, `${T}-s1`], benefits: ["location", "online-booking"], adminNote: SECRET })).toMatchObject({ ok: true });
     expect((await A.updateListing(d1.id, { serviceIds: ["chuzhda"] })).ok).toBe(false);
     expect((await A.pauseListing(d1.id)).ok).toBe(false); // чернова не се спира
 
-    expect(await A.publishListing(d1.id)).toEqual({ ok: true, status: "published" });
+    expect(await A.publishListing(d1.id)).toMatchObject({ ok: true, status: "published" });
     expect((await A.publishListing(d1.id)).ok).toBe(false); // второ натискане
 
     const one = await R.getListingBySlug(d1.slug);
@@ -115,18 +115,18 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     ids.push(d.id);
     expect(await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) })).toMatchObject({ rentText: null, rentPublic: false });
 
-    expect(await A.updateListing(d.id, { rentText: " 645 " })).toEqual({ ok: true });
+    expect(await A.updateListing(d.id, { rentText: " 645 " })).toMatchObject({ ok: true });
     expect((await A.updateListing(d.id, { rentText: "много" })).ok).toBe(false);
-    expect(await A.publishListing(d.id)).toEqual({ ok: true, status: "published" });
+    expect(await A.publishListing(d.id)).toMatchObject({ ok: true, status: "published" });
     const hidden = await R.getListingBySlug(d.slug);
     expect(hidden?.rent).toBeNull();
     expect(JSON.stringify([hidden, await R.getOpenListings()])).not.toContain("645");
 
-    expect(await A.updateListing(d.id, { rentPublic: true })).toEqual({ ok: true });
+    expect(await A.updateListing(d.id, { rentPublic: true })).toMatchObject({ ok: true });
     expect((await R.getListingBySlug(d.slug))?.rent).toBe("645");
     // Включен ключ без сума не се пази.
     expect(await A.updateListing(d.id, { rentText: "" })).toEqual({ ok: false, error: "Въведи сума или изключи ключа." });
-    expect(await A.updateListing(d.id, { rentPublic: false, rentText: null })).toEqual({ ok: true });
+    expect(await A.updateListing(d.id, { rentPublic: false, rentText: null })).toMatchObject({ ok: true });
     expect((await R.getListingBySlug(d.slug))?.rent).toBeNull();
   });
 

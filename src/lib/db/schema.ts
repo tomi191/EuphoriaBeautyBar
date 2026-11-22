@@ -222,6 +222,8 @@ export const rentalPositions = pgTable(
     // Наемът на месец (сумата в €) и ключът «показвай в обявата». Изключен ключ → сумата не излиза публично.
     rentText: text("rent_text"),
     rentPublic: boolean("rent_public").notNull().default(false),
+    // Свои редове в «Какво получаваш» (текстът на Снежана, до 60 знака): в обявата са без дясна част.
+    customBenefits: jsonb("custom_benefits").notNull().default([]).$type<string[]>(),
   },
   (t) => [
     uniqueIndex("rental_positions_slug_uq").on(t.slug),
