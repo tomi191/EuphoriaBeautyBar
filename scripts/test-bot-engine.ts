@@ -52,7 +52,7 @@ const CASES: Case[] = [
   { q: "Работно време", intent: "hours", textIncludes: "09:00" },
   { q: "Къде се намирате?", intent: "location", textIncludes: "Петър Райчев" },
   { q: "Как се плаща, с карта може ли", intent: "payment", textIncludes: "Revolut" },
-  { q: "Работа при вас", intent: "careers", linkIncludes: "/karieri" },
+  { q: "Места под наем", intent: "careers", linkIncludes: "/karieri" },
   { q: "имате ли стол под наем за фризьор", intent: "careers", linkIncludes: "/karieri" },
   { q: "искам да говоря с човек", intent: "contact", linkIncludes: "tel:" },
   { q: "asdf qwerty 123", intent: "fallback" },

@@ -37,7 +37,7 @@ export interface BotReply {
 }
 
 /** Стандартните chips след повечето отговори. */
-const MENU: string[] = ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Работа при вас"];
+const MENU: string[] = ["Цени и услуги", "Запази час", "Работно време", "Къде се намирате?", "Места под наем"];
 
 const BOOK_LINK: BotLink = { label: "Запази час онлайн", href: "/zapazi-chas" };
 const PHONE_LINK: BotLink = { label: siteConfig.contact.phoneFormatted, href: `tel:${siteConfig.contact.phone}` };
