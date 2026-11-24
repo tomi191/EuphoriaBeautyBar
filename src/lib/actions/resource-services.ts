@@ -9,6 +9,8 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { validatePrice, validateServiceTiming } from "@/lib/booking/service-rules";
 import { withPriceLog } from "@/lib/pricing/price-log";
+import { lockedServiceIds } from "@/lib/campaigns/core";
+import { CAMPAIGN_TEXT, shortDay } from "@/lib/campaigns/rules";
 
 function revalidate() {
   revalidatePath("/staff/services");
@@ -110,6 +112,15 @@ export async function updateMyService(serviceItemId: string, input: z.infer<type
   const existing = await db.query.resourceServices.findFirst({
     where: (rs, { and, eq }) => and(eq(rs.resourceId, resource.id), eq(rs.serviceItemId, serviceItemId)),
   });
+  // Цената е заключена, докато има чакаща или течаща промоция (№11): първо се спира промоцията.
+  const lock = (await lockedServiceIds(resource.id)).get(serviceItemId);
+  const priceChanged =
+    !existing ||
+    existing.price !== own.price ||
+    (existing.priceMax ?? null) !== (own.priceMax ?? null) ||
+    existing.priceFrom !== own.priceFrom ||
+    existing.currency !== own.currency;
+  if (lock && priceChanged) return { ok: false as const, error: CAMPAIGN_TEXT.locked(shortDay(lock.endsOn)) };
   // Активно/престой са ГЛОБАЛНИ (service_items) и важат за всеки изпълнител, а времетраенето
   // може да е различно по изпълнител → сумата се сверява с НАЙ-КРАТКОТО време, с което някой
   // предлага услугата. Иначе при колега с по-кратко време прозорецът излиза след края на часа.

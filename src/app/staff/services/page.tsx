@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { StaffShell } from "@/components/staff/staff-shell";
 import { MyServices, type MyServiceOpt, type MyCategoryOpt } from "@/components/staff/my-services";
+import { lockedServiceIds } from "@/lib/campaigns/core";
+import { shortDay } from "@/lib/campaigns/rules";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
 export default async function StaffServicesPage() {
   const { resource } = await requireStaff();
 
-  const [cats, items, mine, allOffers] = await Promise.all([
+  const [cats, items, mine, allOffers, locks] = await Promise.all([
     db.query.serviceCategories.findMany({ orderBy: (c, { asc }) => [asc(c.sortOrder)] }),
     db.query.serviceItems.findMany({ orderBy: (s, { asc }) => [asc(s.sortOrder)] }),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.resourceId, resource.id) }),
     // Всички предлагания — за да знаем кои услуги се ползват от ДРУГ изпълнител (не може да се трият).
     db.query.resourceServices.findMany(),
+    // Цените, заключени от чакаща или течаща промоция (№11).
+    lockedServiceIds(resource.id),
   ]);
 
   const catById = new Map(cats.map((c) => [c.id, c]));
@@ -52,6 +56,8 @@ export default async function StaffServicesPage() {
         processingMin: i.processingMin,
         // Може да се изтрие от каталога само ако друг изпълнител не я предлага.
         deletable: !offeredByOthers.has(i.id),
+        lockedUntil: locks.has(i.id) ? shortDay(locks.get(i.id)!.endsOn) : null,
+        lockedCampaignId: locks.get(i.id)?.campaignId ?? null,
       },
     ];
   });

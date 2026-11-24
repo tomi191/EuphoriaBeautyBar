@@ -1,4 +1,4 @@
-import { pgTable, text, integer, bigint, real, boolean, timestamp, jsonb, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, bigint, real, boolean, timestamp, jsonb, date, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -407,10 +407,60 @@ export const bookings = pgTable("bookings", {
   reviewRequestedAt: ts("review_requested_at"),
   // Резултат от известията при създаване (push/telegram/email) — видимост „защо не ме извести".
   notifyLog: jsonb("notify_log"),
+  // Промоция (№11, drizzle/manual/0004_campaigns.sql; пише ги записването, част 3). FK е на ниво БД.
+  campaignId: text("campaign_id"),
+  regularPriceEur: real("regular_price_eur"), // редовната цена в момента на записа, при промоция
+  cameFrom: text("came_from"), // откъде е дошъл клиентът: начална, промоции, категория, услуга, facebook…
   createdBy: text("created_by"),
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
 });
+
+// Промоциите на специалистите (№11, решения 23, 24, 31; drizzle/manual/0004_campaigns.sql).
+// status пази само решението; «предстои», «тече», «свършила», «изтекла» се смятат по датите
+// (src/lib/campaigns/rules.ts, campaignPhase). Нищо в кода не трие промоция (доказателство).
+export const campaigns = pgTable("campaigns", {
+  id: text("id").primaryKey(),
+  resourceId: text("resource_id").notNull(), // FK RESTRICT на ниво БД
+  kind: text("kind").notNull().$type<"discount" | "gift">(),
+  gift: text("gift"),
+  reason: text("reason"),
+  startsOn: date("starts_on", { mode: "string" }).notNull(),
+  endsOn: date("ends_on", { mode: "string" }).notNull(),
+  slots: integer("slots"),
+  firstVisitOnly: boolean("first_visit_only").notNull().default(false),
+  status: text("status").notNull().default("pending").$type<"pending" | "returned" | "approved" | "stopped">(),
+  submittedAt: ts("submitted_at"),
+  returnReason: text("return_reason").$type<"price" | "text" | "dates" | "other" | null>(),
+  returnNote: text("return_note"),
+  returnedAt: ts("returned_at"),
+  approvedBy: text("approved_by"),
+  approvedAt: ts("approved_at"),
+  stopReason: text("stop_reason"),
+  stopNote: text("stop_note"),
+  stoppedAt: ts("stopped_at"),
+  stoppedBy: text("stopped_by"),
+  facebookPostId: text("facebook_post_id"),
+  facebookPostedAt: ts("facebook_posted_at"),
+  createdBy: text("created_by"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
+
+export const campaignServices = pgTable(
+  "campaign_services",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id").notNull(), // FK CASCADE на ниво БД
+    serviceItemId: text("service_item_id").notNull(),
+    prevPriceEur: real("prev_price_eur"), // най-ниската за 30 дни (price_log)
+    newPriceEur: real("new_price_eur"), // null при подарък
+    regularPriceEur: real("regular_price_eur"),
+    priceFrom: boolean("price_from").notNull().default(false),
+    prevPriceAt: ts("prev_price_at"),
+  },
+  (t) => [unique().on(t.campaignId, t.serviceItemId)],
+);
 
 // Лична бележка на изпълнител за клиент (формула, предпочитания). НЕ се споделя
 // между работниците - наемателите имат собствена клиентела.
@@ -482,4 +532,6 @@ export type ResourceWorkingHour = typeof resourceWorkingHours.$inferSelect;
 export type TimeOff = typeof timeOff.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
+export type Campaign = typeof campaigns.$inferSelect;
+export type CampaignService = typeof campaignServices.$inferSelect;
 export type ClientNote = typeof clientNotes.$inferSelect;

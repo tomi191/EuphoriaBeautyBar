@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Loader2, Lock, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { FIELD_HINTS } from "@/lib/data/field-hints";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { formatServicePrice } from "@/lib/booking/price";
 import { parseDecimalInput } from "@/lib/decimal";
+import { CAMPAIGN_TEXT } from "@/lib/campaigns/rules";
 import { toggleMyService, updateMyService, createMyService, deleteMyService, toggleMyServiceOnline } from "@/lib/actions/resource-services";
 
 export interface MyServiceOpt {
@@ -33,6 +34,9 @@ export interface MyServiceOpt {
   processingMin: number;
   /** Може да се изтрие от каталога (никой друг изпълнител не я предлага). */
   deletable: boolean;
+  /** Цената е заключена от чакаща или течаща промоция (№11): «ДД.ММ» на края и коя е промоцията. */
+  lockedUntil?: string | null;
+  lockedCampaignId?: string | null;
 }
 
 export interface MyCategoryOpt {
@@ -189,6 +193,12 @@ export function MyServices({ services, categories, phone }: { services: MyServic
                     "не предлагам"
                   )}
                 </p>
+                {s.offered && s.lockedUntil && (
+                  <p className="mt-1.5 flex items-start gap-2 text-[13px] leading-snug text-muted-foreground">
+                    <Lock className="mt-0.5 size-4 shrink-0" strokeWidth={1.7} aria-hidden />
+                    {CAMPAIGN_TEXT.locked(s.lockedUntil)}
+                  </p>
+                )}
               </button>
 
               {s.deletable && (
@@ -365,6 +375,7 @@ function EditSheet({
               id="ms-price"
               type="text"
               inputMode="decimal"
+              disabled={!!service.lockedUntil}
               value={price}
               onChange={(e) => {
                 setPrice(e.target.value);
@@ -375,6 +386,17 @@ function EditSheet({
               className={"h-11 text-base" + (errors.price ? " border-destructive" : "")}
             />
             {errors.price && <p role="alert" className="text-xs text-destructive">{errors.price}</p>}
+            {service.lockedUntil && (
+              <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">
+                <Lock className="mt-px size-3.5 shrink-0" strokeWidth={1.8} aria-hidden />
+                <span>
+                  {CAMPAIGN_TEXT.locked(service.lockedUntil)}{" "}
+                  <a href={`/staff/promotions?id=${service.lockedCampaignId ?? ""}`} className="font-medium text-primary underline underline-offset-2">
+                    {CAMPAIGN_TEXT.lockedStop}
+                  </a>
+                </span>
+              </p>
+            )}
           </div>
           <div className="space-y-1.5">
             <LabelWithHint htmlFor="ms-duration" label="Продължителност (мин)" hint={FIELD_HINTS.durationOwn} />
