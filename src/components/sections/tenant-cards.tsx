@@ -9,14 +9,14 @@ import { TenantWorkButton } from "@/components/sections/tenant-work-button";
 /** «Свободно място в салона»: пунктирният блок към обявите (само при отворена обява). */
 function VacancyBlock() {
   return (
-    <div className="flex flex-col rounded-[20px] border border-dashed border-foreground/25 p-4 lg:px-7 lg:pt-6 lg:pb-5">
-      <h3 className="font-display text-lg font-medium leading-snug lg:text-2xl">Свободно място в салона</h3>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground lg:text-base">
+    <div className="flex flex-col rounded-[20px] border border-dashed border-primary/40 px-5 py-4 lg:px-6 lg:pt-6 lg:pb-5">
+      <h3 className="font-display text-[19px] font-medium leading-snug lg:text-[22px]">Свободно място в салона</h3>
+      <p className="mt-1.5 text-[15px] leading-snug text-muted-foreground lg:text-base lg:leading-relaxed">
         Работиш със своя фирма? Наеми работно място при нас.
       </p>
       <Link
         href="/karieri"
-        className="mt-2 inline-flex min-h-11 w-fit items-center gap-2 text-sm font-medium text-primary lg:mt-auto lg:min-h-12 lg:text-[15px]"
+        className="mt-2 inline-flex min-h-11 w-fit items-center gap-2 text-[15px] font-medium text-primary lg:mt-auto lg:min-h-12"
       >
         <span className="underline underline-offset-4">Виж местата под наем</span>
         <ArrowRight className="size-4" />
@@ -84,15 +84,15 @@ function Card({ t }: { t: TenantCard }) {
 export function TenantCards({ tenants, rentalOpen }: { tenants: TenantCard[]; rentalOpen: boolean }) {
   if (tenants.length === 0) {
     return rentalOpen ? (
-      <div className="mt-12 max-w-md lg:mt-20">
+      <div className="mt-10 max-w-md lg:mt-20">
         <VacancyBlock />
       </div>
     ) : null;
   }
   return (
-    <div className="mt-12 border-t border-border pt-6 lg:mt-20 lg:pt-10">
+    <div className="mt-10 border-t border-border pt-4 lg:mt-20 lg:pt-7">
       <h2 className="font-display text-2xl font-medium lg:text-[32px]">Също в салона</h2>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:mt-7 lg:grid-cols-[412fr_412fr_344fr] lg:gap-6">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:mt-5 lg:grid-cols-[412fr_412fr_344fr] lg:gap-6">
         {tenants.map((t) => (
           <Card key={t.id} t={t} />
         ))}
