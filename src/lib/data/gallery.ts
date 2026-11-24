@@ -9,14 +9,15 @@ export interface GalleryImage {
   height: number;
 }
 
-const availableIds = [1, 3, 4, 7, 8, 10, 11, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35];
-
-const categoryRotation: Exclude<GalleryCategory, "all">[] = [
-  "boyadisvane",
-  "podstrigvane",
-  "pricheski",
-  "svatbeni",
-  "manikyur",
+// Категорията на всяка стара снимка е тази от базата (24.11.2026), не въртене по ред: на сайта тя
+// идва от gallery_images, този списък пълни само празна база (scripts/seed.ts).
+const seedCategories: Array<[number, Exclude<GalleryCategory, "all">]> = [
+  [1, "boyadisvane"], [3, "manikyur"], [4, "manikyur"], [7, "svatbeni"], [8, "boyadisvane"],
+  [10, "boyadisvane"], [11, "manikyur"], [14, "manikyur"], [15, "boyadisvane"], [17, "boyadisvane"],
+  [18, "boyadisvane"], [19, "boyadisvane"], [20, "pricheski"], [21, "manikyur"], [22, "podstrigvane"],
+  [23, "boyadisvane"], [24, "podstrigvane"], [27, "pricheski"], [28, "svatbeni"], [29, "pricheski"],
+  [30, "boyadisvane"], [31, "manikyur"], [32, "pricheski"], [33, "svatbeni"], [34, "svatbeni"],
+  [35, "boyadisvane"],
 ];
 
 const dimensionPool: Array<[number, number]> = [
@@ -28,13 +29,13 @@ const dimensionPool: Array<[number, number]> = [
   [800, 1050],
 ];
 
-export const galleryImages: GalleryImage[] = availableIds.map((id, i) => {
+export const galleryImages: GalleryImage[] = seedCategories.map(([id, category], i) => {
   const [w, h] = dimensionPool[i % dimensionPool.length];
   return {
     id: `g-${id}`,
     src: `/images/gallery/g-${id}.webp`,
     alt: `Euphoria Hair & Beauty Bar — снимка ${id}`,
-    category: categoryRotation[i % categoryRotation.length],
+    category,
     width: w,
     height: h,
   };

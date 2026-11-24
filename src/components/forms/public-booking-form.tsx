@@ -134,10 +134,12 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
   );
 }
 
-export function PublicBookingForm({ services, performers, closedDates }: { services: PublicServiceOpt[]; performers: PerformerOpt[]; closedDates?: string[] }) {
-  const [categoryName, setCategoryName] = React.useState("");
-  const [groupTitle, setGroupTitle] = React.useState("");
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+export function PublicBookingForm({ services, performers, closedDates, initialServiceId }: { services: PublicServiceOpt[]; performers: PerformerOpt[]; closedDates?: string[]; initialServiceId?: string }) {
+  // Услуга, избрана от адреса (?usluga=, напр. от галерията): записът почва с нея.
+  const initial = initialServiceId ? services.find((s) => s.id === initialServiceId) : undefined;
+  const [categoryName, setCategoryName] = React.useState(initial?.category ?? "");
+  const [groupTitle, setGroupTitle] = React.useState(initial?.groupTitle ?? "");
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(initial ? [initial.id] : []);
   const [performerId, setPerformerId] = React.useState("");
   const [date, setDate] = React.useState(todayStr());
   const [slots, setSlots] = React.useState<DaySlot[]>([]);

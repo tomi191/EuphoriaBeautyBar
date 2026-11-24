@@ -25,7 +25,6 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 80], [0, 1]);
-  const blur = useTransform(scrollY, [0, 80], [0, 20]);
 
   // Скрит в админ панела и приложението за екипа — те имат собствена навигация.
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
@@ -34,8 +33,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 w-full">
       <motion.div
         aria-hidden
-        className="absolute inset-0 -z-10 border-b border-border/40 bg-background/75"
-        style={{ opacity, backdropFilter: useTransform(blur, (b) => `blur(${b}px) saturate(180%)`) }}
+        className="absolute inset-0 -z-10 border-b border-border/40 bg-background"
+        style={{ opacity }}
       />
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
         <Logo width={120} height={120} className="h-12 w-auto md:h-14" />
