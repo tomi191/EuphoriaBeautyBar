@@ -11,8 +11,11 @@ import { getServiceCatalog, getServiceDetail } from "@/lib/data/service-catalog"
 import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { formatAmount } from "@/lib/booking/price";
-import { slugify } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
+import { ServicePromo } from "@/components/campaigns/promo-blocks";
+import { loadRunningCampaigns } from "@/lib/campaigns/public";
+import { todaySofia } from "@/lib/campaigns/core";
 
 interface Params {
   params: Promise<{ slug: string; service: string }>;
@@ -42,6 +45,9 @@ export async function generateStaticParams() {
 // услуги → notFound() в самата страница (SERVICE_CONTENT + getServiceDetail guard).
 export const dynamicParams = true;
 
+// Промоцията до цената (№11) тръгва и свършва по дата: страницата се опреснява на 10 минути.
+export const revalidate = 600;
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug, service } = await params;
   const content = SERVICE_CONTENT[service];
@@ -66,6 +72,10 @@ export default async function ServiceDetailPage({ params }: Params) {
   if (!content || !detail) notFound();
 
   const { category, item, siblings } = detail;
+  // Течащите промоции за тази услуга (по име в тази категория); Offer долу остава каталожният.
+  const promos = (await loadRunningCampaigns().catch(() => [])).filter((c) =>
+    c.services.some((s) => s.categorySlug === slug && s.name === item.name),
+  );
   const img = `/images/services/unique/${service}.webp`;
   const url = `${siteConfig.url}/uslugi/${slug}/${service}`;
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
@@ -106,11 +116,11 @@ export default async function ServiceDetailPage({ params }: Params) {
       <JsonLd data={[serviceLd, breadcrumbLd, faqLd]} />
 
       {/* HERO — реална снимка background + топъл градиент (като началната) */}
-      <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24">
+      <section className={cn("relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24", promos.length > 0 && "max-lg:pt-28")}>
         <Image src={img} alt={`${item.name} в Euphoria Hair & Beauty Bar, кв. Левски, Варна`} fill priority className="object-cover" sizes="100vw" />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
-          <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <nav aria-label="Трохи" className={cn("mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground", promos.length > 0 && "max-lg:mb-6")}>
             <Link href="/" className="hover:text-foreground">Начало</Link>
             <ChevronRight className="size-3" />
             <Link href="/uslugi" className="hover:text-foreground">Услуги</Link>
@@ -119,18 +129,23 @@ export default async function ServiceDetailPage({ params }: Params) {
             <ChevronRight className="size-3" />
             <span className="text-foreground">{item.name}</span>
           </nav>
-          <div className="max-w-2xl">
+          {/* На 390 с промоция цитатът е под блока ѝ: бутонът е в първия екран (Канопус, обща сверка, т. Ж). */}
+          <div className={cn("max-w-2xl", promos.length > 0 && "max-lg:flex max-lg:flex-col")}>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">{category.shortTitle} · кв. Левски, Варна</p>
             <BlurText as="h1" text={`${item.name} във Варна`} className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl" stagger={0.025} />
-            <p className="mt-6 font-serif text-xl italic text-muted-foreground">{content.tagline}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
-                <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час</Link>
-              </Button>
-              <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-4 py-2.5 font-display text-lg font-medium text-primary backdrop-blur">
-                {priceLabel}
-              </span>
-            </div>
+            <p className={cn("mt-6 font-serif text-xl italic text-muted-foreground", promos.length > 0 && "max-lg:order-last")}>{content.tagline}</p>
+            {promos.length > 0 ? (
+              <ServicePromo campaigns={promos} serviceName={item.name} today={todaySofia()} />
+            ) : (
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+                  <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час</Link>
+                </Button>
+                <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-4 py-2.5 font-display text-lg font-medium text-primary backdrop-blur">
+                  {priceLabel}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>

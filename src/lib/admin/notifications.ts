@@ -3,10 +3,11 @@ import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { positionForCategory } from "@/lib/rental/listing-rules";
 import { INQUIRY_BELL_TITLE, inquiryBellDetail } from "@/lib/rental/inquiry-rules";
 import { pendingPhotoBellItems } from "@/lib/gallery/review";
+import { pendingCampaignBellItems } from "@/lib/campaigns/core";
 
 export type AdminNotification = {
   id: string;
-  kind: "new_online" | "cancelled" | "rental_inquiry" | "gallery_pending";
+  kind: "new_online" | "cancelled" | "rental_inquiry" | "gallery_pending" | "campaign_pending";
   title: string;
   detail: string;
   at: string;
@@ -19,7 +20,7 @@ const dayMonth = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", da
 
 export async function loadAdminNotifications(): Promise<AdminNotificationsState> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [rows, seenRow, inquiries, photos] = await Promise.all([
+  const [rows, seenRow, inquiries, photos, campaigns] = await Promise.all([
     db.query.bookings.findMany({
       where: (b, { or, and, gte, eq, isNotNull }) =>
         or(
@@ -39,6 +40,8 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
     }),
     // Снимките от специалистите, които чакат одобрение (вързан или не Telegram).
     pendingPhotoBellItems(since),
+    // Промоциите, които чакат одобрение (№11).
+    pendingCampaignBellItems(since),
   ]);
 
   const clientIds = [...new Set(rows.map((b) => b.clientId).filter(Boolean))] as string[];
@@ -97,7 +100,7 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
       });
     }
   }
-  items.push(...photos);
+  items.push(...photos, ...campaigns);
   items.sort((a, c) => (a.at < c.at ? 1 : -1));
   const top = items.slice(0, 30);
 

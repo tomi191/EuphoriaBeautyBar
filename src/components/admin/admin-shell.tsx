@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BadgePercent,
   Briefcase,
   CalendarDays,
   Contact,
@@ -38,6 +39,7 @@ const nav = [
   { href: "/admin/testimonials", label: "Отзиви", icon: MessageSquare },
   { href: "/admin/reviews", label: "Google ревюта", icon: Star },
   { href: "/admin/gallery", label: "Галерия", icon: ImageIcon },
+  { href: "/admin/promotions", label: "Промоции", icon: BadgePercent },
   { href: "/admin/faq", label: "ЧЗВ", icon: HelpCircle },
   { href: "/admin/positions", label: "Места под наем", icon: Briefcase },
   { href: "/admin/settings", label: "Настройки", icon: Settings },

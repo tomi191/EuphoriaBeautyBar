@@ -35,6 +35,15 @@ export interface SitemapSection {
   build: () => Promise<SitemapEntry[]>;
 }
 
+async function hasRunningPromotions(): Promise<boolean> {
+  try {
+    const { loadRunningCampaigns } = await import("@/lib/campaigns/public");
+    return (await loadRunningCampaigns()).length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /** Статични страници — index-ите на под-разделите живеят тук, детайлите в своите секции. */
 const STATIC_PATHS = [
   "",
@@ -62,13 +71,16 @@ const STATIC_PATHS = [
 export const SECTIONS: SitemapSection[] = [
   {
     id: "main",
-    build: async () =>
-      STATIC_PATHS.map((path) => ({
+    build: async () => [
+      ...STATIC_PATHS.map((path) => ({
         path,
         changefreq: "weekly" as const,
         // Home носи максимален priority; останалите статични страници — 0.8.
         priority: path === "" ? 1.0 : 0.8,
       })),
+      // /promotsii само докато тече промоция; иначе е noindex и не е тук (Алтаир, №11).
+      ...((await hasRunningPromotions()) ? [{ path: "/promotsii", changefreq: "weekly" as const, priority: 0.8 }] : []),
+    ],
   },
   {
     id: "services",

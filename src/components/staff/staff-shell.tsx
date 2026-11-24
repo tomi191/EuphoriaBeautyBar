@@ -16,7 +16,18 @@ const SERVICE_ICON: Record<string, LucideIcon> = {
   cosmetics: Flower2,
 };
 
-export function StaffShell({ children, kind, wide }: { children: React.ReactNode; kind?: string; wide?: boolean }) {
+export function StaffShell({
+  children,
+  kind,
+  wide,
+  split,
+}: {
+  children: React.ReactNode;
+  kind?: string;
+  wide?: boolean;
+  /** «Промоции» на компютър: списъкът и панелът един до друг (кадър приложение-1440). */
+  split?: boolean;
+}) {
   const pathname = usePathname();
 
   // Tabs се строят на render, защото иконата на „Услуги" зависи от kind.
@@ -97,6 +108,7 @@ export function StaffShell({ children, kind, wide }: { children: React.ReactNode
       <div
         className={cn(
           "mx-auto max-w-lg px-4 py-6",
+          split && "lg:max-w-[90rem] lg:px-6",
           wide &&
             "lg:max-w-[38rem] lg:transition-[translate] lg:duration-300 lg:[body[data-work-panel]_&]:translate-x-[min(0px,calc(50vw-859px))]",
         )}
@@ -105,7 +117,8 @@ export function StaffShell({ children, kind, wide }: { children: React.ReactNode
       </div>
 
       {/* Глобален „Нов час" — достъпен от всеки екран (не само от графика). */}
-      {pathname !== "/staff/new" && (
+      {/* В «Промоции» го няма (кадрите на №11): формата и панелът имат свой основен бутон. */}
+      {pathname !== "/staff/new" && !pathname.startsWith("/staff/promotions") && (
         <Link
           href="/staff/new"
           aria-label="Нов час"
@@ -123,7 +136,10 @@ export function StaffShell({ children, kind, wide }: { children: React.ReactNode
         )}
       >
         {tabs.map((t) => {
-          const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
+          // «Промоции» се отваря от «Профил»: там свети «Профил» (кадри приложение-промоции-390, приложение-1440).
+          const active = t.exact
+            ? pathname === t.href
+            : pathname.startsWith(t.href) || (t.href === "/staff/profile" && pathname.startsWith("/staff/promotions"));
           return (
             <Link
               key={t.href}

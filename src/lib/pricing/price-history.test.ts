@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // offering.ts (toEur) внася базата; тук тя не трябва.
 vi.mock("@/lib/db", () => ({ db: {}, schema: {} }));
 
-import { lowestPriceInWindow, type PriceLogEntry, type PriceState } from "./price-history";
+import { lastRaiseInWindow, lowestPriceInWindow, type PriceLogEntry, type PriceState } from "./price-history";
 
 const AT = new Date("2027-03-01T12:00:00Z");
 const daysAgo = (n: number) => new Date(AT.getTime() - n * 24 * 60 * 60 * 1000);
@@ -40,15 +40,22 @@ describe("lowestPriceInWindow: пълен дневник (над 30 дни)", ()
     expect(r.discountAllowed).toBe(true);
   });
 
-  it("вдигната цена в 30-те дни: най-ниската е старата, но намаление не може до 30 дни след смяната", () => {
+  it("вдигната цена в 30-те дни: предишната е старата (най-ниската), а намаление може (пълен дневник)", () => {
     const r = lowestPriceInWindow({
       at: AT,
       entries: [e("start", 60, eur(25)), e("update", 10, eur(35))],
       current: { ...eur(35), createdAt: daysAgo(200), updatedAt: daysAgo(10) },
     });
-    expect(r.lowestEur).toBe(25);
-    expect(r.reason).toBe("changed_recently");
-    expect(r.discountAllowedFrom).toEqual(new Date(daysAgo(10).getTime() + 30 * 24 * 60 * 60 * 1000));
+    expect(r).toMatchObject({ lowestEur: 25, discountAllowed: true, reason: "ok", historyComplete: true });
+  });
+
+  it("свалена цена в 30-те дни: предишната е новата, по-ниската", () => {
+    const r = lowestPriceInWindow({
+      at: AT,
+      entries: [e("start", 60, eur(35)), e("update", 10, eur(30))],
+      current: { ...eur(30), createdAt: daysAgo(200), updatedAt: daysAgo(10) },
+    });
+    expect(r).toMatchObject({ lowestEur: 30, discountAllowed: true });
   });
 
   it("цена «от» или «X до Y» в прозореца → намаление не може", () => {
@@ -95,6 +102,27 @@ describe("lowestPriceInWindow: дневник под 30 дни (правилот
     expect(r).toMatchObject({ historyComplete: false, discountAllowed: true, lowestEur: 30, reason: "ok" });
   });
 
+  it("при специалист: пипнат след началото на дневника → чака дневникът да навърши 30 дни", () => {
+    const r = lowestPriceInWindow({
+      at: AT,
+      entries: [e("start", 5, eur(30)), e("update", 2, eur(28))],
+      current: { ...eur(28), createdAt: daysAgo(300), updatedAt: daysAgo(2) },
+    });
+    expect(r.reason).toBe("changed_recently");
+    expect(r.lowestEur).toBe(28);
+    expect(r.discountAllowedFrom).toEqual(new Date(daysAgo(5).getTime() + 30 * 24 * 60 * 60 * 1000));
+  });
+
+  it("при специалист: старо updatedAt, но смяна в дневника (ръчна заявка) → чака дневникът да навърши 30 дни", () => {
+    const r = lowestPriceInWindow({
+      at: AT,
+      entries: [e("start", 5, eur(30)), e("update", 2, eur(32))],
+      current: { ...eur(32), createdAt: daysAgo(300), updatedAt: daysAgo(45) },
+    });
+    expect(r).toMatchObject({ discountAllowed: false, reason: "changed_recently", lowestEur: 30 });
+    expect(r.discountAllowedFrom).toEqual(new Date(daysAgo(5).getTime() + 30 * 24 * 60 * 60 * 1000));
+  });
+
   it("при специалист: сменена преди 12 дни по updatedAt → не може до 30 дни след нея", () => {
     const r = lowestPriceInWindow({
       at: AT,
@@ -122,5 +150,23 @@ describe("lowestPriceInWindow: дневник под 30 дни (правилот
 
   it("без ред и без цена → no_data", () => {
     expect(lowestPriceInWindow({ at: AT, entries: [], current: null }).reason).toBe("no_data");
+  });
+});
+
+describe("lastRaiseInWindow: подаръкът след вдигната цена", () => {
+  it("вдигната преди 10 дни → датата на вдигането", () => {
+    expect(lastRaiseInWindow({ at: AT, entries: [e("start", 60, eur(25)), e("update", 10, eur(30))] })).toEqual(daysAgo(10));
+  });
+  it("свалена или вдигната преди повече от 30 дни → null", () => {
+    expect(lastRaiseInWindow({ at: AT, entries: [e("start", 60, eur(30)), e("update", 10, eur(25))] })).toBeNull();
+    expect(lastRaiseInWindow({ at: AT, entries: [e("start", 60, eur(25)), e("update", 40, eur(30))] })).toBeNull();
+  });
+  it("само началото на дневника → null (смените отпреди дневника не се броят)", () => {
+    expect(lastRaiseInWindow({ at: AT, entries: [e("start", 5, eur(30))] })).toBeNull();
+  });
+  it("вдигнат горен край на «X до Y» също е вдигане", () => {
+    expect(
+      lastRaiseInWindow({ at: AT, entries: [e("start", 60, eur(25, { priceMax: 30 })), e("update", 3, eur(25, { priceMax: 35 }))] }),
+    ).toEqual(daysAgo(3));
   });
 });

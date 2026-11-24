@@ -46,6 +46,13 @@
   --font-display: var(--font-manrope);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-cormorant);
+  /* Правият Cormorant 600 за редовете от менюто (картата на промоцията), зарежда се без preload. */
+  --font-serif-semi: var(--font-cormorant-semi), var(--font-cormorant), serif;
+  --color-destructive-deep: var(--destructive-deep);
+  --color-destructive-line: var(--destructive-line);
+  --color-sand: var(--sand);
+  --color-sand-line: var(--sand-line);
+  --color-sand-pill: var(--sand-pill);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -111,6 +118,12 @@
   --mint-soft: oklch(0.93 0.04 168);
   --blush: oklch(0.88 0.06 25);                /* блед розов от логото */
   --blush-soft: oklch(0.95 0.025 25);
+  /* Промоциите (кадри кръг 2): винено за «Върната» и «Спри», пясъчно за предупреждението и «Предстои». */
+  --destructive-deep: #933440;
+  --destructive-line: #801e2c;
+  --sand: #faf1e3;
+  --sand-line: #b99b75;
+  --sand-pill: #f6ead0;
 }
 
 .dark {
@@ -151,6 +164,11 @@
   --mint-soft: oklch(0.28 0.05 168);
   --blush: oklch(0.78 0.07 25);
   --blush-soft: oklch(0.30 0.05 25);
+  --destructive-deep: #c0566a;
+  --destructive-line: #d06a7c;
+  --sand: #2a241c;
+  --sand-line: #8a7356;
+  --sand-pill: #3a3125;
 }
 
 @layer base {

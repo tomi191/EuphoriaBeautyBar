@@ -35,9 +35,23 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
   display: "swap",
 });
+// Правият Cormorant 600: само за редовете от менюто в картата на промоцията (име, нова цена, процент).
+// Без preload, за да не се бие с LCP на началната.
+const cormorantSemi = Cormorant_Garamond({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-cormorant-semi",
+  weight: ["600"],
+  style: ["normal"],
+  display: "swap",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  // Проверка на домейна в Meta (карусел със собствени картини, №11). Празна променлива = няма таг.
+  ...(process.env.FACEBOOK_DOMAIN_VERIFICATION
+    ? { other: { "facebook-domain-verification": process.env.FACEBOOK_DOMAIN_VERIFICATION } }
+    : {}),
   title: {
     // Кратък default (~55 зн.) — дългият се режеше в Google на ~60.
     default: "Euphoria — салон за красота в кв. Левски, Варна",
@@ -99,7 +113,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="bg" suppressHydrationWarning className={cn(inter.variable, manrope.variable, cormorant.variable)}>
+    <html lang="bg" suppressHydrationWarning className={cn(inter.variable, manrope.variable, cormorant.variable, cormorantSemi.variable)}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <div className="relative flex min-h-screen flex-col pb-14 has-[[data-rental-bar]]:pb-[calc(var(--rental-bar-h)+env(safe-area-inset-bottom))] lg:pb-0 lg:has-[[data-rental-bar]]:pb-0">

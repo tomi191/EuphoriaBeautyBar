@@ -5,6 +5,7 @@ import { sendTelegram, editMessageText, answerCallback, findResourceByChatId, AD
 import { buildDaySchedule } from "@/lib/telegram-schedule";
 import { sofiaDateStr } from "@/lib/booking/time";
 import { handleGalleryCallback } from "@/lib/gallery/review";
+import { handleCampaignCallback } from "@/lib/campaigns/core";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ const HELP = "За да получаваш известия, свържи ака
  *  - /today (+ /grafik /dnes) → дневен график с навигация
  *  - callback day:YYYY-MM-DD → редактира съобщението към друг ден (inline бутони)
  *  - callback gal:* → одобрение на снимка от специалист (само от админ канала)
+ *  - callback cmp:* → одобрение или връщане на промоция (само от админ канала)
  * Валидира secret header. Винаги връща 200, за да не кара Telegram да повтаря.
  */
 export async function POST(req: Request) {
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
   if (cb) {
     // Бутоните под нова снимка за галерията: отговарят на натискането сами (с кратък текст).
     if (await handleGalleryCallback(cb)) return NextResponse.json({ ok: true });
+    if (await handleCampaignCallback(cb)) return NextResponse.json({ ok: true });
     await answerCallback(cb.id);
     const chatId = cb.message?.chat?.id;
     const messageId = cb.message?.message_id;

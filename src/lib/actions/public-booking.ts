@@ -7,8 +7,9 @@ import { db, schema } from "@/lib/db";
 import { getDaySlots, isStartBookable, type DaySlot } from "@/lib/booking/slots";
 import { sofiaDateStr } from "@/lib/booking/time";
 import { findFirstFreeDay } from "@/lib/booking/day-label";
-import { formatServicePrice } from "@/lib/booking/price";
-import { resolveOffering, sumOfferingPrices } from "@/lib/booking/offering";
+import { formatEuro, formatServicePrice } from "@/lib/booking/price";
+import { lockPromoSlots, resolveBookingPrice, resolveOffering, type BookingPrice } from "@/lib/booking/offering";
+import { promoDoneLine, promoStaffLine, type PromoOutcome } from "@/lib/campaigns/booking-promo";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
@@ -60,6 +61,56 @@ export async function fetchFirstFreeDay(
 }
 
 /** Потвърждава имейла на клиент по token (от линка в потвърждението). */
+/** Цената, която «Твоят час» показва преди бутона (№11, част 3): редовна или по промоцията, с причината. */
+export interface PublicQuote {
+  outcome: PromoOutcome;
+  totalEur: number | null;
+  regularTotalEur: number | null;
+}
+const toQuote = (p: BookingPrice): PublicQuote => ({ outcome: p.outcome, totalEur: p.totalEur, regularTotalEur: p.regularTotalEur });
+
+const quoteSchema = z.object({
+  resourceId: z.string().min(1),
+  serviceItemIds: z.array(z.string().min(1)).min(1).max(10),
+  startAt: z.string(),
+  promoId: z.string().max(40).nullable().optional(),
+});
+
+/**
+ * Цената на часа с промоцията, преди бутона. Същата сметка като при записа (resolveBookingPrice), но без
+ * телефона и имейла (част 4, 5а): заявката е без вход и не бива да казва дали даден телефон е имал час при
+ * специалиста. При «само първо посещение» формата показва двете цени условно; коя важи решава записът.
+ */
+export async function quotePublicBooking(input: z.infer<typeof quoteSchema>): Promise<PublicQuote | null> {
+  const parsed = quoteSchema.safeParse(input);
+  if (!parsed.success) return null;
+  const d = parsed.data;
+  const start = new Date(d.startAt);
+  if (Number.isNaN(start.getTime())) return null;
+  const priced = await resolveBookingPrice({
+    resourceId: d.resourceId,
+    serviceItemIds: d.serviceItemIds,
+    startAt: start,
+    client: null,
+    promoId: d.promoId ?? null,
+  });
+  return toQuote(priced);
+}
+
+/** Откъде е дошъл клиентът (bookings.came_from): само «from» и UTM от адреса, изчистени, до 200 знака. */
+function cleanCameFrom(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const q = new URLSearchParams(raw.startsWith("?") ? raw.slice(1) : raw);
+  const out = new URLSearchParams();
+  for (const k of ["from", "utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
+    const v = (q.get(k) ?? "").replace(/[^\p{L}\p{N}_.\-]/gu, "").slice(0, 60);
+    if (v) out.set(k, v);
+  }
+  if (![...out.keys()].length && q.get("promo")) out.set("from", "promo");
+  const s = out.toString();
+  return s ? s.slice(0, 200) : null;
+}
+
 export async function verifyEmailToken(token: string): Promise<boolean> {
   if (!token) return false;
   const client = await db.query.clients.findFirst({ where: (c, { eq }) => eq(c.verifyToken, token) });
@@ -90,6 +141,14 @@ const publicSchema = z.object({
   clientEmail: z.string().email(),
   consentLate: z.literal(true),
   allowParallel: z.boolean().optional(),
+  // №11, част 3: сумата, която клиентът е видял преди бутона. Ако цената вече е друга (местата свършиха,
+  // промоцията спря), часът не се записва и формата показва новата цена и защо. Не определя цената.
+  expectedTotalEur: z.number().nullable().optional(),
+  // «Само първо посещение»: редовната цена, видяна като «иначе …»; важи само ако записът реши, че не е първо.
+  expectedAltEur: z.number().nullable().optional(),
+  promoId: z.string().max(40).nullable().optional(),
+  // Адресът, от който е отворена формата (from и UTM от рекламата).
+  cameFrom: z.string().max(500).nullable().optional(),
 });
 
 export type PublicBookingInput = z.infer<typeof publicSchema>;
@@ -187,12 +246,8 @@ export async function createPublicBooking(input: PublicBookingInput) {
   });
   if (!check.ok) return { ok: false as const, error: check.reason };
 
-  // Снимка на цената (€): собствената цена печели; комбиниран запис → сбор.
-  const priceEurSnap = single
-    ? single.priceEur
-    : data.serviceItemIds?.length
-      ? await sumOfferingPrices(data.resourceId, data.serviceItemIds)
-      : null;
+  // Цената (€) с промоцията се решава вътре в записа (resolveBookingPrice), след заключването на местата.
+  const priceIds = data.serviceItemId ? [data.serviceItemId] : (data.serviceItemIds ?? []);
 
   // upsert клиент по имейл; генерира verify token за неверифицирани (онбординг)
   let clientId: string;
@@ -222,7 +277,26 @@ export async function createPublicBooking(input: PublicBookingInput) {
 
   try {
     const id = nanoid();
-    await db.insert(schema.bookings).values({
+    const saved = await db.transaction(async (tx) => {
+      await lockPromoSlots(tx, data.resourceId, priceIds);
+      const priced = await resolveBookingPrice(
+        {
+          resourceId: data.resourceId,
+          serviceItemIds: priceIds,
+          startAt: start,
+          client: { phone: data.clientPhone, email: data.clientEmail },
+          promoId: data.promoId,
+        },
+        tx,
+      );
+      const seen = data.expectedTotalEur;
+      const same = (x: number | null) =>
+        x == null ? priced.totalEur == null : priced.totalEur != null && Math.abs(x - priced.totalEur) <= 0.005;
+      const notFirst = priced.outcome.state === "refused" && priced.outcome.reason === "not_first";
+      const changed =
+        seen !== undefined && !same(seen) && !(notFirst && data.expectedAltEur !== undefined && same(data.expectedAltEur));
+      if (changed) return { changed: true as const, priced };
+      await tx.insert(schema.bookings).values({
       id,
       resourceId: data.resourceId,
       serviceItemId: data.serviceItemId ?? null,
@@ -235,11 +309,19 @@ export async function createPublicBooking(input: PublicBookingInput) {
       processingMin: single?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: "online",
-      priceEur: priceEurSnap, // server authority (собствена цена > каталожна) — не от клиента
+      priceEur: priced.totalEur, // server authority (собствена цена > каталожна, промоцията) — не от клиента
+      campaignId: priced.campaignId,
+      regularPriceEur: priced.campaignId ? priced.regularTotalEur : null,
+      cameFrom: cleanCameFrom(data.cameFrom),
       consentLate: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      });
+      return { changed: false as const, priced };
     });
+    if (saved.changed) return { ok: false as const, error: "", quote: toQuote(saved.priced) };
+    const priced = saved.priced;
+    const o = priced.outcome;
 
     // Имейли (потвърждение към клиента + известие към салона). Не блокират записа при грешка.
     const [resource, item] = await Promise.all([
@@ -249,7 +331,18 @@ export async function createPublicBooking(input: PublicBookingInput) {
         : Promise.resolve(undefined),
     ]);
     const performerName = resource?.name ?? "екипа на Euphoria";
-    const priceLabel = data.priceLabel ?? (item ? formatServicePrice(item) : undefined);
+    const priceLabel =
+      o.state === "applied" && o.kind === "discount" && priced.totalEur != null
+        ? formatEuro(priced.totalEur)
+        : (data.priceLabel ?? (item ? formatServicePrice(item) : undefined));
+    const promoTitle =
+      o.state === "applied"
+        ? o.serviceItemId === data.serviceItemId
+          ? data.serviceName
+          : ((await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, o.serviceItemId), columns: { name: true } }))
+              ?.name ?? data.serviceName)
+        : data.serviceName;
+    const staffPromoLine = promoStaffLine(o, promoTitle, formatWhen(start), priced.totalEur);
     const base = process.env.NEXT_PUBLIC_SITE_URL ?? siteConfig.url;
     const verifyUrl = verifyToken ? `${base}/verify-email?token=${verifyToken}` : undefined;
     const [clientEmailRes, salonEmailRes, staffRes, adminTgRes] = await Promise.allSettled([
@@ -259,6 +352,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
         performerName,
         start,
         priceLabel,
+        promoLine: promoDoneLine(o, priced, "email"),
         verifyUrl,
         cancelUrl: `${base}/otkazhi-chas/${id}`,
       }),
@@ -273,7 +367,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
       }),
       notifyResource(data.resourceId, {
         title: "Нов запис",
-        body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})`,
+        body: `${data.serviceName} — ${formatWhen(start)} (${data.clientName})${staffPromoLine ? `\n${staffPromoLine}` : ""}`,
         url: "/staff",
         clientPhone: data.clientPhone,
         dateKey: sofiaDateStr(start),
@@ -307,7 +401,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
       // логът е диагностика, не бива да проваля записа
     }
 
-    return { ok: true as const, id };
+    return { ok: true as const, id, quote: toQuote(priced) };
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {

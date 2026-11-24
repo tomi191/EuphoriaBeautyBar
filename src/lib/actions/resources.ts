@@ -11,6 +11,7 @@ import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
 import { releaseListingsFilledBy } from "@/lib/rental/release";
 import { setConsent } from "@/lib/data/tenant-consent";
 import { processTeamPhoto, removeTeamPhotoIfUnused, TEAM_BUCKET, TEAM_PHOTO_ERRORS, teamStorage } from "@/lib/images/team-photo";
+import { endResourceCampaigns } from "@/lib/campaigns/lifecycle";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -131,6 +132,8 @@ async function endStaffAccess(resourceId: string) {
  */
 export async function endCooperation(id: string) {
   await requireAdmin();
+  // Решение 24: промоциите спират и постовете му във Facebook се трият (преди да се махне Telegram-ът му).
+  await endResourceCampaigns(id).catch((e) => console.error("[campaigns] край на сътрудничеството:", e instanceof Error ? e.message : String(e)));
   if (!(await endStaffAccess(id))) return { ok: false as const, error: "Изпълнителят не е намерен." };
   const pausedListings = await releaseListingsFilledBy(id);
   revalidate();

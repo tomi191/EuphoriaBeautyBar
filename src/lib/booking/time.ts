@@ -57,3 +57,14 @@ export function sofiaDateStr(at: Date): string {
   ) as Record<string, string>;
   return `${p.year}-${p.month}-${p.day}`;
 }
+
+/**
+ * Първият ден (YYYY-MM-DD) в Sofia, чието начало 00:00 е в момента `at` или след него. Обратното на
+ * sofiaWallToUtc(ден, "00:00"): ден, върнат оттук, започва не по-рано от `at`. Нужно е, когато момент
+ * («намаление може от 12.12 в 14:16») се показва като дата, а сървърът проверява към 00:00 на датата.
+ */
+export function sofiaFirstDayFrom(at: Date): string {
+  const day = sofiaDateStr(at);
+  if (sofiaWallToUtc(day, "00:00").getTime() >= at.getTime()) return day;
+  return sofiaDateStr(new Date(sofiaWallToUtc(day, "12:00").getTime() + 24 * 60 * 60 * 1000));
+}

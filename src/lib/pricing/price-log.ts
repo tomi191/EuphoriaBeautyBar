@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { lowestPriceInWindow, type LowestPriceResult, type PriceLogEntry } from "@/lib/pricing/price-history";
+import { lastRaiseInWindow, lowestPriceInWindow, type LowestPriceResult, type PriceLogEntry } from "@/lib/pricing/price-history";
 
 /** Откъде е смяната на цената (колоната source в price_log). */
 export type PriceSource = "staff_app" | "admin" | "script";
@@ -28,7 +28,7 @@ export async function lowestPriceLast30Days(
   resourceId: string | null,
   serviceItemId: string,
   at: Date = new Date(),
-): Promise<LowestPriceResult & { table: "resource_services" | "service_items" | null }> {
+): Promise<LowestPriceResult & { table: "resource_services" | "service_items" | null; lastRaiseAt: Date | null }> {
   const rs = resourceId
     ? await db.query.resourceServices.findFirst({
         where: (r, { and, eq }) => and(eq(r.resourceId, resourceId), eq(r.serviceItemId, serviceItemId)),
@@ -58,5 +58,5 @@ export async function lowestPriceLast30Days(
         ...(rs ? { createdAt: rs.createdAt, updatedAt: rs.updatedAt } : {}),
       }
     : null;
-  return { ...lowestPriceInWindow({ at, entries, current }), table };
+  return { ...lowestPriceInWindow({ at, entries, current }), table, lastRaiseAt: lastRaiseInWindow({ at, entries }) };
 }
