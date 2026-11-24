@@ -35,7 +35,7 @@ export const LIST_INTRO =
   "Салонът в кв. Левски дава места под наем на фризьори, маникюристи и козметици. Подходящо е и за започващи.";
 
 /** Истинска снимка на салона: за списъка и за обява без своя снимка. */
-export const RENTAL_FALLBACK_IMAGE = "/images/interior/hero-bg.png";
+export const RENTAL_FALLBACK_IMAGE = "/images/interior/hero-bg.webp";
 
 /**
  * Постът във Facebook от името на салона (Саиф, «обява-запитване-и-наем», част 7): без наем, емоджи и

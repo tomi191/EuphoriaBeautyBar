@@ -14,7 +14,7 @@ export function CtaBooking() {
     <section className="relative isolate overflow-hidden bg-foreground text-background">
       {/* Background image с тъмен treatment */}
       <Image
-        src="/images/services/portrait-elegant.jpg"
+        src="/images/services/portrait-elegant.webp"
         alt="Жена с елегантна прическа и грим след посещение в Euphoria Hair & Beauty Bar"
         fill
         sizes="100vw"

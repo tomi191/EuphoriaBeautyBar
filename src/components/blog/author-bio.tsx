@@ -13,7 +13,7 @@ export const BLOG_AUTHOR = {
   name: "Снежана Саблева",
   role: "Собственик и фризьор-стилист, Euphoria",
   bio: "Над 25 години зад стола. Създава Euphoria в кв. Левски, Варна, за да работи с време и внимание към всеки клиент. Пише от практиката, не от учебника.",
-  image: "/images/team/snezhana.jpg",
+  image: "/images/team/snezhana.webp",
   profileUrl: "/za-nas",
 } as const;
 

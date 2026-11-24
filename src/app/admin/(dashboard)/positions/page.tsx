@@ -41,7 +41,7 @@ const STATUS: Record<ListingStatus, { label: string; pill: string; dot: string }
   draft: { label: "Чернова", pill: "bg-secondary text-muted-foreground", dot: "border border-muted-foreground" },
 };
 
-const FALLBACK_IMAGE = "/images/interior/hero-bg.png";
+const FALLBACK_IMAGE = "/images/interior/hero-bg.webp";
 
 function inquiriesWord(n: number) {
   return n === 1 ? "1 запитване" : `${n} запитвания`;

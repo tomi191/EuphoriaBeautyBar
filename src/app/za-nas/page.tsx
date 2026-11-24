@@ -63,7 +63,7 @@ export default async function AboutPage() {
       <section className="relative isolate min-h-[72svh] overflow-hidden bg-cream lg:min-h-[78svh]">
         {/* Фон — реалната снимка на салона */}
         <Image
-          src="/images/interior/salon-1.jpg"
+          src="/images/interior/salon-1.webp"
           alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
           fill
           priority

@@ -19,7 +19,7 @@ export default function ContactsPage() {
       <section className="relative isolate min-h-[58svh] overflow-hidden bg-cream lg:min-h-[62svh]">
         {/* Фон — реалната снимка на салона Euphoria */}
         <Image
-          src="/images/interior/hero-bg.png"
+          src="/images/interior/hero-bg.webp"
           alt="Салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
           fill
           priority

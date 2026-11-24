@@ -5,7 +5,7 @@
  * H2 секции (виж prompts.ts). Тази функция намира първите N placeholder-а,
  * генерира за всеки РЕАЛИСТИЧНА снимка през KIE (gpt-image-2-text-to-image,
  * същата палитра като cover-image.ts: салвия/нюд/крем, без лилаво, без текст),
- * качва в Supabase Storage (bucket "blog-images", posts/<slug>/inline-<n>.png)
+ * качва в Supabase Storage (bucket "blog-images", posts/<slug>/inline-<n>.webp)
  * и заменя placeholder-а в markdown с `![alt](url)`.
  *
  * Поколение е ПАРАЛЕЛНО (Promise.all) за скорост. Всеки слот е изолиран: ако
@@ -18,6 +18,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { stripToWebp } from "@/lib/images/strip-metadata";
 
 const KIE_CREATE_URL = "https://api.kie.ai/api/v1/jobs/createTask";
 const KIE_POLL_URL = "https://api.kie.ai/api/v1/jobs/recordInfo";
@@ -26,7 +27,7 @@ const KIE_POLL_URL = "https://api.kie.ai/api/v1/jobs/recordInfo";
 const PLACEHOLDER_RE = /<!--\s*image:\s*([\s\S]+?)\s*-->/g;
 
 export interface InlineImagesInput {
-  /** Slug на поста — за storage path posts/<slug>/inline-<n>.png. */
+  /** Slug на поста — за storage path posts/<slug>/inline-<n>.webp. */
   slug: string;
   /** Тема/заглавие — задава контекста на снимките. */
   topic: string;
@@ -211,12 +212,14 @@ export async function generateInlineImages(
         if (!downloadRes.ok) {
           throw new Error(`Inline image download failed: ${downloadRes.status}`);
         }
-        const buffer = Buffer.from(await downloadRes.arrayBuffer());
+        // KIE връща PNG; в хранилището влиза WebP (решение 35).
+        const buffer = await stripToWebp(Buffer.from(await downloadRes.arrayBuffer()));
+        if (!buffer) throw new Error("Inline image is not a readable image");
 
-        const path = `posts/${input.slug}/inline-${idx + 1}.png`;
+        const path = `posts/${input.slug}/inline-${idx + 1}.webp`;
         const { error: uploadErr } = await supabase.storage
           .from("blog-images")
-          .upload(path, buffer, { contentType: "image/png", upsert: true });
+          .upload(path, buffer, { contentType: "image/webp", upsert: true });
         if (uploadErr) {
           throw new Error(`Inline upload failed: ${uploadErr.message}`);
         }

@@ -17,3 +17,19 @@ export async function stripImageMetadata(buffer: Buffer): Promise<Buffer | null>
 }
 
 export const IMAGE_NOT_READABLE = "Тази снимка не се отваря. Избери снимка във формат JPG, PNG или WebP.";
+
+/** Качеството на WebP за всяко качване (същото като публичната снимка в галерията, watermark.ts). */
+export const WEBP_QUALITY = 86;
+
+/**
+ * Същото като stripImageMetadata, но записва WebP (решение 35: всички снимки на сайта в WebP).
+ * Размерът остава; прозрачността се пази. Връща null, ако файлът не се отваря като снимка.
+ */
+export async function stripToWebp(buffer: Buffer): Promise<Buffer | null> {
+  try {
+    return await sharp(buffer, { failOn: "error" }).rotate().webp({ quality: WEBP_QUALITY }).toBuffer();
+  } catch (err) {
+    console.warn("[images] не успях да направя WebP, снимката не е записана:", err);
+    return null;
+  }
+}
