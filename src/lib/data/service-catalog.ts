@@ -99,6 +99,44 @@ function publicPrice(base: PriceParts, offers: PriceParts[], includeBase: boolea
   return { price: low, priceMax: high > low ? high : null, priceFrom: anyFrom };
 }
 
+/**
+ * Цената от ценоразписа по id на услуга: един източник за /uslugi и за търсенето и списъка в
+ * /zapazi-chas. `readyResources` са активните и готови изпълнители; оферти на други не се броят.
+ */
+export function publicPricesByItem(
+  items: { id: string; categoryId: string; price: number; priceMax: number | null; priceFrom: boolean }[],
+  categories: { id: string; slug: string }[],
+  offers: { serviceItemId: string; resourceId: string; price: number; priceMax: number | null; priceFrom: boolean }[],
+  readyResources: { id: string; kind: string }[],
+): Map<string, PriceParts> {
+  const activeResourceIds = new Set(readyResources.map((r) => r.id));
+  const liveOffers = offers.filter((o) => activeResourceIds.has(o.resourceId));
+
+  // Оферти по услуга + брой оферти на изпълнител (за curation статуса).
+  const offersByItem = new Map<string, PriceParts[]>();
+  const offerCount = new Map<string, number>();
+  for (const o of liveOffers) {
+    const arr = offersByItem.get(o.serviceItemId);
+    const parts: PriceParts = { price: o.price, priceMax: o.priceMax, priceFrom: o.priceFrom };
+    if (arr) arr.push(parts);
+    else offersByItem.set(o.serviceItemId, [parts]);
+    offerCount.set(o.resourceId, (offerCount.get(o.resourceId) ?? 0) + 1);
+  }
+  // Kind-ове с поне един „не-curated" изпълнител (0 оферти → таксува по каталога).
+  const kindHasBaseSeller = new Set<string>();
+  for (const r of readyResources) if ((offerCount.get(r.id) ?? 0) === 0) kindHasBaseSeller.add(r.kind);
+
+  const slugById = new Map(categories.map((c) => [c.id, c.slug]));
+  const out = new Map<string, PriceParts>();
+  for (const i of items) {
+    const slug = slugById.get(i.categoryId);
+    const kind = slug ? KIND_BY_SLUG[slug] : undefined;
+    const includeBase = kind ? kindHasBaseSeller.has(kind) : true;
+    out.set(i.id, publicPrice({ price: i.price, priceMax: i.priceMax, priceFrom: i.priceFrom }, offersByItem.get(i.id) ?? [], includeBase));
+  }
+  return out;
+}
+
 export async function getServiceCatalog(): Promise<ServiceCategory[]> {
   const [cats, items, offers, activeResources] = await Promise.all([
     db.query.serviceCategories.findMany({
@@ -116,29 +154,12 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
   // Същото за неготов изпълнител (без своя услуга): още не е пред клиентите.
   const readiness = await getReadiness(activeResources.map((r) => r.id));
   const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
-  const activeResourceIds = new Set(resources.map((r) => r.id));
-  const liveOffers = offers.filter((o) => activeResourceIds.has(o.resourceId));
-
-  // Оферти по услуга + брой оферти на изпълнител (за curation статуса).
-  const offersByItem = new Map<string, PriceParts[]>();
-  const offerCount = new Map<string, number>();
-  for (const o of liveOffers) {
-    const arr = offersByItem.get(o.serviceItemId);
-    const parts: PriceParts = { price: o.price, priceMax: o.priceMax, priceFrom: o.priceFrom };
-    if (arr) arr.push(parts);
-    else offersByItem.set(o.serviceItemId, [parts]);
-    offerCount.set(o.resourceId, (offerCount.get(o.resourceId) ?? 0) + 1);
-  }
-  // Kind-ове с поне един „не-curated" изпълнител (0 оферти → таксува по каталога).
-  const kindHasBaseSeller = new Set<string>();
-  for (const r of resources) if ((offerCount.get(r.id) ?? 0) === 0) kindHasBaseSeller.add(r.kind);
+  const prices = publicPricesByItem(items, cats, offers, resources);
 
   return cats.map((c) => {
-    const kind = KIND_BY_SLUG[c.slug];
-    const includeBase = kind ? kindHasBaseSeller.has(kind) : true;
     const catItems = items.filter((i) => i.categoryId === c.id);
     const itemToOpt = (i: (typeof items)[number]): ServiceItem => {
-      const pp = publicPrice({ price: i.price, priceMax: i.priceMax, priceFrom: i.priceFrom }, offersByItem.get(i.id) ?? [], includeBase);
+      const pp = prices.get(i.id)!;
       return toItem({
         name: i.name,
         price: pp.price,

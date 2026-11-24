@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { listPublicGalleryImages } from "@/lib/data/public-gallery";
+import { publicPricesByItem } from "@/lib/data/service-catalog";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { getClosedDates } from "@/lib/booking/closures";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
@@ -92,6 +93,8 @@ export default async function BookingPage() {
   // (напр. маникюр между двама наематели) остава видим и формата го показва като
   // „· по телефон" (както козметика със спрян онлайн запис), вместо категорията
   // да изчезва мълчаливо, докато FAQ/CTA другаде обещават запис.
+  // Цената преди избор на специалист е тази от ценоразписа (един източник с /uslugi).
+  const listPrices = publicPricesByItem(items, cats, offerings, resources);
   const services: PublicServiceOpt[] = items.flatMap((i) => {
     const cat = catById.get(i.categoryId);
     const kind = cat ? KIND_BY_SLUG[cat.slug] : undefined;
@@ -109,6 +112,7 @@ export default async function BookingPage() {
         priceMax: i.priceMax,
         priceFrom: i.priceFrom,
         currency: i.currency,
+        listPrice: listPrices.get(i.id)!,
       },
     ];
   });

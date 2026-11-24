@@ -5,6 +5,7 @@
  * отменен/неявил се, а очакваното — от бъдещите потвърдени часове.
  */
 import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "./time";
+import { formatAmount } from "./price";
 
 export interface RevenueBucket {
   count: number;
@@ -69,11 +70,8 @@ export function buildPeriodBounds(now: Date): PeriodBounds {
   };
 }
 
-/** Форматира € сума: цели числа без стотинки, иначе 2 знака, десетична запетая (bg). */
-export function formatEur(v: number): string {
-  const r = Math.round(v * 100) / 100;
-  return (Number.isInteger(r) ? String(r) : r.toFixed(2)).replace(".", ",");
-}
+/** Форматира € сума: общата функция за цени (`formatAmount` в ./price). */
+export const formatEur = formatAmount;
 
 function emptyPeriod(): RevenuePeriod {
   return { earned: { count: 0, total: 0 }, expected: { count: 0, total: 0 }, unpriced: 0 };
