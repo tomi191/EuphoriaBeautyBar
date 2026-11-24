@@ -183,6 +183,17 @@ export async function listMyGalleryImages(): Promise<MyGalleryImage[]> {
   }));
 }
 
+/** Кои от дадените часове вече имат негова снимка (бутонът в графика става «Добави още една снимка»). */
+export async function listMyPhotoBookingIds(bookingIds: string[]): Promise<Set<string>> {
+  const { resource } = await requireStaff();
+  if (bookingIds.length === 0) return new Set();
+  const rows = await db
+    .select({ bookingId: schema.galleryImages.bookingId })
+    .from(schema.galleryImages)
+    .where(and(eq(schema.galleryImages.uploadedBy, resource.id), inArray(schema.galleryImages.bookingId, bookingIds)));
+  return new Set(rows.map((r) => r.bookingId).filter((id): id is string => !!id));
+}
+
 /** Специалистът трие своя снимка, която чака или е върната (одобрената маха само Снежана). */
 export async function deleteMyGalleryImage(imageId: string) {
   const { resource } = await requireStaff();
