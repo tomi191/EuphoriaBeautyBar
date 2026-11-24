@@ -23,7 +23,7 @@ export function PhasePill({ phase, className }: { phase: CampaignPhase; classNam
   return (
     <span
       className={cn(
-        "inline-flex min-h-8 shrink-0 items-center rounded-full px-3.5 py-1 text-center text-sm font-medium leading-tight",
+        "inline-flex min-h-8 shrink-0 items-center rounded-full px-3 py-1 text-center text-sm font-medium leading-tight",
         phase === "pending" && "max-w-[6.5rem] lg:max-w-none",
         PILL[phase],
         className,
@@ -50,7 +50,7 @@ function Prices({ v, big }: { v: CampaignView; big?: boolean }) {
 }
 
 const left = (v: CampaignView) => (v.slots != null ? Math.max(v.slots - v.stats.total, 0) : null);
-const placesWord = (n: number) => (n === 1 ? "1 място" : `${n} места`);
+const placesWord = (n: number) => (n === 1 ? "1\u00a0място" : `${n}\u00a0места`);
 
 /** Редът под името в списъка (Саиф 4.4–4.10). */
 function RowDetail({ v, today }: { v: CampaignView; today: string }) {
@@ -95,7 +95,7 @@ function RowDetail({ v, today }: { v: CampaignView; today: string }) {
       return (
         <p className="text-[15px] leading-snug">
           {v.kind === "discount" ? <Prices v={v} /> : <>Подарък: {v.gift}</>}
-          {sep}до {d(v.endsOn)}
+          {sep}до&nbsp;{d(v.endsOn)}
           {n != null && (
             <>
               <span className="hidden lg:inline">{sep}остават {placesWord(n)}</span>
@@ -116,7 +116,8 @@ function RowDetail({ v, today }: { v: CampaignView; today: string }) {
     case "stopped":
       return (
         <p className="text-[15px] leading-snug text-muted-foreground">
-          Спряна на {d(v.stoppedOn ?? v.endsOn)}: {stopReasonText(v.stopReason, v.stopNote)}.
+          Спряна на {d(v.stoppedOn ?? v.endsOn)}
+          {stopReasonText(v.stopReason, v.stopNote) ? `: ${stopReasonText(v.stopReason, v.stopNote)}` : ""}.
         </p>
       );
     case "expired":
@@ -132,20 +133,21 @@ export function PromotionRow({ v, today, selected }: { v: CampaignView; today: s
         selected ? "border-border lg:border-primary lg:ring-1 lg:ring-primary" : "border-border hover:border-foreground/30",
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
+      {/* На телефона редът под името е на цялата ширина, под хапчето (Канопус, обща сверка, т. Е). */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2">
+        <div className="min-w-0 [text-wrap:balance]">
           <Link
             href={`/staff/promotions?id=${v.id}`}
             aria-current={selected ? "true" : undefined}
-            className="text-[16px] font-medium leading-snug [text-wrap:pretty] after:absolute after:inset-0 after:rounded-2xl"
+            className="text-[16px] font-medium leading-snug after:absolute after:inset-0 after:rounded-2xl"
           >
             {campaignTitle(v)}
           </Link>
-          <div className="mt-0.5">
-            <RowDetail v={v} today={today} />
-          </div>
         </div>
         <PhasePill phase={v.phase} />
+        <div className="col-span-2 mt-0.5 min-w-0 lg:col-span-1">
+          <RowDetail v={v} today={today} />
+        </div>
       </div>
       {v.phase === "returned" && (
         <div className="relative z-10 mt-2 hidden justify-end lg:flex">

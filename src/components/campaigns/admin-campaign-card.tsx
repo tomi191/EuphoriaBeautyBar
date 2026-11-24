@@ -90,7 +90,7 @@ export function AdminCampaignCard({
           {v.services.map((s) => (
             <div key={s.serviceItemId} className={cn("py-2", v.kind === "discount" ? "lg:flex lg:items-baseline lg:gap-5" : "flex items-baseline gap-3 lg:gap-5")}>
               <p className={cn("text-[21px] leading-snug lg:shrink-0 lg:font-serif-semi lg:text-[2.25rem] lg:font-semibold", UPRIGHT)}>{s.name}</p>
-              <span className={cn("mb-2 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/50 lg:mb-3", v.kind === "discount" && "hidden lg:block")} aria-hidden />
+              <span className={cn("mb-2 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/50 lg:mb-3 lg:self-baseline", v.kind === "discount" && "hidden lg:block")} aria-hidden />
               {v.kind === "discount" && s.prevEur != null && s.newEur != null ? (
                 <div className="mt-1 flex items-baseline gap-4 lg:mt-0 lg:grid lg:grid-cols-[auto_auto] lg:gap-x-8 lg:gap-y-1">
                   <s className={cn("font-serif text-[30px] leading-none text-muted-foreground lg:text-[2.5rem]", UPRIGHT)}>{formatEuro(s.prevEur)}</s>

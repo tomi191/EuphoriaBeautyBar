@@ -144,39 +144,43 @@ function MenuCard({
   className?: string;
 }) {
   const cta = campaignCta(data, phone);
+  // «−20%» на 1440 е ред в потока; условията почват под него с малък отстъп по мастилото (Канопус, обща сверка, т. А).
+  const hasPct = data.kind === "discount" && data.services.some((s) => s.percent != null);
   const btn =
-    "mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 [font-feature-settings:'locl'_0] lg:mt-3 lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:text-[19px]";
+    "mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 [font-feature-settings:'locl'_0] lg:mt-auto lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:self-start lg:text-[19px]";
   return (
-    <article className={cn("text-left", className)}>
+    <article className={cn("text-left lg:flex lg:flex-col", className)}>
       <p className="font-serif text-[30px] italic leading-tight text-primary lg:text-[27px] lg:leading-none">{data.who}</p>
       {data.services.map((s) => (
         <div key={s.name} className="mt-1.5 lg:-mt-3.5">
           {data.kind === "discount" && s.prevEur != null && s.newEur != null ? (
             <>
               <div className="lg:flex lg:items-baseline lg:gap-3">
-                <p className={cn("font-display text-[19px] leading-snug text-foreground lg:shrink lg:font-serif-semi lg:text-[26px] lg:font-semibold lg:leading-tight", upright)}>
+                <p className={cn("font-display text-[19px] leading-snug text-foreground lg:shrink lg:font-serif-semi lg:text-[26px] lg:font-semibold lg:leading-tight lg:[text-wrap:balance]", upright)}>
                   {s.name}
                 </p>
-                <div className="mt-1 flex items-baseline gap-2.5 lg:relative lg:mt-0 lg:min-w-[40%] lg:flex-1" aria-hidden>
-                  <span className="mb-1.5 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45" />
-                  <s className={cn("font-display text-[22px] leading-none text-muted-foreground decoration-[1.5px] lg:font-serif lg:text-[32px]", upright)}>
+                <div className="mt-1 lg:mt-0 lg:flex-1" aria-hidden>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="mb-1.5 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45 lg:min-w-4" />
+                  <s className={cn("shrink-0 font-display text-[22px] leading-none text-muted-foreground decoration-[1.5px] lg:font-serif lg:text-[32px]", upright)}>
                     <span className="lg:hidden">{formatEuro(s.prevEur)}</span>
                     <span className="hidden lg:inline">{thin(formatEuro(s.prevEur))}</span>
                   </s>
                   <span
-                    className={cn("font-display text-[36px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[48px] lg:font-semibold", upright)}
+                    className={cn("shrink-0 font-display text-[36px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[48px] lg:font-semibold", upright)}
                     style={{ fontVariantNumeric: "lining-nums" }}
                   >
                     <span className="lg:hidden">{formatEuro(s.newEur)}</span>
                     <span className="hidden lg:inline">{thin(formatEuro(s.newEur))}</span>
                   </span>
                   {s.percent != null && <span className={cn("font-display text-[22px] font-medium leading-none text-primary lg:hidden", upright)}>−{s.percent}%</span>}
-                  {/* На 1440 «−20%» е в колоната на цената, под новата цена (Канопус, част 2, т. 4г). */}
-                  {s.percent != null && (
-                    <span className={cn("absolute top-full right-0 mt-2 hidden font-serif-semi text-[34px] font-semibold leading-none text-primary lg:block", upright)}>
-                      −{s.percent}%
-                    </span>
-                  )}
+                </div>
+                {/* На 1440 «−20%» е ред вдясно под новата цена, в колоната ѝ и в потока: бута условията (Канопус, обща сверка, т. А). */}
+                {s.percent != null && (
+                  <p className={cn("-mt-2 hidden text-right font-serif-semi text-[34px] font-semibold leading-none text-primary lg:block", upright)}>
+                    −{s.percent}%
+                  </p>
+                )}
                 </div>
               </div>
               <p className="sr-only">
@@ -186,7 +190,7 @@ function MenuCard({
             </>
           ) : (
             <div className="flex items-baseline gap-2.5">
-              <p className={cn("font-display text-[17px] leading-snug text-foreground lg:font-serif-semi lg:text-[28px] lg:font-semibold lg:leading-tight", upright)}>{s.name}</p>
+              <p className={cn("font-display text-[17px] leading-snug text-foreground lg:font-serif-semi lg:text-[26px] lg:font-semibold lg:leading-tight lg:[text-wrap:balance]", upright)}>{s.name}</p>
               <span className="mb-1.5 min-w-6 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45" aria-hidden />
               <span className={cn("shrink-0 font-display text-[19px] leading-none text-foreground lg:font-serif-semi lg:text-[46px] lg:font-semibold", upright)}>
                 {s.regularEur != null ? `${s.priceFrom ? "от " : ""}${formatEuro(s.regularEur)}` : ""}
@@ -200,7 +204,7 @@ function MenuCard({
           Подарък в същия час: {data.gift}
         </p>
       )}
-      <div className={cn("mt-3 space-y-0.5 font-display text-[17px] leading-snug text-muted-foreground lg:mt-1 lg:font-serif lg:text-[24px] lg:text-foreground/70", upright)}>
+      <div className={cn("mt-3 space-y-0.5 font-display text-[17px] leading-snug text-muted-foreground lg:mb-3 lg:font-serif lg:text-[24px] lg:text-foreground/70", hasPct ? "lg:-mt-1" : "lg:mt-1", upright)}>
         {/* На 1440 условията са 600 и по-тъмни от срока (Канопус, част 2, т. 5). */}
         {data.firstVisitOnly && <p className="lg:font-serif-semi lg:font-semibold lg:text-foreground/85">Само за първо посещение при {data.sameWho}.</p>}
         {data.slotsLeft != null && (

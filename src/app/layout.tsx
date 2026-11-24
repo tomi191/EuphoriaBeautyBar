@@ -48,6 +48,10 @@ const cormorantSemi = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  // Проверка на домейна в Meta (карусел със собствени картини, №11). Празна променлива = няма таг.
+  ...(process.env.FACEBOOK_DOMAIN_VERIFICATION
+    ? { other: { "facebook-domain-verification": process.env.FACEBOOK_DOMAIN_VERIFICATION } }
+    : {}),
   title: {
     // Кратък default (~55 зн.) — дългият се режеше в Google на ~60.
     default: "Euphoria — салон за красота в кв. Левски, Варна",

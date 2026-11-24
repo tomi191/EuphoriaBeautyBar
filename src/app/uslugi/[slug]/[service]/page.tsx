@@ -11,7 +11,7 @@ import { getServiceCatalog, getServiceDetail } from "@/lib/data/service-catalog"
 import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { formatAmount } from "@/lib/booking/price";
-import { slugify } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
 import { ServicePromo } from "@/components/campaigns/promo-blocks";
 import { loadRunningCampaigns } from "@/lib/campaigns/public";
@@ -116,11 +116,11 @@ export default async function ServiceDetailPage({ params }: Params) {
       <JsonLd data={[serviceLd, breadcrumbLd, faqLd]} />
 
       {/* HERO — реална снимка background + топъл градиент (като началната) */}
-      <section className="relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24">
+      <section className={cn("relative overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24", promos.length > 0 && "max-lg:pt-28")}>
         <Image src={img} alt={`${item.name} в Euphoria Hair & Beauty Bar, кв. Левски, Варна`} fill priority className="object-cover" sizes="100vw" />
         <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/45 lg:bg-gradient-to-r lg:from-background lg:via-background/80 lg:to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 lg:px-10">
-          <nav aria-label="Трохи" className="mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          <nav aria-label="Трохи" className={cn("mb-8 flex flex-wrap items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground", promos.length > 0 && "max-lg:mb-6")}>
             <Link href="/" className="hover:text-foreground">Начало</Link>
             <ChevronRight className="size-3" />
             <Link href="/uslugi" className="hover:text-foreground">Услуги</Link>
@@ -129,10 +129,11 @@ export default async function ServiceDetailPage({ params }: Params) {
             <ChevronRight className="size-3" />
             <span className="text-foreground">{item.name}</span>
           </nav>
-          <div className="max-w-2xl">
+          {/* На 390 с промоция цитатът е под блока ѝ: бутонът е в първия екран (Канопус, обща сверка, т. Ж). */}
+          <div className={cn("max-w-2xl", promos.length > 0 && "max-lg:flex max-lg:flex-col")}>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">{category.shortTitle} · кв. Левски, Варна</p>
             <BlurText as="h1" text={`${item.name} във Варна`} className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl" stagger={0.025} />
-            <p className="mt-6 font-serif text-xl italic text-muted-foreground">{content.tagline}</p>
+            <p className={cn("mt-6 font-serif text-xl italic text-muted-foreground", promos.length > 0 && "max-lg:order-last")}>{content.tagline}</p>
             {promos.length > 0 ? (
               <ServicePromo campaigns={promos} serviceName={item.name} today={todaySofia()} />
             ) : (

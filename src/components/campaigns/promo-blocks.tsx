@@ -48,10 +48,10 @@ export function CategoryPromoStrip({ campaigns, slug, today }: { campaigns: Publ
                       <span className="mb-1 w-6 shrink-0 self-end border-b-2 border-dotted border-muted-foreground/45 lg:min-w-8 lg:flex-1" />
                       {c.kind === "discount" && s.prevEur != null && s.newEur != null ? (
                         <>
-                          <s className={cn("shrink-0 whitespace-nowrap font-serif text-[20px] leading-none text-muted-foreground lg:text-[30px]", upright)}>
+                          <s className={cn("shrink-0 whitespace-nowrap font-display text-[20px] leading-none text-muted-foreground lg:font-serif lg:text-[30px]", upright)}>
                             {formatEuro(s.prevEur)}
                           </s>
-                          <span className={cn("shrink-0 whitespace-nowrap font-serif-semi text-[34px] font-semibold leading-none text-primary lg:text-[46px]", upright)}>
+                          <span className={cn("shrink-0 whitespace-nowrap font-display text-[34px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[46px]", upright)}>
                             {formatEuro(s.newEur)}
                           </span>
                           {s.percent != null && (
@@ -59,7 +59,7 @@ export function CategoryPromoStrip({ campaigns, slug, today }: { campaigns: Publ
                           )}
                         </>
                       ) : (
-                        <span className={cn("shrink-0 whitespace-nowrap font-serif text-[24px] leading-none lg:text-[34px]", upright)}>
+                        <span className={cn("shrink-0 whitespace-nowrap font-display text-[24px] leading-none lg:font-serif lg:text-[34px]", upright)}>
                           {s.regularEur != null ? `${s.priceFrom ? "от " : ""}${formatEuro(s.regularEur)}` : ""}
                         </span>
                       )}
@@ -149,7 +149,7 @@ export function ServicePromo({ campaigns, serviceName, today }: { campaigns: Pub
               <div className={cn("mt-3 space-y-0.5 font-display text-[17px] leading-snug text-foreground/80 lg:mt-0 lg:font-serif lg:text-[26px] lg:italic lg:text-muted-foreground", plainMobile)}>
                 {c.card.firstVisitOnly && <p>Само за първо посещение при {c.card.sameWho}.</p>}
                 {c.card.slotsLeft != null && <p>{c.card.slotsLeft === 1 ? "Остава 1 място." : `Остават ${c.card.slotsLeft} места.`}</p>}
-                <p>{endsLine(c.endsOn, today)}</p>
+                <p className="lg:[font-variant-numeric:lining-nums]">{endsLine(c.endsOn, today)}</p>
               </div>
               {c.action.phone ? (
                 <a href={c.action.href} aria-label={cta.label} className={btn}>

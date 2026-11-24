@@ -117,10 +117,10 @@ export default async function PromotionsPage({
               <EndGate key={c.id} endsOn={c.endsOn}>
                 <div
                   id={`promo-${c.id}`}
-                  className={cn(!first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
+                  className={cn("lg:flex lg:flex-col", !first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
                   <h2
                     className={cn(
-                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:pb-0.5 lg:font-serif-semi lg:text-[36px] lg:font-semibold",
+                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:pb-0.5 lg:font-serif-semi lg:text-[36px] lg:font-semibold lg:[font-feature-settings:'locl'_0,'lnum'_1]",
                       !first && "hidden lg:block",
                     )}
                   >
@@ -132,7 +132,7 @@ export default async function PromotionsPage({
                     today={today}
                     href={withFrom(c.action.href, from)}
                     phone={c.action.phone}
-                    className={cn("mt-3 lg:mt-0", !first && "mt-0")}
+                    className={cn("mt-3 lg:mt-0 lg:flex-1", !first && "mt-0")}
                   />
                 </div>
               </EndGate>
