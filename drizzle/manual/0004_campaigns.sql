@@ -1,7 +1,8 @@
 -- №11, част 1: промоциите на специалистите (решения 23, 24, 31). Само добавяне: две нови таблици и три нови
 -- празни колони в bookings; старите редове не се пипат. Повторното пускане не чупи нищо.
 -- Статусът пази само решението (чака / върната / одобрена / спряна). «Предстои», «тече», «свършила» и «изтекла»
--- се смятат по датите при четене (src/lib/campaigns/rules.ts, campaignPhase), без крон.
+-- се смятат по датите при четене (src/lib/campaigns/rules.ts, campaignPhase); кронът в 00:00 (част 4) само
+-- опреснява страниците, спира от системата и праща известията.
 -- Записите се пазят като доказателство (ЗЗП чл. 68л, ал. 2): нищо в кода не трие промоция.
 -- Връщане: 0004_campaigns.down.sql.
 BEGIN;
@@ -39,6 +40,10 @@ CREATE TABLE IF NOT EXISTS campaigns (
   -- Постът във Facebook (част 4).
   facebook_post_id text,
   facebook_posted_at timestamptz,
+  -- Постът е изтрит от страницата (край на сътрудничеството, решение 24).
+  facebook_deleted_at timestamptz,
+  -- Кои известия и опити вече са направени (част 4, кронът): ключ → кога. Един път на ключ.
+  notified jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_by text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -47,6 +52,10 @@ CREATE TABLE IF NOT EXISTS campaigns (
 
 CREATE INDEX IF NOT EXISTS campaigns_resource_idx ON campaigns (resource_id, status, ends_on);
 CREATE INDEX IF NOT EXISTS campaigns_status_idx ON campaigns (status, starts_on, ends_on);
+-- Копие, в което 0004 е пускана преди част 4: двете колони се добавят и тук (иначе пропуск).
+ALTER TABLE campaigns
+  ADD COLUMN IF NOT EXISTS facebook_deleted_at timestamptz,
+  ADD COLUMN IF NOT EXISTS notified jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 -- Услугите в промоцията (от 1 до 5) и цените им.
 CREATE TABLE IF NOT EXISTS campaign_services (
@@ -67,6 +76,18 @@ CREATE TABLE IF NOT EXISTS campaign_services (
 
 CREATE INDEX IF NOT EXISTS campaign_services_service_idx ON campaign_services (service_item_id);
 
+-- Седмичният карусел във Facebook (част 4): един на седмица (понеделникът), с промоциите в него.
+CREATE TABLE IF NOT EXISTS campaign_carousels (
+  id text PRIMARY KEY,
+  week_of date NOT NULL UNIQUE,
+  campaign_ids text[] NOT NULL,
+  -- posting | posted | failed | deleted | delete_failed
+  status text NOT NULL DEFAULT 'posting',
+  facebook_post_id text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  deleted_at timestamptz
+);
+
 -- Часът пази промоцията, редовната цена в този момент и откъде е дошъл клиентът (пише ги част 3).
 ALTER TABLE bookings
   ADD COLUMN IF NOT EXISTS campaign_id text REFERENCES campaigns(id) ON DELETE SET NULL,
@@ -77,13 +98,14 @@ CREATE INDEX IF NOT EXISTS bookings_campaign_idx ON bookings (campaign_id) WHERE
 
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaign_services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaign_carousels ENABLE ROW LEVEL SECURITY;
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    EXECUTE 'REVOKE ALL ON campaigns, campaign_services FROM anon';
+    EXECUTE 'REVOKE ALL ON campaigns, campaign_services, campaign_carousels FROM anon';
   END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    EXECUTE 'REVOKE ALL ON campaigns, campaign_services FROM authenticated';
+    EXECUTE 'REVOKE ALL ON campaigns, campaign_services, campaign_carousels FROM authenticated';
   END IF;
 END $$;
 

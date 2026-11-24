@@ -7,6 +7,10 @@
     { "path": "/api/cron/review-request", "schedule": "0 * * * *" },
     { "path": "/api/cron/evening-digest", "schedule": "0 16 * * *" },
     { "path": "/api/cron/keep-warm", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/sync-reviews", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/sync-reviews", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/campaigns?run=summer", "schedule": "0 21 * * *" },
+    { "path": "/api/cron/campaigns?run=winter", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/campaigns-carousel?run=summer", "schedule": "0 6 * * 1" },
+    { "path": "/api/cron/campaigns-carousel?run=winter", "schedule": "0 7 * * 1" }
   ]
 }

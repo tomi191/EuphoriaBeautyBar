@@ -11,6 +11,7 @@ ALTER TABLE bookings
   DROP COLUMN IF EXISTS regular_price_eur,
   DROP COLUMN IF EXISTS came_from;
 
+DROP TABLE IF EXISTS campaign_carousels;
 DROP TABLE IF EXISTS campaign_services;
 DROP TABLE IF EXISTS campaigns;
 

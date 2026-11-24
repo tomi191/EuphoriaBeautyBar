@@ -208,6 +208,7 @@ export function stopReasonText(key: string | null, note: string | null): string 
   if (key === "other") return note ?? "друго";
   if (key === "system_hidden") return "услугата вече не е в онлайн записването";
   if (key === "system_ended") return "сътрудничеството приключи";
+  if (key === "system_paused") return "специалистът е скрит от сайта";
   const r = STOP_REASONS.find((s) => s.key === key);
   return r ? r.label.toLowerCase() : (note ?? "");
 }

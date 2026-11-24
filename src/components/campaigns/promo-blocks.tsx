@@ -4,7 +4,7 @@ import { formatEuro } from "@/lib/booking/price";
 import { longDay } from "@/lib/campaigns/rules";
 import { campaignCta, endsLine } from "@/components/campaigns/campaign-card";
 import { EndGate } from "@/components/campaigns/end-gate";
-import type { PublicCampaign } from "@/lib/campaigns/public";
+import { withFrom, type PublicCampaign } from "@/lib/campaigns/public";
 import { cn } from "@/lib/utils";
 
 // Промоциите на страницата на категорията (лента най-горе, кадър кръг-2/категория-1440 и …-390 екр. 1) и на
@@ -58,7 +58,7 @@ export function CategoryPromoStrip({ campaigns, slug, today }: { campaigns: Publ
                 </div>
                 <div className="lg:flex lg:shrink-0 lg:flex-col lg:items-end lg:gap-3 lg:pb-1">
                   <p className="hidden font-display text-[16px] text-muted-foreground lg:block">{endsLine(c.endsOn, today)}</p>
-                  <Link href="/promotsii" className="inline-flex min-h-11 items-center font-display text-[17px] text-primary underline underline-offset-4">
+                  <Link href="/promotsii?from=kategoriya" className="inline-flex min-h-11 items-center font-display text-[17px] text-primary underline underline-offset-4">
                     Всички промоции
                   </Link>
                 </div>
@@ -132,7 +132,7 @@ export function ServicePromo({ campaigns, serviceName, today }: { campaigns: Pub
                   <Icon className="size-5" aria-hidden /> {cta.text}
                 </a>
               ) : (
-                <Link href={c.action.href} aria-label={cta.label} className={btn}>
+                <Link href={withFrom(c.action.href, "usluga")} aria-label={cta.label} className={btn}>
                   <Icon className="size-5 lg:hidden" aria-hidden /> {cta.text}
                 </Link>
               )}

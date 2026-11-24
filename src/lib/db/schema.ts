@@ -442,11 +442,24 @@ export const campaigns = pgTable("campaigns", {
   stoppedBy: text("stopped_by"),
   facebookPostId: text("facebook_post_id"),
   facebookPostedAt: ts("facebook_posted_at"),
+  facebookDeletedAt: ts("facebook_deleted_at"),
+  // Известията и опитите на крона (част 4): ключ → кога; всеки ключ веднъж.
+  notified: jsonb("notified").notNull().default({}).$type<Record<string, string>>(),
   createdBy: text("created_by"),
   createdAt: ts("created_at").notNull().defaultNow(),
   updatedAt: ts("updated_at").notNull().defaultNow(),
 });
 
+// Седмичният карусел във Facebook (№11, част 4): един на понеделник.
+export const campaignCarousels = pgTable("campaign_carousels", {
+  id: text("id").primaryKey(),
+  weekOf: date("week_of", { mode: "string" }).notNull().unique(),
+  campaignIds: text("campaign_ids").array().notNull(),
+  status: text("status").notNull().default("posting").$type<"posting" | "posted" | "failed" | "deleted" | "delete_failed">(),
+  facebookPostId: text("facebook_post_id"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  deletedAt: ts("deleted_at"),
+});
 export const campaignServices = pgTable(
   "campaign_services",
   {

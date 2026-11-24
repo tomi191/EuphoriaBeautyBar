@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CampaignCard } from "@/components/campaigns/campaign-card";
 import { PromoTitle } from "@/components/campaigns/promo-title";
 import { EndGate } from "@/components/campaigns/end-gate";
-import { homePicks, loadRunningCampaigns } from "@/lib/campaigns/public";
+import { homePicks, loadRunningCampaigns, withFrom } from "@/lib/campaigns/public";
 import { todaySofia } from "@/lib/campaigns/core";
 
 /**
@@ -31,7 +31,7 @@ export async function PromotionsSection() {
             {picks.map((c) => (
               <EndGate key={c.id} endsOn={c.endsOn}>
                 <div>
-                  <CampaignCard variant="menu" data={c.card} today={today} href={c.action.href} phone={c.action.phone} />
+                  <CampaignCard variant="menu" data={c.card} today={today} href={withFrom(c.action.href, "nachalna")} phone={c.action.phone} />
                 </div>
               </EndGate>
             ))}

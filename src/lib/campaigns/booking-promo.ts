@@ -144,6 +144,10 @@ export function promoDoneLine(
   totals: { totalEur: number | null; regularTotalEur: number | null },
   where: "screen" | "email",
 ): string | null {
+  // «Само първо посещение» и записът реши, че не е първо (част 4, 5а): цената е редовната и го казваме след записа.
+  if (o.state === "refused" && o.reason === "not_first" && totals.totalEur != null) {
+    return `Цената е ${formatEuro(totals.totalEur)}. Промоцията е само за първо посещение, затова цената е редовната.`;
+  }
   if (o.state !== "applied") return null;
   if (o.kind === "gift") return o.gift ? `Подарък в същия час: ${o.gift}.` : null;
   if (totals.totalEur == null || totals.regularTotalEur == null) return null;

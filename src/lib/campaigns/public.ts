@@ -123,6 +123,16 @@ export async function loadRunningCampaigns(): Promise<PublicCampaign[]> {
   return out.sort((a, b) => a.endsOn.localeCompare(b.endsOn) || a.startsOn.localeCompare(b.startsOn));
 }
 
+/** Местата, от които се натиска картата (част 4, 5б); стигат до часа като came_from=from=… */
+export type PromoPlace = "nachalna" | "promotsii" | "kategoriya" | "usluga" | "facebook" | "karusel";
+export const PROMO_PLACES: readonly PromoPlace[] = ["nachalna", "promotsii", "kategoriya", "usluga", "facebook", "karusel"];
+
+/** Бутонът към записа носи мястото (`from`); обаждането не се пипа. */
+export function withFrom(href: string, from: PromoPlace): string {
+  if (!href.startsWith("/zapazi-chas")) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}from=${from}`;
+}
+
 /** За началната: по една на специалист (първо тази, която свършва най-скоро), най-много 3. */
 export function homePicks(all: PublicCampaign[]): PublicCampaign[] {
   const seen = new Set<string>();

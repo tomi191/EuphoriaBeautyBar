@@ -4,7 +4,15 @@ import { CampaignCard } from "@/components/campaigns/campaign-card";
 import { PromoTitle } from "@/components/campaigns/promo-title";
 import { EndGate } from "@/components/campaigns/end-gate";
 import { JsonLd } from "@/components/seo/json-ld";
-import { byPosition, campaignOffersLd, loadEndedCampaign, loadRunningCampaigns } from "@/lib/campaigns/public";
+import {
+  PROMO_PLACES,
+  byPosition,
+  campaignOffersLd,
+  loadEndedCampaign,
+  loadRunningCampaigns,
+  withFrom,
+  type PromoPlace,
+} from "@/lib/campaigns/public";
 import { todaySofia } from "@/lib/campaigns/core";
 import { longDay } from "@/lib/campaigns/rules";
 import { formatEuro } from "@/lib/booking/price";
@@ -38,8 +46,14 @@ const primaryBtn =
   "inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:text-[19px]";
 const secondLink = "inline-flex min-h-12 items-center font-serif text-[30px] italic text-primary underline underline-offset-4";
 
-export default async function PromotionsPage({ searchParams }: { searchParams: Promise<{ id?: string | string[] }> }) {
-  const { id: rawId } = await searchParams;
+export default async function PromotionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string | string[]; from?: string | string[] }>;
+}) {
+  const { id: rawId, from: rawFrom } = await searchParams;
+  // Откъде е дошъл клиентът (пост, карусел, категория): бутоните на картите го носят до часа.
+  const from: PromoPlace = PROMO_PLACES.includes(rawFrom as PromoPlace) ? (rawFrom as PromoPlace) : "promotsii";
   const id = typeof rawId === "string" ? rawId.slice(0, 64) : null;
   const [running, ended] = await Promise.all([loadRunningCampaigns(), id ? loadEndedCampaign(id) : Promise.resolve(null)]);
   const today = todaySofia();
@@ -101,7 +115,9 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
           <div className="mt-10 grid gap-y-8 lg:mt-14 lg:grid-cols-2 lg:gap-y-16 lg:[&>*:nth-child(even)]:border-l lg:[&>*:nth-child(even)]:border-border lg:[&>*:nth-child(even)]:pl-16 lg:[&>*:nth-child(odd)]:pr-16">
             {items.map(({ c, heading, first }) => (
               <EndGate key={c.id} endsOn={c.endsOn}>
-                <div className={cn(!first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
+                <div
+                  id={`promo-${c.id}`}
+                  className={cn(!first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
                   <h2
                     className={cn(
                       "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:font-serif-semi lg:text-[36px] lg:font-semibold",
@@ -114,7 +130,7 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
                     variant="menu"
                     data={c.card}
                     today={today}
-                    href={c.action.href}
+                    href={withFrom(c.action.href, from)}
                     phone={c.action.phone}
                     className={cn("mt-3", !first && "mt-0 lg:mt-3")}
                   />

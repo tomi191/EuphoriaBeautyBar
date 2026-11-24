@@ -394,7 +394,9 @@ export function PublicBookingForm({
     };
   }, [performerId, date, totalDuration, totalBuffer, isOffline, waitingFirstFree]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Цената по промоцията: пита сървъра при избран час и пак при телефона и имейла (първо посещение).
+  // Цената по промоцията: пита сървъра при избран час. Без телефона и имейла (част 4, 5а): при «само първо
+  // посещение» показва двете цени условно, а коя важи се решава при записа (иначе отговорът казва на всеки дали
+  // даден телефон е бил клиент).
   const quoteKey = hasSelection && performerId && slot && !isOffline ? `${performerId}|${selectedIds.join(",")}|${slot}` : "";
   const hasPromoHere = promos.some((c) => c.resourceId === performerId && c.services.some((x) => selectedIds.includes(x.serviceItemId)));
   React.useEffect(() => {
@@ -408,8 +410,6 @@ export function PublicBookingForm({
         resourceId: performerId,
         serviceItemIds: selectedIds,
         startAt: slot,
-        phone: phone.trim() || undefined,
-        email: email.trim() || undefined,
         promoId: seenPromoId.current,
       })
         .then((q) => {
@@ -423,7 +423,7 @@ export function PublicBookingForm({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [quoteKey, hasPromoHere, phone, email]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [quoteKey, hasPromoHere]); // eslint-disable-line react-hooks/exhaustive-deps
   const q = quote?.key === quoteKey ? quote.q : null;
 
   // Защо бутонът е сив (null = всичко е попълнено).
@@ -457,6 +457,8 @@ export function PublicBookingForm({
         allowParallel: slotIsParallel,
         // Сумата, която клиентката вижда в «Твоят час»: ако на сървъра е друга, часът не се записва.
         expectedTotalEur: q ? q.totalEur : undefined,
+        // «Само първо посещение»: видяна е и редовната цена («иначе …»), тя също е съгласие.
+        expectedAltEur: q && q.outcome.state === "applied" && q.outcome.firstVisitOnly ? q.regularTotalEur : undefined,
         promoId: seenPromoId.current,
         cameFrom: typeof window !== "undefined" ? window.location.search : null,
       });
@@ -528,6 +530,7 @@ export function PublicBookingForm({
   // Промоцията в «Твоят час»: двете цени, редът под тях или защо цената е редовната (преди бутона).
   const po = q?.outcome;
   const promoApplied = po?.state === "applied" ? po : null;
+  const firstOnly = !!promoApplied?.firstVisitOnly;
   const promoSvcName = po && po.state !== "none" ? (services.find((s) => s.id === po.serviceItemId)?.name ?? "") : "";
   const promoPriceLabel =
     promoApplied?.kind === "discount" && promoApplied.newEur != null
@@ -1074,7 +1077,17 @@ export function PublicBookingForm({
               <dd>{formatDurationShort(totalDuration)}, до {summaryEnd}</dd>
               <dt className="text-muted-foreground">{selectedServices.length > 1 ? "Общо" : "Цена"}</dt>
               <dd>
-                {promoPriceLabel ? (
+                {promoPriceLabel && firstOnly ? (
+                  <>
+                    <span className="text-[17px] font-semibold text-primary md:text-base">{promoPriceLabel}</span> при първо
+                    посещение при специалиста, иначе {summaryPrice}
+                    {notes.under.map((n) => (
+                      <span key={n} className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">
+                        {n}
+                      </span>
+                    ))}
+                  </>
+                ) : promoPriceLabel ? (
                   <>
                     <s className="mr-2 text-muted-foreground">{summaryPrice}</s>
                     <span className="text-[17px] font-semibold text-primary md:text-base">{promoPriceLabel}</span>
@@ -1098,7 +1111,9 @@ export function PublicBookingForm({
                   <dt className="text-muted-foreground">Подарък</dt>
                   <dd>
                     {promoApplied.gift}
-                    <span className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">Получаваш го в същия час.</span>
+                    <span className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">
+                      {firstOnly ? "Получаваш го в същия час, при първо посещение при специалиста." : "Получаваш го в същия час."}
+                    </span>
                   </dd>
                 </>
               )}

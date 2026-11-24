@@ -56,7 +56,7 @@ const fail = (error: string, problems?: Problem[]): Fail => ({ ok: false, error,
 
 export const todaySofia = () => sofiaDateStr(new Date());
 
-function revalidateCampaigns() {
+export function revalidateCampaigns() {
   revalidatePath("/staff/promotions");
   revalidatePath("/staff/services");
   revalidatePath("/admin/promotions");
@@ -312,6 +312,7 @@ export async function submitCampaignCore(
   if (!result.ok) return result;
   revalidateCampaigns();
   if (result.status === "pending") await notifyAdminNewCampaign(id);
+  else if (input.startsOn <= todaySofia()) await postIfStarted(id);
   return result;
 }
 
@@ -325,10 +326,20 @@ export async function checkDraftCore(resource: Resource, rawInput: CampaignInput
 
 // ── Одобрение, връщане, спиране ──
 
+/** Постът във Facebook за вече почнала промоция (част 4). Не хвърля; кронът хваща пропуснатото. */
+async function postIfStarted(id: string) {
+  try {
+    const { publishStartPost } = await import("@/lib/campaigns/facebook");
+    await publishStartPost(id);
+  } catch (e) {
+    console.error("[campaigns] постът при одобрение падна:", e instanceof Error ? e.message : String(e));
+  }
+}
+
 const startedLine = (c: { startsOn: string; endsOn: string }, today: string) =>
   c.startsOn > today ? `Тръгва на ${shortDay(c.startsOn, today)}.` : `Тръгва веднага, краят е ${shortDay(c.endsOn, today)}.`;
 
-async function serviceTitle(campaignId: string): Promise<string> {
+export async function serviceTitle(campaignId: string): Promise<string> {
   const rows = await db
     .select({ name: schema.serviceItems.name })
     .from(schema.campaignServices)
@@ -391,6 +402,8 @@ export async function approveCampaignCore(
       : `Снежана одобри промоцията „${title}“. Тръгва на ${shortDay(c.startsOn, today)}.`,
     url: `/staff/promotions?id=${id}`,
   }).catch(() => null);
+  // Решение 23: постът излиза в деня на началото; одобрена след началото излиза веднага (иначе я пуска кронът).
+  if (started) await postIfStarted(id);
   return { ok: true, startsLine: `Одобрена. ${startedLine(c, today)}` };
 }
 

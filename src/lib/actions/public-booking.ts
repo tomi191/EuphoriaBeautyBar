@@ -73,12 +73,14 @@ const quoteSchema = z.object({
   resourceId: z.string().min(1),
   serviceItemIds: z.array(z.string().min(1)).min(1).max(10),
   startAt: z.string(),
-  phone: z.string().max(30).optional(),
-  email: z.string().max(200).optional(),
   promoId: z.string().max(40).nullable().optional(),
 });
 
-/** Цената на часа с промоцията, преди бутона. Същата сметка като при записа (resolveBookingPrice). */
+/**
+ * Цената на часа с промоцията, преди бутона. Същата сметка като при записа (resolveBookingPrice), но без
+ * телефона и имейла (част 4, 5а): заявката е без вход и не бива да казва дали даден телефон е имал час при
+ * специалиста. При «само първо посещение» формата показва двете цени условно; коя важи решава записът.
+ */
 export async function quotePublicBooking(input: z.infer<typeof quoteSchema>): Promise<PublicQuote | null> {
   const parsed = quoteSchema.safeParse(input);
   if (!parsed.success) return null;
@@ -89,7 +91,7 @@ export async function quotePublicBooking(input: z.infer<typeof quoteSchema>): Pr
     resourceId: d.resourceId,
     serviceItemIds: d.serviceItemIds,
     startAt: start,
-    client: { phone: d.phone, email: z.string().email().safeParse(d.email).success ? d.email : null },
+    client: null,
     promoId: d.promoId ?? null,
   });
   return toQuote(priced);
@@ -142,6 +144,8 @@ const publicSchema = z.object({
   // №11, част 3: сумата, която клиентът е видял преди бутона. Ако цената вече е друга (местата свършиха,
   // промоцията спря), часът не се записва и формата показва новата цена и защо. Не определя цената.
   expectedTotalEur: z.number().nullable().optional(),
+  // «Само първо посещение»: редовната цена, видяна като «иначе …»; важи само ако записът реши, че не е първо.
+  expectedAltEur: z.number().nullable().optional(),
   promoId: z.string().max(40).nullable().optional(),
   // Адресът, от който е отворена формата (from и UTM от рекламата).
   cameFrom: z.string().max(500).nullable().optional(),
@@ -286,9 +290,11 @@ export async function createPublicBooking(input: PublicBookingInput) {
         tx,
       );
       const seen = data.expectedTotalEur;
+      const same = (x: number | null) =>
+        x == null ? priced.totalEur == null : priced.totalEur != null && Math.abs(x - priced.totalEur) <= 0.005;
+      const notFirst = priced.outcome.state === "refused" && priced.outcome.reason === "not_first";
       const changed =
-        seen !== undefined &&
-        (seen == null ? priced.totalEur != null : priced.totalEur == null || Math.abs(seen - priced.totalEur) > 0.005);
+        seen !== undefined && !same(seen) && !(notFirst && data.expectedAltEur !== undefined && same(data.expectedAltEur));
       if (changed) return { changed: true as const, priced };
       await tx.insert(schema.bookings).values({
       id,
