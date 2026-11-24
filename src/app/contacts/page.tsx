@@ -163,7 +163,7 @@ export default function ContactsPage() {
             <PolicyCard
               num="02"
               title="Закъснял отказ и неявяване"
-              text={`При по-късен отказ или неявяване се начисляват ${cancellationPolicy.feePercent}% от стойността на услугата.`}
+              text={cancellationPolicy.lateFee}
               accent
             />
             <PolicyCard
