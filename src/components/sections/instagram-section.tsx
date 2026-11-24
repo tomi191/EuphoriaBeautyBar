@@ -2,43 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Instagram } from "lucide-react";
 import { Reveal } from "@/components/reactbits/reveal";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
-const tiles = [
-  {
-    src: "/images/gallery/g-1.webp",
-    span: "row-span-2",
-    alt: "Дамска прическа от салон Euphoria Hair & Beauty Bar в кв. Левски, Варна",
-  },
-  {
-    src: "/images/gallery/g-7.webp",
-    span: "",
-    alt: "Стилизиране на коса в салон Euphoria, кв. Левски, Варна",
-  },
-  {
-    src: "/images/gallery/g-14.webp",
-    span: "",
-    alt: "Боядисана коса след процедура в Euphoria Hair & Beauty Bar, Варна",
-  },
-  {
-    src: "/images/gallery/g-21.webp",
-    span: "row-span-2",
-    alt: "Атмосфера в салона Euphoria Hair & Beauty Bar, кв. Левски, Варна",
-  },
-  {
-    src: "/images/gallery/g-28.webp",
-    span: "",
-    alt: "Готова визия от майсторско подстригване в салон Euphoria, Варна",
-  },
-  {
-    src: "/images/gallery/g-35.webp",
-    span: "",
-    alt: "Грижа за косата при специалист в Euphoria Hair & Beauty Bar, кв. Левски",
-  },
-];
+// Плочките идват от одобрените снимки на галерията, по реда ѝ: скрита или върната снимка не стига
+// до тук (№8, решение 30). Взимат се 7.–12., защото първите 6 са в «Реални работи» по-горе.
+const spans = ["row-span-2", "", "", "row-span-2", "", ""];
 
-export function InstagramSection() {
+export async function InstagramSection() {
+  const all = await listPublicGalleryImages();
+  const tiles = all.length >= 12 ? all.slice(6, 12) : all.slice(0, 6);
+
   return (
     <section className="relative overflow-hidden bg-cream py-24 lg:py-32">
       <Image
@@ -80,14 +55,14 @@ export function InstagramSection() {
         {/* Asymmetric mosaic — 6 tiles, 2 големи */}
         <div className="mt-12 grid auto-rows-[140px] grid-cols-2 gap-3 md:auto-rows-[180px] md:grid-cols-4 lg:gap-4">
           {tiles.map((tile, i) => (
-            <Reveal key={tile.src} delay={i * 0.05}>
+            <Reveal key={tile.id} delay={i * 0.05}>
               <a
                 href={siteConfig.social.instagram}
                 target="_blank"
                 rel="noopener"
                 className={cn(
                   "group relative block h-full overflow-hidden rounded-md border border-foreground/10 bg-secondary",
-                  tile.span,
+                  spans[i],
                 )}
                 aria-label={`Instagram пост ${i + 1}`}
               >
