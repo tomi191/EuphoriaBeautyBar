@@ -4,6 +4,8 @@ import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { getClosedDates } from "@/lib/booking/closures";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
+import { adminResourceUserIds, getConsentMap } from "@/lib/data/tenant-consent";
+import { publicIdentity } from "@/lib/data/tenant-identity";
 import {
   PublicBookingForm,
   type PublicServiceOpt,
@@ -39,7 +41,7 @@ export default async function BookingPage() {
   const readiness = await getReadiness(activeResources.map((r) => r.id));
   const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
 
-  const closed = await getClosedDates();
+  const [closed, adminIds, consent] = await Promise.all([getClosedDates(), adminResourceUserIds(), getConsentMap()]);
   const catById = new Map(cats.map((c) => [c.id, c]));
 
   // Портфолио снимки по изпълнител (само тагнатите към него)
@@ -68,17 +70,23 @@ export default async function BookingPage() {
     offeringsByResource.set(o.resourceId, m);
   }
 
-  const performers: PerformerOpt[] = resources.map((r) => ({
-    id: r.id,
-    name: r.name,
-    kind: r.kind,
-    image: r.image ?? null,
-    bio: r.bio ?? null,
-    phone: r.phone ?? null,
-    portfolio: portfolioByResource.get(r.id) ?? [],
-    curated: offeringsByResource.has(r.id),
-    offerings: offeringsByResource.get(r.id) ?? {},
-  }));
+  // Наемател (не е вързан към вход на админ): име и снимка само със съгласие, вместо описанието
+  // честният ред «Самостоятелен специалист в салона» (визия №21). Името без съгласие не стига до браузъра.
+  const performers: PerformerOpt[] = resources.map((r) => {
+    const tenant = !(r.userId && adminIds.has(r.userId));
+    return {
+      id: r.id,
+      ...publicIdentity({ name: r.name, image: r.image ?? null }, { tenant, consent: !!consent[r.id] }),
+      tenant,
+      kind: r.kind,
+      bio: tenant ? null : (r.bio ?? null),
+      // Личният телефон само със съгласие; без него карето «Обади се за час» звъни на салона (решение 21).
+      phone: tenant && !consent[r.id] ? null : (r.phone ?? null),
+      portfolio: portfolioByResource.get(r.id) ?? [],
+      curated: offeringsByResource.has(r.id),
+      offerings: offeringsByResource.get(r.id) ?? {},
+    };
+  });
 
   // Услугите НЕ се филтрират по наличен изпълнител: kind без активен изпълнител
   // (напр. маникюр между двама наематели) остава видим и формата го показва като

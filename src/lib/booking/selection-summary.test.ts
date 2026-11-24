@@ -6,13 +6,13 @@ const from = (price: number) => ({ price, priceMax: null, priceFrom: true, curre
 const range = (price: number, priceMax: number) => ({ price, priceMax, priceFrom: false, currency: "€" });
 
 describe("formatDurationShort", () => {
-  it("formats minutes and hours like Saif's rules", () => {
-    expect(formatDurationShort(30)).toBe("30 мин");
-    expect(formatDurationShort(45)).toBe("45 мин");
-    expect(formatDurationShort(60)).toBe("1 ч");
-    expect(formatDurationShort(75)).toBe("1 ч 15 мин");
-    expect(formatDurationShort(100)).toBe("1 ч 40 мин");
-    expect(formatDurationShort(130)).toBe("2 ч 10 мин");
+  it("formats minutes and hours like Saif's rules, number and unit kept together", () => {
+    expect(formatDurationShort(30)).toBe("30\u00a0мин");
+    expect(formatDurationShort(45)).toBe("45\u00a0мин");
+    expect(formatDurationShort(60)).toBe("1\u00a0ч");
+    expect(formatDurationShort(75)).toBe("1\u00a0ч 15\u00a0мин");
+    expect(formatDurationShort(100)).toBe("1\u00a0ч 40\u00a0мин");
+    expect(formatDurationShort(130)).toBe("2\u00a0ч 10\u00a0мин");
   });
 });
 

@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/actions/auth-guard";
 import { auth } from "@/lib/auth";
 import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
 import { releaseListingsFilledBy } from "@/lib/rental/release";
+import { setConsent } from "@/lib/data/tenant-consent";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -17,6 +18,8 @@ const resourceSchema = z.object({
   image: z.string().nullable().optional(),
   bio: z.string().nullable().optional(),
   active: z.boolean().default(true),
+  /** Писмено съгласие за първо име и снимка на сайта (само за специалист под наем). */
+  publicConsent: z.boolean().optional(),
 });
 
 export type ResourceInput = z.infer<typeof resourceSchema>;
@@ -25,6 +28,7 @@ function revalidate() {
   revalidatePath("/admin/resources");
   revalidatePath("/admin/bookings");
   revalidatePath("/zapazi-chas");
+  revalidatePath("/za-nas");
 }
 
 export async function createResource(input: ResourceInput) {
@@ -43,6 +47,7 @@ export async function createResource(input: ResourceInput) {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
+  if (d.publicConsent !== undefined) await setConsent(id, d.publicConsent);
   revalidate();
   return { id };
 }
@@ -55,6 +60,7 @@ export async function updateResource(id: string, input: ResourceInput) {
     .update(schema.resources)
     .set({ name: d.name, kind: d.kind, color: d.color ?? null, image: d.image ?? null, bio: d.bio ?? null, active: d.active, updatedAt: new Date() })
     .where(eq(schema.resources.id, id));
+  if (d.publicConsent !== undefined) await setConsent(id, d.publicConsent);
   revalidate();
 }
 

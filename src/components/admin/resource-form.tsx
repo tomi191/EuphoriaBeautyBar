@@ -30,12 +30,15 @@ const KINDS: Array<{ value: "hair" | "nails" | "cosmetics"; label: string }> = [
 export function ResourceForm({
   trigger,
   initial,
+  consentAt = null,
   futureBookings = 0,
   defaultOpen = false,
   returnTo,
 }: {
   trigger: React.ReactNode;
   initial?: Resource;
+  /** Кога е отбелязано писменото съгласие (ISO); null = няма. */
+  consentAt?: string | null;
   futureBookings?: number; // бъдещи часове (за потвърждението при приключване)
   /** Отворена още при зареждане (идва от «Добави нов изпълнител» в «Места под наем»). */
   defaultOpen?: boolean;
@@ -55,11 +58,12 @@ export function ResourceForm({
   const [image, setImage] = React.useState(initial?.image ?? "");
   const [bio, setBio] = React.useState(initial?.bio ?? "");
   const [active, setActive] = React.useState(initial?.active ?? true);
+  const [consent, setConsent] = React.useState(!!consentAt);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const payload: ResourceInput = { name, kind, color: color || null, image: image.trim() || null, bio: bio.trim() || null, active };
+    const payload: ResourceInput = { name, kind, color: color || null, image: image.trim() || null, bio: bio.trim() || null, active, publicConsent: consent };
     try {
       if (initial) {
         await updateResource(initial.id, payload);
@@ -161,6 +165,21 @@ export function ResourceForm({
                 rows={3}
                 placeholder="напр. Снежана — собственик, специалист по цвят и подстригване."
               />
+            </div>
+            <div className="space-y-1.5 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="res-consent" className="cursor-pointer leading-snug">
+                  Писмено съгласие: име и снимка на сайта
+                </Label>
+                <Switch id="res-consent" checked={consent} onCheckedChange={setConsent} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {consent && consentAt
+                  ? `Отбелязано на ${new Date(consentAt).toLocaleDateString("bg-BG")}. `
+                  : ""}
+                Включи го само ако специалистът е подписал съгласие. Без него в «За нас» и при записването излиза само с
+                какво се занимава, без име и снимка. Ако си оттегли съгласието, изключи го. Снежана излиза винаги с името си.
+              </p>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <Label htmlFor="res-active" className="cursor-pointer">Активен (приема записвания)</Label>
