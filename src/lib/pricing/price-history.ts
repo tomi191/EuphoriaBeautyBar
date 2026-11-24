@@ -108,17 +108,20 @@ export function lowestPriceInWindow(input: {
 
   // Дневникът е по-къс от 30 дни. Частта преди него се знае само ако редът не е пипан в прозореца
   // (updatedAt се сменя и при друго, затова е горна граница за смяна на цената). Каталогът няма updatedAt.
+  // Смяна в дневника при старо updatedAt значи, че цената е сменена по път, който не пипа updatedAt (ръчна
+  // заявка): тогава updatedAt не е доказателство и чакаме 30 дни дневник (правилата на Полярис, «За Сириус» 1).
   const hasTouch = current?.updatedAt instanceof Date;
+  const logChange = es.some((e) => e.event !== "start");
   const touch = hasTouch
     ? Math.max(current!.updatedAt!.getTime(), current?.createdAt ? current.createdAt.getTime() : 0)
     : null;
-  if (touch != null && touch <= windowStart.getTime()) {
+  if (touch != null && touch <= windowStart.getTime() && !logChange) {
     return { ...base, discountAllowed: true, discountAllowedFrom: null, reason: "ok" };
   }
   // Кога ще се знае: дневникът навършва 30 дни, или (ако последното пипане е преди него) 30 дни след пипането.
   const dates: number[] = [];
   if (historyFrom) dates.push(plus30(historyFrom).getTime());
-  if (touch != null && (!historyFrom || touch <= historyFrom.getTime())) dates.push(touch + WINDOW_DAYS * DAY_MS);
+  if (touch != null && !logChange && (!historyFrom || touch <= historyFrom.getTime())) dates.push(touch + WINDOW_DAYS * DAY_MS);
   const from = dates.length ? new Date(Math.min(...dates)) : null;
   return no(hasTouch ? "changed_recently" : "history_short", from);
 }

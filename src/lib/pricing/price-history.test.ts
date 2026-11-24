@@ -113,6 +113,16 @@ describe("lowestPriceInWindow: дневник под 30 дни (правилот
     expect(r.discountAllowedFrom).toEqual(new Date(daysAgo(5).getTime() + 30 * 24 * 60 * 60 * 1000));
   });
 
+  it("при специалист: старо updatedAt, но смяна в дневника (ръчна заявка) → чака дневникът да навърши 30 дни", () => {
+    const r = lowestPriceInWindow({
+      at: AT,
+      entries: [e("start", 5, eur(30)), e("update", 2, eur(32))],
+      current: { ...eur(32), createdAt: daysAgo(300), updatedAt: daysAgo(45) },
+    });
+    expect(r).toMatchObject({ discountAllowed: false, reason: "changed_recently", lowestEur: 30 });
+    expect(r.discountAllowedFrom).toEqual(new Date(daysAgo(5).getTime() + 30 * 24 * 60 * 60 * 1000));
+  });
+
   it("при специалист: сменена преди 12 дни по updatedAt → не може до 30 дни след нея", () => {
     const r = lowestPriceInWindow({
       at: AT,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Images } from "lucide-react";
+import { BadgePercent, ChevronRight, Images } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getMyRevenue } from "@/lib/actions/revenue";
 import { StaffShell } from "@/components/staff/staff-shell";
@@ -43,6 +43,15 @@ export default async function StaffProfilePage() {
       >
         <Images className="size-5 text-primary" strokeWidth={1.7} aria-hidden />
         <span className="flex-1">Моите снимки</span>
+        <ChevronRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden />
+      </Link>
+
+      <Link
+        href="/staff/promotions"
+        className="mb-3 flex h-12 items-center gap-3 rounded-2xl border border-border bg-background px-4 text-[15px] font-medium transition-colors hover:border-foreground/40"
+      >
+        <BadgePercent className="size-5 text-primary" strokeWidth={1.7} aria-hidden />
+        <span className="flex-1">Промоции</span>
         <ChevronRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden />
       </Link>
 
