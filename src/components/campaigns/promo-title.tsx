@@ -16,7 +16,7 @@ export function PromoTitle({ as: Tag = "h2", id, aside, className }: { as?: "h1"
         </Tag>
         <p
           className={cn(
-            "mt-4 font-display text-[17px] leading-snug text-muted-foreground [text-wrap:pretty] lg:mt-0 lg:mb-2 lg:max-w-[30rem] lg:text-right lg:font-serif lg:text-[22px] lg:italic",
+            "mt-4 font-display text-[17px] leading-snug text-muted-foreground max-lg:[font-feature-settings:'locl'_0] [text-wrap:pretty] lg:mt-0 lg:mb-2 lg:max-w-[30rem] lg:text-right lg:font-serif lg:text-[22px] lg:italic",
           )}
         >
           {aside}

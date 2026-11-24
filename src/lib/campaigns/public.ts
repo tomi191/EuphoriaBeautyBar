@@ -133,7 +133,7 @@ export function withFrom(href: string, from: PromoPlace): string {
   return `${href}${href.includes("?") ? "&" : "?"}from=${from}`;
 }
 
-/** За началната: по една на специалист (първо тази, която свършва най-скоро), най-много 3. */
+/** За началната: по една на специалист (първо тази, която свършва най-скоро), най-много 2 (Канопус, част 2, т. 6). */
 export function homePicks(all: PublicCampaign[]): PublicCampaign[] {
   const seen = new Set<string>();
   const out: PublicCampaign[] = [];
@@ -141,7 +141,7 @@ export function homePicks(all: PublicCampaign[]): PublicCampaign[] {
     if (seen.has(c.resourceId)) continue;
     seen.add(c.resourceId);
     out.push(c);
-    if (out.length === 3) break;
+    if (out.length === 2) break;
   }
   return out;
 }

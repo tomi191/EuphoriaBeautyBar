@@ -124,6 +124,7 @@ describe("текстовете (Саиф, точка 3)", () => {
     );
     expect(promoDoneLine({ state: "none" }, t, "screen")).toBeNull();
     // Част 4, 5а: «само първо посещение» се решава при записа; ако не е първо, редът казва редовната цена.
+    if (applied.state === "none") throw new Error("очаква се промоция");
     const notFirst = { ...applied, state: "refused" as const, reason: "not_first" as const };
     expect(promoDoneLine(notFirst, { totalEur: 25, regularTotalEur: 25 }, "email")).toMatch(
       /^Цената е 25.€\. Промоцията е само за първо посещение, затова цената е редовната\.$/,

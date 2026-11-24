@@ -7,7 +7,7 @@ import { todaySofia } from "@/lib/campaigns/core";
 
 /**
  * Секцията «Промоции в салона.» на началната (визия №26, A-начална-1440/390), веднага след първия екран.
- * По една карта на специалист, най-много 3, първо тези, които свършват най-скоро; без течаща промоция я няма.
+ * По една карта на специалист, най-много 2 (кадрите A-начална), първо тези, които свършват най-скоро; без течаща промоция я няма.
  */
 export async function PromotionsSection() {
   let all: Awaited<ReturnType<typeof loadRunningCampaigns>> = [];
@@ -27,7 +27,7 @@ export async function PromotionsSection() {
       <section id="promotsii" aria-labelledby="promotsii-title" className="bg-background py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 lg:px-10">
           <PromoTitle id="promotsii-title" aside="Цената важи и когато запазваш онлайн." />
-          <div className="mt-10 grid gap-y-10 lg:mt-16 lg:grid-cols-2 lg:gap-y-16 lg:[&>*:nth-child(even)]:border-l lg:[&>*:nth-child(even)]:border-border lg:[&>*:nth-child(even)]:pl-16 lg:[&>*:nth-child(odd)]:pr-16">
+          <div className="mt-10 grid gap-y-10 lg:mt-16 lg:grid-cols-2 lg:gap-y-16 lg:[&>*:nth-child(even)]:border-l lg:[&>*:nth-child(even)]:border-border lg:[&>*:nth-child(even)]:pl-11 lg:[&>*:nth-child(odd)]:pr-11">
             {picks.map((c) => (
               <EndGate key={c.id} endsOn={c.endsOn}>
                 <div>

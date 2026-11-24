@@ -421,7 +421,7 @@ export function CampaignForm({
                           setKind("gift");
                           setProblems([]);
                         }}
-                        className="mt-1 min-h-11 text-primary underline underline-offset-4"
+                        className="mt-1 flex min-h-12 items-center text-primary underline underline-offset-4"
                       >
                         Направи подарък
                       </button>
@@ -430,7 +430,7 @@ export function CampaignForm({
                       <button
                         type="button"
                         onClick={() => startFrom(block.from!)}
-                        className="mt-1 ml-4 min-h-11 text-primary underline underline-offset-4"
+                        className="mt-2 flex min-h-12 items-center text-primary underline underline-offset-4"
                       >
                         Започни от {shortDay(block.from, today)}
                       </button>

@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const primaryBtn =
-  "inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:text-[19px]";
+  "inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 [font-feature-settings:'locl'_0] lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:text-[19px]";
 const secondLink = "inline-flex min-h-12 items-center font-serif text-[30px] italic text-primary underline underline-offset-4";
 
 export default async function PromotionsPage({
@@ -66,7 +66,7 @@ export default async function PromotionsPage({
             Тази промоция приключи на {longDay(ended.endedOn, today)}.
           </h1>
           {ended.regular && (
-            <p className="mt-6 font-display text-[19px] leading-snug text-muted-foreground lg:text-[22px]">
+            <p className="mt-6 font-display text-[19px] leading-snug text-muted-foreground [font-feature-settings:'locl'_0] lg:text-[22px]">
               {ended.serviceName}: редовната цена е {ended.regular.from ? "от " : ""}
               {formatEuro(ended.regular.eur)}.
             </p>
@@ -97,7 +97,7 @@ export default async function PromotionsPage({
         {items.length === 0 ? (
           <div className="mt-14 max-w-xl lg:mt-20">
             <h2 className="font-display text-[30px] leading-tight font-medium lg:text-4xl">Сега няма промоции.</h2>
-            <p className="mt-6 font-display text-[19px] leading-snug text-muted-foreground lg:text-[22px]">
+            <p className="mt-6 font-display text-[19px] leading-snug text-muted-foreground [font-feature-settings:'locl'_0] lg:text-[22px]">
               Цените са в ценоразписа, а свободните часове в записването.
             </p>
             <div className="mt-8">
@@ -112,7 +112,7 @@ export default async function PromotionsPage({
             </div>
           </div>
         ) : (
-          <div className="mt-10 grid gap-y-8 lg:mt-14 lg:grid-cols-2 lg:gap-y-16 lg:[&>*:nth-child(even)]:border-l lg:[&>*:nth-child(even)]:border-border lg:[&>*:nth-child(even)]:pl-16 lg:[&>*:nth-child(odd)]:pr-16">
+          <div className="mt-10 grid gap-y-8 lg:mt-14 lg:grid-cols-2 lg:gap-y-16 lg:[&>*:nth-child(even)]:border-l lg:[&>*:nth-child(even)]:border-border lg:[&>*:nth-child(even)]:pl-11 lg:[&>*:nth-child(odd)]:pr-11">
             {items.map(({ c, heading, first }) => (
               <EndGate key={c.id} endsOn={c.endsOn}>
                 <div
@@ -120,7 +120,7 @@ export default async function PromotionsPage({
                   className={cn(!first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
                   <h2
                     className={cn(
-                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:font-serif-semi lg:text-[36px] lg:font-semibold",
+                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:pb-0.5 lg:font-serif-semi lg:text-[36px] lg:font-semibold",
                       !first && "hidden lg:block",
                     )}
                   >
@@ -132,7 +132,7 @@ export default async function PromotionsPage({
                     today={today}
                     href={withFrom(c.action.href, from)}
                     phone={c.action.phone}
-                    className={cn("mt-3", !first && "mt-0 lg:mt-3")}
+                    className={cn("mt-3 lg:mt-0", !first && "mt-0")}
                   />
                 </div>
               </EndGate>
