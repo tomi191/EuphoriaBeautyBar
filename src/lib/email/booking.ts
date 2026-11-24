@@ -100,6 +100,8 @@ export interface BookingEmailData {
   start: Date;
   /** Форматирана ориентировъчна цена (напр. „20 лв" / „от 40 лв" / „60–90 лв"). */
   priceLabel?: string;
+  /** Ред за промоцията (№11, част 3; Саиф 3.14 и 3.15): веднага след реда с часа. */
+  promoLine?: string | null;
   /** Ако клиентът още не е потвърдил имейла си — линк за потвърждение (онбординг). */
   verifyUrl?: string;
   /** Линк за онлайн отмяна на часа (token = booking id). */
@@ -129,6 +131,7 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
         ...(data.priceLabel ? ([["Ориентировъчна цена", data.priceLabel]] as [string, string][]) : []),
         addressCell(),
       ])}
+      ${data.promoLine ? `<p style="margin:0 0 8px;font-size:14px;color:#2b2b2b">${esc(data.promoLine)}</p>` : ""}
       ${
         data.priceLabel
           ? `<p style="margin:0 0 8px;font-size:12px;color:#8a8279">Цената е ориентировъчна и може да варира според дължината и състоянието на косата и използваните продукти.</p>`

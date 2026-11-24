@@ -11,7 +11,7 @@ import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
 import { upsertClientByPhone } from "@/lib/booking/clients";
-import { resolveOffering } from "@/lib/booking/offering";
+import { lockPromoSlots, resolveBookingPrice, resolveOffering } from "@/lib/booking/offering";
 import { allowedFrom, TRANSITION_ERROR } from "@/lib/booking/status";
 import { isValidDateStr, isValidTimeStr } from "@/lib/booking/input-guards";
 
@@ -61,7 +61,7 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
     columns: { id: true },
   });
   if (!owns) return { ok: false as const, error: "Тази услуга не е в твоя списък." };
-  const { durationMin, bufferMin, priceEur, activeMin, processingMin } = await resolveOffering(resource.id, d.serviceItemId);
+  const { durationMin, bufferMin, activeMin, processingMin } = await resolveOffering(resource.id, d.serviceItemId);
   const start = new Date(d.startAt);
   if (Number.isNaN(start.getTime())) return { ok: false as const, error: "Невалиден час." };
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
@@ -89,7 +89,14 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
 
   try {
     const id = nanoid();
-    await db.insert(schema.bookings).values({
+    // Цената по промоцията (№11, част 3): същата сметка като на сайта, с заключени места.
+    await db.transaction(async (tx) => {
+      await lockPromoSlots(tx, resource.id, [d.serviceItemId]);
+      const priced = await resolveBookingPrice(
+        { resourceId: resource.id, serviceItemIds: [d.serviceItemId], startAt: start, client: { phone: d.clientPhone } },
+        tx,
+      );
+      await tx.insert(schema.bookings).values({
       id,
       resourceId: resource.id,
       serviceItemId: d.serviceItemId,
@@ -102,11 +109,14 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
       processingMin,
       allowParallel: d.allowParallel === true,
       source: "phone",
-      priceEur,
+      priceEur: priced.totalEur,
+      campaignId: priced.campaignId,
+      regularPriceEur: priced.campaignId ? priced.regularTotalEur : null,
       notes: d.notes ?? null,
       createdBy: session.user.id,
       createdAt: new Date(),
       updatedAt: new Date(),
+      });
     });
     revalidatePath("/staff");
     revalidatePath("/staff/board");
@@ -244,6 +254,8 @@ export async function editMyBooking(id: string, input: z.infer<typeof editSchema
         startAt: start,
         endAt: end,
         priceEur,
+        // Друга услуга: часът вече не е по промоцията (цената е редовната) и не заема място в нея.
+        ...(serviceChanged ? { campaignId: null, regularPriceEur: null } : {}),
         activeMin: d.activeMin ?? booking.activeMin,
         processingMin: d.processingMin ?? booking.processingMin,
         notes: d.notes ?? null,

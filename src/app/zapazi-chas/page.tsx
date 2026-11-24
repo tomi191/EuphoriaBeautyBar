@@ -7,10 +7,12 @@ import { getClosedDates } from "@/lib/booking/closures";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { adminResourceUserIds, getConsentMap } from "@/lib/data/tenant-consent";
 import { publicIdentity } from "@/lib/data/tenant-identity";
+import { loadRunningCampaigns } from "@/lib/campaigns/public";
 import {
   PublicBookingForm,
   type PublicServiceOpt,
   type PerformerOpt,
+  type PromoOpt,
 } from "@/components/forms/public-booking-form";
 
 export const metadata: Metadata = {
@@ -23,8 +25,10 @@ export const metadata: Metadata = {
 // (важно за актуални слотове) + премахва DB зависимостта от build-а.
 export const dynamic = "force-dynamic";
 
-export default async function BookingPage() {
-  const [cats, items, activeResources, gallery, offerings] = await Promise.all([
+export default async function BookingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const sp = await searchParams;
+  const param = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string).slice(0, 40) : null);
+  const [cats, items, activeResources, gallery, offerings, running] = await Promise.all([
     db.query.serviceCategories.findMany(),
     db.query.serviceItems.findMany({
       where: (s, { eq }) => eq(s.bookableOnline, true),
@@ -36,7 +40,21 @@ export default async function BookingPage() {
     }),
     listPublicGalleryImages(),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
+    loadRunningCampaigns(),
   ]);
+  // Течащите промоции с онлайн запис и свободни места (№11, част 3). Цената при записа я решава сървърът.
+  const promos: PromoOpt[] = running
+    .filter((c) => c.online)
+    .map((c) => ({
+      id: c.id,
+      resourceId: c.resourceId,
+      kind: c.kind,
+      endsOn: c.endsOn,
+      firstVisitOnly: c.card.firstVisitOnly,
+      gift: c.card.gift,
+      who: c.card.who,
+      services: c.services.map((s) => ({ serviceItemId: s.serviceItemId, prevEur: s.prevEur, newEur: s.newEur })),
+    }));
 
   // Само готови изпълнители (поне една своя услуга): нов не излиза, преди да е готов.
   const readiness = await getReadiness(activeResources.map((r) => r.id));
@@ -130,7 +148,15 @@ export default async function BookingPage() {
         <p className="mt-3 mb-6 md:mb-8 text-sm text-muted-foreground">
           Плащането е в салона: в брой, с карта или през Revolut. Запазването е без депозит.
         </p>
-        {services.length > 0 && <PublicBookingForm services={services} performers={performers} closedDates={closed} />}
+        {services.length > 0 && (
+          <PublicBookingForm
+            services={services}
+            performers={performers}
+            closedDates={closed}
+            promos={promos}
+            start={{ promoId: param("promo"), specialistId: param("specialist"), serviceId: param("usluga") }}
+          />
+        )}
       </div>
     </section>
   );

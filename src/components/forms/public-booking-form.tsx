@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createPublicBooking, fetchFirstFreeDay, fetchPublicSlots } from "@/lib/actions/public-booking";
+import { createPublicBooking, fetchFirstFreeDay, fetchPublicSlots, quotePublicBooking, type PublicQuote } from "@/lib/actions/public-booking";
+import { promoDoneLine, promoNotes } from "@/lib/campaigns/booking-promo";
+import { longDay } from "@/lib/campaigns/rules";
 import type { DaySlot } from "@/lib/booking/slots";
-import { formatServicePrice, priceVaries } from "@/lib/booking/price";
+import { formatEuro, formatServicePrice, priceVaries } from "@/lib/booking/price";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { serviceImageFor } from "@/lib/booking/length-icon";
 import { siteConfig, cancellationPolicy } from "@/lib/site";
@@ -89,6 +91,26 @@ export interface PerformerOpt {
   offerings: Record<string, OfferingData>;
 }
 
+/** Течаща промоция с онлайн запис (№11, част 3): значката, двете цени при специалиста и пристигането от картата. */
+export interface PromoOpt {
+  id: string;
+  resourceId: string;
+  kind: "discount" | "gift";
+  endsOn: string;
+  firstVisitOnly: boolean;
+  gift: string | null;
+  /** «при Снежана» / «при специалиста по маникюр». */
+  who: string;
+  services: { serviceItemId: string; prevEur: number | null; newEur: number | null }[];
+}
+
+/** Избраното от бутона на картата: /zapazi-chas?promo=…&specialist=…&usluga=… */
+export interface BookingStart {
+  promoId: string | null;
+  specialistId: string | null;
+  serviceId: string | null;
+}
+
 /** Връща цената/продължителността на услуга за конкретен изпълнител (own или каталожна). */
 function resolveOffering(svc: PublicServiceOpt, performer: PerformerOpt | undefined): OfferingData {
   const own = performer?.offerings[svc.id];
@@ -134,11 +156,27 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
   );
 }
 
-export function PublicBookingForm({ services, performers, closedDates }: { services: PublicServiceOpt[]; performers: PerformerOpt[]; closedDates?: string[] }) {
-  const [categoryName, setCategoryName] = React.useState("");
-  const [groupTitle, setGroupTitle] = React.useState("");
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  const [performerId, setPerformerId] = React.useState("");
+export function PublicBookingForm({
+  services,
+  performers,
+  closedDates,
+  promos = [],
+  start,
+}: {
+  services: PublicServiceOpt[];
+  performers: PerformerOpt[];
+  closedDates?: string[];
+  promos?: PromoOpt[];
+  start?: BookingStart;
+}) {
+  // Пристигане от картата на промоцията: услугата и специалистът са избрани (само ако промоцията още тече).
+  const startPromo = promos.find((c) => c.id === start?.promoId) ?? null;
+  const startSvc = start?.serviceId ? services.find((s) => s.id === start.serviceId) : undefined;
+  const startPerformer = start?.specialistId && performers.some((p) => p.id === start.specialistId) ? start.specialistId : "";
+  const [categoryName, setCategoryName] = React.useState(startSvc?.category ?? "");
+  const [groupTitle, setGroupTitle] = React.useState(startSvc?.groupTitle ?? "");
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(startSvc ? [startSvc.id] : []);
+  const [performerId, setPerformerId] = React.useState(startSvc ? startPerformer : "");
   const [date, setDate] = React.useState(todayStr());
   const [slots, setSlots] = React.useState<DaySlot[]>([]);
   const [dayClosed, setDayClosed] = React.useState(false);
@@ -150,7 +188,10 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const [consent, setConsent] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [done, setDone] = React.useState<{ when: string; service: string; who: string } | null>(null);
+  const [done, setDone] = React.useState<{ when: string; service: string; who: string; promoLine: string | null } | null>(null);
+  // Цената с промоцията от сървъра (същата сметка като при записа) и за кой избор е.
+  const [quote, setQuote] = React.useState<{ key: string; q: PublicQuote } | null>(null);
+  const seenPromoId = React.useRef<string | null>(startPromo?.id ?? null);
   const [lightbox, setLightbox] = React.useState<PerformerOpt | null>(null);
   const [serviceQuery, setServiceQuery] = React.useState("");
   // Изборът на услуга се свива в един ред; „Смени“, „Промени“ и „Добави още услуга“ го отварят пак.
@@ -353,6 +394,38 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     };
   }, [performerId, date, totalDuration, totalBuffer, isOffline, waitingFirstFree]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Цената по промоцията: пита сървъра при избран час и пак при телефона и имейла (първо посещение).
+  const quoteKey = hasSelection && performerId && slot && !isOffline ? `${performerId}|${selectedIds.join(",")}|${slot}` : "";
+  const hasPromoHere = promos.some((c) => c.resourceId === performerId && c.services.some((x) => selectedIds.includes(x.serviceItemId)));
+  React.useEffect(() => {
+    if (!quoteKey || (!hasPromoHere && !seenPromoId.current)) {
+      setQuote(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      quotePublicBooking({
+        resourceId: performerId,
+        serviceItemIds: selectedIds,
+        startAt: slot,
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+        promoId: seenPromoId.current,
+      })
+        .then((q) => {
+          if (cancelled || !q) return;
+          if (q.outcome.state === "applied") seenPromoId.current = q.outcome.campaignId;
+          setQuote({ key: quoteKey, q });
+        })
+        .catch(() => null);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [quoteKey, hasPromoHere, phone, email]); // eslint-disable-line react-hooks/exhaustive-deps
+  const q = quote?.key === quoteKey ? quote.q : null;
+
   // Защо бутонът е сив (null = всичко е попълнено).
   const reason = missingReason({ service: hasSelection, performer: !!performerId, slot: !!slot, name, phone, email, consent });
 
@@ -382,9 +455,21 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         clientEmail: email,
         consentLate: true,
         allowParallel: slotIsParallel,
+        // Сумата, която клиентката вижда в «Твоят час»: ако на сървъра е друга, часът не се записва.
+        expectedTotalEur: q ? q.totalEur : undefined,
+        promoId: seenPromoId.current,
+        cameFrom: typeof window !== "undefined" ? window.location.search : null,
       });
       if (res.ok) {
-        setDone({ when: `${date}, ${slotLabel(slot)} ч.`, service: serviceNamesLabel, who: performer?.name ?? "" });
+        setDone({
+          when: `${date}, ${slotLabel(slot)} ч.`,
+          service: serviceNamesLabel,
+          who: performer?.name ?? "",
+          promoLine: res.quote ? promoDoneLine(res.quote.outcome, res.quote, "screen") : null,
+        });
+      } else if ("quote" in res && res.quote) {
+        // Цената се смени между избора и бутона: новата цена и защо стоят преди бутона.
+        setQuote({ key: quoteKey, q: res.quote });
       } else {
         setError(res.error);
       }
@@ -404,6 +489,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           {done.service}
           {done.who ? ` при ${done.who}` : ""} — {done.when}
         </p>
+        {done.promoLine && <p className="mt-2 text-foreground/80">{done.promoLine}</p>}
         <p className="mt-4 text-sm text-muted-foreground">
           Изпратихме потвърждение на имейла ти. В него има линк, с който можеш да откажеш часа сам.
         </p>
@@ -417,6 +503,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const currentYear = Number(today.slice(0, 4));
   const canAddMore = services.some((s) => s.kind === activeKind && !selectedIds.includes(s.id) && isOnlineBookable(s));
   const phoneOnlyInGroup = groupItems.some((s) => !isOnlineBookable(s));
+  const promoServiceIds = new Set(promos.flatMap((c) => c.services.map((x) => x.serviceItemId)));
   const queryLabel = serviceQuery.trim().length > 24 ? `${serviceQuery.trim().slice(0, 24)}…` : serviceQuery.trim();
 
   // Под затворен или пълен ден: бутон към най-близкия свободен ден (или защо го няма).
@@ -438,6 +525,23 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
   const summaryOfferings = performer ? selectedServices.map((s) => resolveOffering(s, performer)) : [];
   const summaryPrice =
     summaryOfferings.length === 1 ? formatPrice(summaryOfferings[0]) : sumPriceLabel(summaryOfferings);
+  // Промоцията в «Твоят час»: двете цени, редът под тях или защо цената е редовната (преди бутона).
+  const po = q?.outcome;
+  const promoApplied = po?.state === "applied" ? po : null;
+  const promoSvcName = po && po.state !== "none" ? (services.find((s) => s.id === po.serviceItemId)?.name ?? "") : "";
+  const promoPriceLabel =
+    promoApplied?.kind === "discount" && promoApplied.newEur != null
+      ? summaryOfferings.length === 1
+        ? formatEuro(promoApplied.newEur)
+        : sumPriceLabel(
+            selectedServices.map((s, i) =>
+              s.id === promoApplied.serviceItemId ? { ...summaryOfferings[i], price: promoApplied.newEur!, priceMax: null, priceFrom: false } : summaryOfferings[i],
+            ),
+          )
+      : null;
+  const notes = po
+    ? promoNotes(po, { today: todayStr(), regularLabel: summaryPrice, serviceName: promoSvcName, manyServices: selectedServices.length > 1 })
+    : { under: [], beforeButton: null };
   const summaryEnd = slot ? slotLabel(new Date(new Date(slot).getTime() + totalDuration * 60_000).toISOString()) : "";
 
   return (
@@ -604,6 +708,9 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       <span className="min-w-0">
                         <span className="block font-medium leading-tight">{s.name}</span>
                         {phoneOnly && <span className="block text-xs text-muted-foreground">Само по телефон</span>}
+                        {!phoneOnly && promoServiceIds.has(s.id) && (
+                          <span className="mt-1 inline-block rounded bg-primary/10 px-1.5 py-px text-xs font-medium text-primary">Промоция</span>
+                        )}
                       </span>
                     </span>
                     <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
@@ -749,6 +856,27 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       ) : (
                         p.bio && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.bio}</p>
                       )}
+                      {(() => {
+                        const c = promos.find((x) => x.resourceId === p.id && x.services.some((y) => selectedIds.includes(y.serviceItemId)));
+                        const cs = c?.services.find((y) => selectedIds.includes(y.serviceItemId));
+                        if (!c || !cs) return null;
+                        return (
+                          <div className="mt-1.5">
+                            {c.kind === "discount" && cs.prevEur != null && cs.newEur != null && selectedIds.length === 1 && (
+                              <p className="flex items-baseline gap-2 tabular-nums">
+                                <s className="text-base text-muted-foreground">{formatEuro(cs.prevEur)}</s>
+                                <span className="text-xl font-semibold text-primary">{formatEuro(cs.newEur)}</span>
+                                <span className="sr-only">Предишна цена {formatEuro(cs.prevEur)}, нова цена {formatEuro(cs.newEur)}.</span>
+                              </p>
+                            )}
+                            <p className="mt-1 font-serif text-[15px] italic leading-snug text-muted-foreground">
+                              Промоция до {longDay(c.endsOn, todayStr())}.
+                              {c.kind === "gift" && c.gift && <span className="block">Подарък в същия час: {c.gift}.</span>}
+                              {c.firstVisitOnly && <span className="block">Само за първо посещение {c.who}.</span>}
+                            </p>
+                          </div>
+                        );
+                      })()}
                       {p.portfolio.length > 0 && (
                         <button
                           type="button"
@@ -786,6 +914,11 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           </div>
         ) : noPerformer ? null : (
         <div className="space-y-2">
+          {startPromo && startSvc && selectedIds.includes(startSvc.id) && performerId === startPromo.resourceId && (
+            <p className="text-sm">
+              Избрана е промоцията: {startSvc.name} {startPromo.who}.
+            </p>
+          )}
           <Label>Дата</Label>
           <BookingCalendar value={date} onChange={pickDate} disabledDates={closedDates} hidePast />
           {autoPicked && hasSelection && performerId && (
@@ -941,13 +1074,34 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               <dd>{formatDurationShort(totalDuration)}, до {summaryEnd}</dd>
               <dt className="text-muted-foreground">{selectedServices.length > 1 ? "Общо" : "Цена"}</dt>
               <dd>
-                <span className="text-[17px] font-semibold text-primary md:text-base">{summaryPrice}</span>
+                {promoPriceLabel ? (
+                  <>
+                    <s className="mr-2 text-muted-foreground">{summaryPrice}</s>
+                    <span className="text-[17px] font-semibold text-primary md:text-base">{promoPriceLabel}</span>
+                    {notes.under.map((n) => (
+                      <span key={n} className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">
+                        {n}
+                      </span>
+                    ))}
+                  </>
+                ) : (
+                  <span className="text-[17px] font-semibold text-primary md:text-base">{summaryPrice}</span>
+                )}
                 {summaryOfferings.some((o) => priceVaries(o)) && (
                   <span className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">
                     Цената е ориентировъчна: точната се уточнява в салона.
                   </span>
                 )}
               </dd>
+              {promoApplied?.kind === "gift" && promoApplied.gift && (
+                <>
+                  <dt className="text-muted-foreground">Подарък</dt>
+                  <dd>
+                    {promoApplied.gift}
+                    <span className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">Получаваш го в същия час.</span>
+                  </dd>
+                </>
+              )}
               <dt className="text-muted-foreground">Адрес</dt>
               <dd>
                 <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 md:underline">
@@ -992,6 +1146,11 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           </span>
         </label>
 
+        {notes.beforeButton && hasSelection && performer && slot && !isOffline && (
+          <p id="bf-promo" aria-live="polite" className="text-[15px] leading-snug md:text-sm">
+            {notes.beforeButton}
+          </p>
+        )}
         {error && (
           <p role="alert" aria-live="assertive" className="text-sm text-destructive">
             {error}
