@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, boolean, timestamp, jsonb, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, bigint, real, boolean, timestamp, jsonb, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -320,6 +320,36 @@ export const resourceServices = pgTable("resource_services", {
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
   updatedAt: ts("updated_at").notNull().$defaultFn(() => new Date()),
 });
+
+// Дневник на цените (№11, решение 25; ЗЗП чл. 65, ал. 2). Само добавяне. Пише го тригер от
+// drizzle/manual/0003_price_log.sql при всяка смяна на цена в resource_services и service_items;
+// кой и откъде се подава с withPriceLog (src/lib/pricing/price-log.ts). Кодът само чете.
+export const priceLog = pgTable(
+  "price_log",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    tableName: text("table_name").notNull(), // resource_services | service_items
+    rowId: text("row_id").notNull(),
+    serviceItemId: text("service_item_id").notNull(),
+    resourceId: text("resource_id"), // null = каталожна цена
+    event: text("event").notNull(), // start | insert | update
+    oldPrice: real("old_price"),
+    newPrice: real("new_price").notNull(),
+    oldPriceMax: real("old_price_max"),
+    newPriceMax: real("new_price_max"),
+    oldPriceFrom: boolean("old_price_from"),
+    newPriceFrom: boolean("new_price_from").notNull(),
+    oldCurrency: text("old_currency"),
+    newCurrency: text("new_currency").notNull(),
+    changedAt: ts("changed_at").notNull().defaultNow(),
+    changedBy: text("changed_by"),
+    source: text("source").notNull(), // staff_app | admin | script | direct | migration
+  },
+  (t) => [
+    index("price_log_row_idx").on(t.tableName, t.rowId, t.changedAt),
+    index("price_log_offer_idx").on(t.serviceItemId, t.resourceId, t.changedAt),
+  ],
+);
 
 // Собствено работно време на изпълнител по ден (fallback към салонното working_hours).
 export const resourceWorkingHours = pgTable("resource_working_hours", {
