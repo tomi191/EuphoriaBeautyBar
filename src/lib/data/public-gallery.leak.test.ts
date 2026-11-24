@@ -13,6 +13,7 @@ const ALLOWED = new Set(
     "lib/actions/gallery.ts", // администрацията
     "lib/actions/gallery-review.ts", // администрацията
     "lib/actions/staff-gallery.ts", // само своите снимки на влезлия специалист
+    "lib/gallery/review.ts", // одобрението при Снежана: администрацията и бутоните в админ канала на Telegram
     "lib/data/gallery.ts", // статичният списък отпреди базата (не чете базата)
   ].map((p) => path.normalize(p)),
 );
@@ -48,7 +49,7 @@ describe("галерията: няма публично четене покра�
       .map((f) => path.relative(ROOT, f))
       .filter((rel) => /gallery-originals|ORIGINALS_BUCKET/.test(fs.readFileSync(path.join(ROOT, rel), "utf8")));
     expect(users.sort()).toEqual(
-      ["lib/actions/gallery-review.ts", "lib/actions/gallery.ts", "lib/actions/staff-gallery.ts", "lib/db/schema.ts", "lib/gallery/storage.ts"].map((p) => path.normalize(p)).sort(),
+      ["lib/actions/gallery.ts", "lib/actions/staff-gallery.ts", "lib/db/schema.ts", "lib/gallery/review.ts", "lib/gallery/storage.ts"].map((p) => path.normalize(p)).sort(),
     );
   });
 });

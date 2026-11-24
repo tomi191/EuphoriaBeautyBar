@@ -2,10 +2,11 @@ import { db } from "@/lib/db";
 import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { positionForCategory } from "@/lib/rental/listing-rules";
 import { INQUIRY_BELL_TITLE, inquiryBellDetail } from "@/lib/rental/inquiry-rules";
+import { pendingPhotoBellItems } from "@/lib/gallery/review";
 
 export type AdminNotification = {
   id: string;
-  kind: "new_online" | "cancelled" | "rental_inquiry";
+  kind: "new_online" | "cancelled" | "rental_inquiry" | "gallery_pending";
   title: string;
   detail: string;
   at: string;
@@ -18,7 +19,7 @@ const dayMonth = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", da
 
 export async function loadAdminNotifications(): Promise<AdminNotificationsState> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [rows, seenRow, inquiries] = await Promise.all([
+  const [rows, seenRow, inquiries, photos] = await Promise.all([
     db.query.bookings.findMany({
       where: (b, { or, and, gte, eq, isNotNull }) =>
         or(
@@ -36,6 +37,8 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
       limit: 50,
       columns: { id: true, name: true, phone: true, createdAt: true, positionId: true },
     }),
+    // Снимките от специалистите, които чакат одобрение (вързан или не Telegram).
+    pendingPhotoBellItems(since),
   ]);
 
   const clientIds = [...new Set(rows.map((b) => b.clientId).filter(Boolean))] as string[];
@@ -94,6 +97,7 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
       });
     }
   }
+  items.push(...photos);
   items.sort((a, c) => (a.at < c.at ? 1 : -1));
   const top = items.slice(0, 30);
 

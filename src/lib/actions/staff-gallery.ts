@@ -2,6 +2,7 @@
 
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { after } from "next/server";
 import sharp from "sharp";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
@@ -17,6 +18,7 @@ import {
   sniffImageType,
 } from "@/lib/gallery/upload-rules";
 import { ORIGINALS_BUCKET, ensureOriginalsBucket, galleryStorage, signOriginals } from "@/lib/gallery/storage";
+import { notifyAdminNewPhoto } from "@/lib/gallery/review";
 
 type Fail = { ok: false; error: string };
 const fail = (error: string): Fail => ({ ok: false, error });
@@ -134,6 +136,9 @@ export async function uploadStaffGalleryImage(formData: FormData) {
     return fail(E.storage);
   }
 
+  // Снежана получава снимката в Telegram след отговора към специалиста (бавен Telegram не го задържа).
+  // Камбанката в администрацията показва чакащата и без Telegram.
+  after(() => notifyAdminNewPhoto(id));
   return { ok: true as const, id };
 }
 

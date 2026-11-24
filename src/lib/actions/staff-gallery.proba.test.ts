@@ -10,6 +10,8 @@ const RUN = process.env.PROBA_DB === "1";
 const who = vi.hoisted(() => ({ user: null as null | { id: string; role: string } }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: async () => (who.user ? { user: who.user } : null) } } }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
+// after(): известието до Снежана тръгва след отговора; тук не се праща нищо (без Telegram ключ).
+vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), after: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: (u: string) => { throw new Error(`REDIRECT:${u}`); } }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
