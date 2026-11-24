@@ -16,6 +16,7 @@ import { searchServices } from "@/lib/booking/service-search";
 import { capitalize, humanDay, onHumanDay } from "@/lib/booking/day-label";
 import { formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
 import { TENANT_LINE, TENANT_ROLE, TENANT_ROLE_SHORT, firstName } from "@/lib/data/tenant-identity";
+import { missingReason } from "@/lib/booking/missing-reason";
 
 const SALON_PHONE = siteConfig.contact.phone;
 const SALON_PHONE_DISPLAY = siteConfig.contact.phoneFormatted;
@@ -348,11 +349,14 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     };
   }, [performerId, date, totalDuration, totalBuffer, isOffline, waitingFirstFree]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Защо бутонът е сив (null = всичко е попълнено).
+  const reason = missingReason({ service: hasSelection, performer: !!performerId, slot: !!slot, name, phone, email, consent });
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!hasSelection || !performerId || !slot || !consent) {
-      setError("Избери поне една услуга, специалист, час и приеми условията.");
+    if (reason) {
+      setError(reason);
       return;
     }
     setSubmitting(true);
@@ -381,7 +385,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         setError(res.error);
       }
     } catch {
-      setError("Възникна грешка. Опитай пак или се обади.");
+      setError(`Не успяхме да запазим часа. Опитай пак или се обади на ${SALON_PHONE_DISPLAY}.`);
     } finally {
       setSubmitting(false);
     }
@@ -426,9 +430,15 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
     </Button>
   ) : null;
 
+  // «Твоят час»: обобщението преди бутона (кадри Час-обобщение-390/1440, визия №22).
+  const summaryOfferings = performer ? selectedServices.map((s) => resolveOffering(s, performer)) : [];
+  const summaryPrice =
+    summaryOfferings.length === 1 ? formatPrice(summaryOfferings[0]) : sumPriceLabel(summaryOfferings);
+  const summaryEnd = slot ? slotLabel(new Date(new Date(slot).getTime() + totalDuration * 60_000).toISOString()) : "";
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-6 md:p-8">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-4 md:p-8">
         {showPicker && (<>
         {/* Търсачка — пряк път през 70+ услуги, без да минаваш категория → вид */}
         <div className="space-y-2">
@@ -897,20 +907,65 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="bf-name">Име</Label>
-            <Input id="bf-name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-11" />
+            <Input id="bf-name" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} className="h-12 md:text-base" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="bf-phone">Телефон</Label>
-            <Input id="bf-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-11" />
+            <Input id="bf-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12 md:text-base" />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="bf-email">Имейл</Label>
-          <Input id="bf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-11" />
+          <Input id="bf-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-12 md:text-base" />
         </div>
 
-        <label className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4" />
+        <div className="space-y-3 md:space-y-4">
+        {hasSelection && performer && slot && !isOffline && (
+          <section aria-labelledby="bf-summary" className="rounded-2xl border border-border bg-secondary/40 p-3 md:p-5">
+            <h3 id="bf-summary" className="font-sans text-lg font-semibold tracking-normal md:text-xl">Твоят час</h3>
+            <dl className="mt-2 grid grid-cols-[88px_minmax(0,1fr)] gap-x-1.5 gap-y-1 text-sm leading-5 [&_dt]:text-[13px] md:[&_dt]:text-base md:grid-cols-[120px_minmax(0,1fr)] md:gap-x-3 md:gap-y-1.5 md:text-base md:leading-snug">
+              <dt className="text-muted-foreground">Услуга</dt>
+              <dd>
+                {selectedServices.map((s) => (
+                  <span key={s.id} className="block">{s.name}</span>
+                ))}
+              </dd>
+              <dt className="text-muted-foreground">Специалист</dt>
+              <dd>{performer.name ? firstName(performer.name) : TENANT_ROLE[performer.kind] ?? performer.kind}</dd>
+              <dt className="text-muted-foreground">Кога</dt>
+              <dd>{humanDay(date, { currentYear })}, {slotLabel(slot)}</dd>
+              <dt className="text-muted-foreground">Времетраене</dt>
+              <dd>{formatDurationShort(totalDuration)}, до {summaryEnd}</dd>
+              <dt className="text-muted-foreground">{selectedServices.length > 1 ? "Общо" : "Цена"}</dt>
+              <dd>
+                <span className="text-[17px] font-semibold text-primary md:text-base">{summaryPrice}</span>
+                {summaryOfferings.some((o) => priceVaries(o)) && (
+                  <span className="mt-0.5 block text-[13px] text-muted-foreground md:text-sm">
+                    Цената е ориентировъчна: точната се уточнява в салона.
+                  </span>
+                )}
+              </dd>
+              <dt className="text-muted-foreground">Адрес</dt>
+              <dd>
+                <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 md:underline">
+                  {siteConfig.address.full.replace(/ ул\..*$/, "")}{" "}
+                  <span className="underline">{siteConfig.address.full.replace(/^.*?(ул\..*)$/, "$1")}</span>
+                </a>
+              </dd>
+            </dl>
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="font-serif text-lg italic text-primary md:text-xl">Плащаш в салона, без депозит.</p>
+              <p className="mt-1 text-[13px] leading-normal text-muted-foreground md:text-sm md:leading-5">
+                Потвърждението идва на имейла ти.
+                <br />
+                Отказ: до 5 часа преди часа, от линка в имейла или по телефона. После се начисляват 50% от цената.
+              </p>
+            </div>
+          </section>
+        )}
+
+        <label className="flex items-start gap-2.5 rounded-2xl border border-border bg-secondary/20 p-3.5 text-sm leading-[19px] md:gap-3 md:p-4 md:text-[13px] md:leading-5">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-px size-[18px] shrink-0 accent-primary" />
           <span className="text-foreground/80">
             Приемам{" "}
             <a
@@ -940,11 +995,17 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           </p>
         )}
 
+        {reason && !error && (
+          <p id="bf-reason" aria-live="polite" className="text-[15px] md:text-sm">
+            {reason}
+          </p>
+        )}
         <Button
           type="submit"
           size="lg"
-          disabled={submitting || !performerId || !slot || !consent}
-          className="h-12 w-full rounded-full bg-foreground text-background hover:bg-primary"
+          disabled={submitting || !!reason}
+          aria-describedby={reason ? "bf-reason" : undefined}
+          className="h-[50px] w-full rounded-full bg-foreground text-base text-background hover:bg-primary disabled:bg-foreground/20 disabled:opacity-100"
         >
           {submitting ? (
             <>
@@ -954,6 +1015,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             "Запази час"
           )}
         </Button>
+        </div>
         </>)}
       </form>
 
