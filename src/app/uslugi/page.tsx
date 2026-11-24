@@ -27,7 +27,7 @@ export default async function UslugiPage() {
       <section className="relative isolate min-h-[62svh] overflow-hidden bg-cream lg:min-h-[66svh]">
         {/* Фон — реалната снимка на салона */}
         <Image
-          src="/images/interior/wash-station.jpg"
+          src="/images/interior/wash-station.webp"
           alt="Измивна станция в салон Euphoria Hair & Beauty Bar, кв. Левски, Варна"
           fill
           priority

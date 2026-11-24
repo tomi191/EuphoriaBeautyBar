@@ -84,7 +84,7 @@ export function TeamForm({ trigger, initial }: TeamFormProps) {
           </div>
           <div className="space-y-2">
             <Label>Снимка (път или URL)</Label>
-            <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="/images/team/име.jpg" />
+            <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="/images/team/име.webp" />
           </div>
           <div className="space-y-2">
             <Label>Био</Label>

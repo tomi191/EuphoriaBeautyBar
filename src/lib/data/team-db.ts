@@ -10,7 +10,7 @@ import { team as fallbackTeam, type TeamMember } from "@/lib/data/team";
  * Отделен файл, а НЕ в team.ts: `@/lib/db` хвърля при import без DATABASE_URL,
  * а team.ts се чете и от seed скриптове.
  */
-const DEFAULT_IMAGE = "/images/team/snezhana.jpg";
+const DEFAULT_IMAGE = "/images/team/snezhana.webp";
 
 export async function getTeam(): Promise<TeamMember[]> {
   try {

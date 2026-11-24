@@ -17,8 +17,8 @@ export const team: TeamMember[] = [
     role: "Основател · Главен стилист",
     bio:
       "Започнах през 2000 г. Над две десетилетия зад стола са моят учител. През 2023 г. създадох Euphoria като място, в което всеки човек получава прическа, направена за неговия живот, а не за каталог. Работя с Goldwell Kerasilk, Montibello и Nashi Argan, защото искам резултатът да издържи дълго, не само до първото миене.",
-    image: "/images/team/snezhana.jpg",
-    imageSalon: "/images/team/snezhana-salon.png",
+    image: "/images/team/snezhana.webp",
+    imageSalon: "/images/team/snezhana-salon.webp",
     experience: "25+ години",
     specialties: [
       "Балаяж и омбре",

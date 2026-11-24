@@ -11,7 +11,7 @@ import type { BlogPost as DbBlogPost } from "@/lib/db/schema";
  *    остане празно място в hero/картите.
  */
 
-const COVER_FALLBACK = "/images/interior/salon-1.jpg";
+const COVER_FALLBACK = "/images/interior/salon-1.webp";
 
 /** DB ред → презентационен `BlogPost` (date като ISO string, contentJson → блокове). */
 function toBlogPost(row: DbBlogPost): BlogPost {

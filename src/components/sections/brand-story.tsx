@@ -48,7 +48,7 @@ export function BrandStory() {
             <div aria-hidden className="absolute inset-x-6 -bottom-5 top-10 -z-10 rounded-md bg-mint" />
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-secondary">
               <Image
-                src="/images/interior/salon-1.jpg"
+                src="/images/interior/salon-1.webp"
                 alt="Интериорът на салон Euphoria Hair & Beauty Bar, кв. Левски, Варна"
                 fill
                 sizes="(max-width: 1024px) 100vw, 58vw"

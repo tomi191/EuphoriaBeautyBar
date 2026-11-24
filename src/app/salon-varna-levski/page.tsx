@@ -109,7 +109,7 @@ export default async function SalonVarnaLevskiPage() {
       <section className="relative isolate min-h-[84svh] overflow-hidden bg-cream">
         {/* Фон — реалната снимка на салона */}
         <Image
-          src="/images/interior/hero-front.jpg"
+          src="/images/interior/hero-front.webp"
           alt="Интериорът на салон Euphoria Hair & Beauty Bar в кв. Левски, Варна"
           fill
           priority

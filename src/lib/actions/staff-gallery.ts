@@ -6,7 +6,7 @@ import { after } from "next/server";
 import sharp from "sharp";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
-import { stripImageMetadata } from "@/lib/images/strip-metadata";
+import { stripToWebp } from "@/lib/images/strip-metadata";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
 import {
   STAFF_NOTE_MAX,
@@ -89,7 +89,7 @@ export async function uploadStaffGalleryImage(formData: FormData) {
   const raw = Buffer.from(await file.arrayBuffer());
   const kind = sniffImageType(raw);
   if (!kind) return fail(E.notImage);
-  const clean = await stripImageMetadata(raw);
+  const clean = await stripToWebp(raw);
   if (!clean) return fail(E.notImage);
   const meta = await sharp(clean).metadata().catch(() => null);
   if (!meta?.width || !meta?.height) return fail(E.notImage);
@@ -103,8 +103,8 @@ export async function uploadStaffGalleryImage(formData: FormData) {
   if (!(await ensureOriginalsBucket(storage))) return fail(E.storage);
 
   const id = `gs-${nanoid(10)}`;
-  const originalPath = `${resource.id}/${id}.${kind.ext}`;
-  const up = await storage.client.storage.from(ORIGINALS_BUCKET).upload(originalPath, clean, { contentType: kind.mime });
+  const originalPath = `${resource.id}/${id}.webp`;
+  const up = await storage.client.storage.from(ORIGINALS_BUCKET).upload(originalPath, clean, { contentType: "image/webp" });
   if (up.error) {
     console.error("[staff-gallery] качването в частното хранилище падна:", up.error);
     return fail(E.storage);

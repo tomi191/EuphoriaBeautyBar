@@ -46,6 +46,7 @@ vi.mock("@/lib/db", async () => {
 import { uploadGalleryImage } from "@/lib/actions/gallery";
 import { uploadListingImage } from "@/lib/actions/rental-listings";
 import { uploadStaffPhoto } from "@/lib/actions/staff-photo";
+import { stripToWebp } from "@/lib/images/strip-metadata";
 
 const MAKE = "ProbaPhone-GPS";
 let jpeg: Buffer;
@@ -57,7 +58,7 @@ function hasGpsPointer(exif: Buffer | undefined) {
   return exif.includes(Buffer.from([0x88, 0x25])) || exif.includes(Buffer.from([0x25, 0x88]));
 }
 
-async function expectClean(body: Buffer, format: "jpeg" | "png") {
+async function expectClean(body: Buffer, format: "webp" = "webp") {
   const meta = await sharp(body).metadata();
   expect(meta.format).toBe(format);
   expect(meta.exif).toBeUndefined();
@@ -99,19 +100,22 @@ describe("качване на снимка: метаданните не стиг
     const res = await uploadListingImage("l1", form(jpeg, "image/jpeg"));
     expect(res.ok).toBe(true);
     expect(uploads).toHaveLength(1);
-    await expectClean(uploads[0].body, "jpeg");
+    await expectClean(uploads[0].body);
+    expect(uploads[0].path).toMatch(/\.webp$/);
   });
 
   it("обявата: PNG с местоположение → без EXIF", async () => {
     await uploadListingImage("l1", form(png, "image/png"));
-    await expectClean(uploads[0].body, "png");
+    await expectClean(uploads[0].body);
+    expect(uploads[0].path).toMatch(/\.webp$/);
   });
 
   it("профилната снимка на специалиста → без EXIF", async () => {
     const res = await uploadStaffPhoto(form(jpeg, "image/jpeg"));
     expect(res.ok).toBe(true);
     expect(uploads[0].bucket).toBe("team");
-    await expectClean(uploads[0].body, "jpeg");
+    await expectClean(uploads[0].body);
+    expect(uploads[0].path).toMatch(/\.webp$/);
   });
 
   it("галерията от администрацията → без EXIF", async () => {
@@ -120,7 +124,8 @@ describe("качване на снимка: метаданните не стиг
     );
     expect(res.ok).toBe(true);
     expect(uploads[0].bucket).toBe("gallery");
-    await expectClean(uploads[0].body, "jpeg");
+    await expectClean(uploads[0].body);
+    expect(uploads[0].path).toMatch(/\.webp$/);
   });
 
   it("файл, който не се отваря като снимка: нищо не се записва, ясно съобщение", async () => {
@@ -131,5 +136,26 @@ describe("качване на снимка: метаданните не стиг
       error: "Тази снимка не се отваря. Избери снимка във формат JPG, PNG или WebP.",
     });
     expect(uploads).toHaveLength(0);
+  });
+});
+
+describe("stripToWebp (решение 35)", () => {
+  it("JPG с местоположение → WebP със същия размер, без EXIF", async () => {
+    const out = await stripToWebp(jpeg);
+    expect(out).not.toBeNull();
+    const meta = await sharp(out!).metadata();
+    expect([meta.format, meta.width, meta.height]).toEqual(["webp", 64, 48]);
+    await expectClean(out!);
+  });
+
+  it("PNG с прозрачност → WebP пази прозрачността", async () => {
+    const clear = await sharp({ create: { width: 20, height: 10, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).png().toBuffer();
+    const meta = await sharp((await stripToWebp(clear))!).metadata();
+    expect(meta.format).toBe("webp");
+    expect(meta.hasAlpha).toBe(true);
+  });
+
+  it("не е снимка → null", async () => {
+    expect(await stripToWebp(Buffer.from("not an image"))).toBeNull();
   });
 });

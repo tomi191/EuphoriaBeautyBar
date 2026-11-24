@@ -48,7 +48,7 @@ export default function MontibelloPage() {
       <section className="relative isolate min-h-[64svh] overflow-hidden bg-cream lg:min-h-[70svh]">
         {/* Фон — реална продуктова снимка Montibello HOP */}
         <Image
-          src="/images/montibello/full-volume-bg.jpg"
+          src="/images/montibello/full-volume-bg.webp"
           alt="Професионалната гама Montibello HOP в салон Euphoria, Варна"
           fill
           priority

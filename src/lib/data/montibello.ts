@@ -113,7 +113,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Първата стъпка от рутината Ultra Repair. Измива нежно, но още под душа започва да реконструира коса, изтощена от топлинно оформяне или химични процеси.\n\nВ основата стоят веган колаген (растителен протеинов комплекс) и биотехнологията LifeAlgae. Подготвя дължините за балсама и маската от същата серия.",
     forHairType: "Увредена коса (от топлина и химия)",
     keyIngredients: ["Веган колаген (растителен протеинов комплекс)", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/ultra-repair-shampoo.jpg",
+    officialImage: "/images/montibello/ultra-repair-shampoo.webp",
     accent: "sage",
   },
   {
@@ -127,7 +127,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Балсам, който идва след Ultra Repair шампоана. Облекчава разресването и връща мекота на коса, останала груба след химия или често изправяне.\n\nРаботи със същите активи като останалата серия - веган колаген и LifeAlgae.",
     forHairType: "Увредена коса (от топлина и химия)",
     keyIngredients: ["Веган колаген (растителен протеинов комплекс)", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/ultra-repair-rinse.jpg",
+    officialImage: "/images/montibello/ultra-repair-rinse.webp",
     accent: "sage",
   },
   {
@@ -141,7 +141,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Интензивната стъпка в рутината Ultra Repair. Веган колагенът и LifeAlgae работят навътре във влакното, докато маската стои на косата, и възстановяват устойчивостта на най-увредените участъци.\n\nЗа коса, която след сешоар, преса или изрусяване е станала чуплива и трудна за оформяне.",
     forHairType: "Увредена коса (от топлина и химия)",
     keyIngredients: ["Веган колаген (растителен протеинов комплекс)", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/ultra-repair-mask.jpg",
+    officialImage: "/images/montibello/ultra-repair-mask.webp",
     accent: "sage",
   },
   {
@@ -169,7 +169,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Нанася се вечер и работи, докато спиш. По данни на марката връща сила, влага и мекота за една нощ.\n\nФинален акцент в серията Ultra Repair, със същата база от веган колаген и LifeAlgae.",
     forHairType: "Увредена коса (от топлина и химия)",
     keyIngredients: ["Веган колаген (растителен протеинов комплекс)", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/ultra-repair-overnight-serum.jpg",
+    officialImage: "/images/montibello/ultra-repair-overnight-serum.webp",
     accent: "sage",
   },
 
@@ -185,7 +185,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Рутината Colour Last удължава живота на цвета и пази боядисаната коса хидратирана. Шампоанът мие меко, без да издърпва пигмента преждевременно.\n\nС ферулова киселина (растителен антиоксидант), LifeAlgae и UV филтър срещу избледняване от слънцето.",
     forHairType: "Боядисана коса",
     keyIngredients: ["LifeAlgae биотехнология", "Ферулова киселина (растителен антиоксидант)", "UV филтър"],
-    officialImage: "/images/montibello/colour-last-shampoo.jpg",
+    officialImage: "/images/montibello/colour-last-shampoo.webp",
     accent: "blush",
   },
   {
@@ -199,7 +199,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Балсамът от Colour Last приглажда люспите след измиване, така че цветът да отразява повече светлина и да изглежда наситен по-дълго. Ферулова киселина, LifeAlgae и UV филтър.",
     forHairType: "Боядисана коса",
     keyIngredients: ["LifeAlgae биотехнология", "Ферулова киселина (растителен антиоксидант)", "UV филтър"],
-    officialImage: "/images/montibello/colour-last-rinse.jpg",
+    officialImage: "/images/montibello/colour-last-rinse.webp",
     accent: "blush",
   },
   {
@@ -213,7 +213,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Седмичната грижа от серията Colour Last. Подхранва дължините по-дълбоко от балсама и поддържа интензитета на цвета между посещенията в салона.\n\nСъс защита от ферулова киселина, LifeAlgae и UV филтър.",
     forHairType: "Боядисана коса",
     keyIngredients: ["LifeAlgae биотехнология", "Ферулова киселина (растителен антиоксидант)", "UV филтър"],
-    officialImage: "/images/montibello/colour-last-mask.jpg",
+    officialImage: "/images/montibello/colour-last-mask.webp",
     accent: "blush",
   },
 
@@ -229,7 +229,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Рутината Smooth Hydration укротява сухата и наелектризирана коса и я прави по-лесна за прибиране. Шампоанът подсилва влакното, докато връща влага.\n\nС хиалуронова киселина, полизахариди от чиа и лен и LifeAlgae.",
     forHairType: "Суха, непокорна и/или наелектризирана коса",
     keyIngredients: ["Хиалуронова киселина", "Полизахариди от чиа и лен", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/smooth-hydration-shampoo.jpg",
+    officialImage: "/images/montibello/smooth-hydration-shampoo.webp",
     accent: "mint",
   },
   {
@@ -243,7 +243,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Балсамът напоява косата и приглажда повърхността, така че пухкавостта спада, а разресването става безпроблемно. С хиалуронова киселина, полизахариди от чиа и лен и LifeAlgae.",
     forHairType: "Суха, непокорна и/или наелектризирана коса",
     keyIngredients: ["Хиалуронова киселина", "Полизахариди от чиа и лен", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/smooth-hydration-rinse.jpg",
+    officialImage: "/images/montibello/smooth-hydration-rinse.webp",
     accent: "mint",
   },
   {
@@ -257,7 +257,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Интензивната влага в серията Smooth Hydration. За дни, когато косата е особено суха и не иска да се поддаде - маската я напива и я оставя мека и податлива.\n\nХиалуронова киселина, полизахариди от чиа и лен, LifeAlgae.",
     forHairType: "Суха, непокорна и/или наелектризирана коса",
     keyIngredients: ["Хиалуронова киселина", "Полизахариди от чиа и лен", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/smooth-hydration-mask.jpg",
+    officialImage: "/images/montibello/smooth-hydration-mask.webp",
     accent: "mint",
   },
 
@@ -273,7 +273,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За фина коса, която бързо увисва. Шампоанът изгражда плътност и повдига от корена, без да утежнява.\n\nОвесените пептиди и хидролизираният оризов протеин дават естествена структура на влакното, подкрепени от LifeAlgae.",
     forHairType: "Фина коса",
     keyIngredients: ["Овесени пептиди (аминокиселини за плътност и текстура)", "Хидролизиран оризов протеин", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/full-volume-shampoo.jpg",
+    officialImage: "/images/montibello/full-volume-shampoo.webp",
     accent: "mint",
   },
   {
@@ -287,7 +287,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Балсам с лека пенлива текстура - грижи се за дължините, но не ги сваля надолу, така че обемът от шампоана остава. Част от рутината Full Volume с овесени пептиди, оризов протеин и LifeAlgae.",
     forHairType: "Фина коса",
     keyIngredients: ["Овесени пептиди (аминокиселини за плътност и текстура)", "Хидролизиран оризов протеин", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/full-volume-foam-rinse.jpg",
+    officialImage: "/images/montibello/full-volume-foam-rinse.webp",
     accent: "mint",
   },
   {
@@ -301,7 +301,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Освежава косата между измиванията и връща обема, когато прическата започне да спада. От рутината Full Volume - с овесени пептиди, оризов протеин и LifeAlgae.",
     forHairType: "Фина коса",
     keyIngredients: ["Овесени пептиди (аминокиселини за плътност и текстура)", "Хидролизиран оризов протеин", "LifeAlgae биотехнология"],
-    officialImage: "/images/montibello/full-volume-dry-shampoo.jpg",
+    officialImage: "/images/montibello/full-volume-dry-shampoo.webp",
     accent: "mint",
   },
 
@@ -317,7 +317,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За косата след лято, морска вода и часове на слънце. Измива солта и хлора и започва да възстановява изсушеното влакно.\n\nС ресвератрол, LifeAlgae и UV филтър - част от рутината Sun Care.",
     forHairType: "Коса, изложена на слънце",
     keyIngredients: ["LifeAlgae биотехнология", "Ресвератрол", "UV филтър"],
-    officialImage: "/images/montibello/sun-care-restorative-shampoo.jpg",
+    officialImage: "/images/montibello/sun-care-restorative-shampoo.webp",
     accent: "blush",
   },
   {
@@ -331,7 +331,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Интензивната грижа от серията Sun Care. Връща влагата и еластичността на коса, пресушена от слънце и солена вода. Ресвератрол, LifeAlgae и UV филтър.",
     forHairType: "Коса, изложена на слънце",
     keyIngredients: ["LifeAlgae биотехнология", "Ресвератрол", "UV филтър"],
-    officialImage: "/images/montibello/sun-care-restorative-mask.jpg",
+    officialImage: "/images/montibello/sun-care-restorative-mask.webp",
     accent: "blush",
   },
   {
@@ -345,7 +345,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Лек спрей-балсам, който се пръска върху косата преди излагане на слънце. Овлажнява и оставя UV защита по дължините през деня на плажа или в планината.\n\nС ресвератрол, LifeAlgae и UV филтър.",
     forHairType: "Коса, изложена на слънце",
     keyIngredients: ["LifeAlgae биотехнология", "Ресвератрол", "UV филтър"],
-    officialImage: "/images/montibello/sun-care-defence-mist.jpg",
+    officialImage: "/images/montibello/sun-care-defence-mist.webp",
     accent: "blush",
   },
 
@@ -361,7 +361,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Дълбоко почистване за скалп, който бързо се омазнява и натрупва замърсявания. Освежава и балансира, без да дразни.\n\nГлината поема излишния себум, а сарказинът регулира мастната секреция. LifeAlgae тук е с пребиотици и постбиотици за равновесие на скалпа.",
     forHairType: "Скалп и коса с излишна мазнина и замърсявания",
     keyIngredients: ["LifeAlgae с пребиотици и постбиотици", "Глина (поема излишна мазнина и замърсявания)", "Сарказин (аминокиселина, регулираща мастната секреция)"],
-    officialImage: "/images/montibello/detox-cleansing-shampoo.jpg",
+    officialImage: "/images/montibello/detox-cleansing-shampoo.webp",
     accent: "ink",
   },
   {
@@ -375,7 +375,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Целенасочена грижа за самия скалп - почиства порите и възстановява баланса, когато корените се омазняват прекалено бързо.\n\nЧаст от рутината Detox, с глина, сарказин и LifeAlgae с пребиотици и постбиотици.",
     forHairType: "Скалп с излишна мазнина и замърсявания",
     keyIngredients: ["LifeAlgae с пребиотици и постбиотици", "Глина (поема излишна мазнина и замърсявания)", "Сарказин (аминокиселина, регулираща мастната секреция)"],
-    officialImage: "/images/montibello/scalp-detox-cleansing-treatment.jpg",
+    officialImage: "/images/montibello/scalp-detox-cleansing-treatment.webp",
     accent: "ink",
   },
 
@@ -391,7 +391,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За скалп, който се дразни, опъва или лющи. Шампоанът мие меко и успокоява, вместо да утежнява състоянието.\n\nНиацинамидът и сокът от алое вера действат върху раздразнението, заедно с LifeAlgae.",
     forHairType: "Чувствителен, раздразнен или лющещ се скалп",
     keyIngredients: ["Ниацинамид (антиоксидант)", "LifeAlgae биотехнология", "Сок от алое вера"],
-    officialImage: "/images/montibello/sensitive-protection-shampoo.jpg",
+    officialImage: "/images/montibello/sensitive-protection-shampoo.webp",
     accent: "sage",
   },
   {
@@ -405,7 +405,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Серум, който се нанася директно върху раздразнените участъци на скалпа. Допълва шампоана Sensitive Protection за по-целенасочено успокояване. С ниацинамид, сок от алое вера и LifeAlgae.",
     forHairType: "Чувствителен, раздразнен или лющещ се скалп",
     keyIngredients: ["Ниацинамид (антиоксидант)", "LifeAlgae биотехнология", "Сок от алое вера"],
-    officialImage: "/images/montibello/sensitive-protection-scalp-serum.jpg",
+    officialImage: "/images/montibello/sensitive-protection-scalp-serum.webp",
     accent: "sage",
   },
 
@@ -421,7 +421,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Пречистваща и ексфолираща грижа за натоварен скалп - стресиран, претоварен с токсини или склонен към пърхот.\n\nПропандиол каприлатът е активът срещу пърхот, насочен към маласезия. LifeAlgae тук е с пребиотици и постбиотици.",
     forHairType: "Стресиран и/или склонен към пърхот скалп",
     keyIngredients: ["LifeAlgae с пребиотици и постбиотици", "Пропандиол каприлат (актив срещу пърхот, насочен към маласезия)"],
-    officialImage: "/images/montibello/purifying-balance-shampoo.jpg",
+    officialImage: "/images/montibello/purifying-balance-shampoo.webp",
     accent: "ink",
   },
   {
@@ -435,7 +435,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Ексфолира скалпа и разгражда натрупването, което захранва пърхота. Работи в тандем с пречистващия шампоан от същата серия.\n\nС пропандиол каприлат срещу маласезия и LifeAlgae с пребиотици и постбиотици.",
     forHairType: "Стресиран и/или склонен към пърхот скалп",
     keyIngredients: ["LifeAlgae с пребиотици и постбиотици", "Пропандиол каприлат (актив срещу пърхот, насочен към маласезия)"],
-    officialImage: "/images/montibello/purifying-balance-scalp-treatment.jpg",
+    officialImage: "/images/montibello/purifying-balance-scalp-treatment.webp",
     accent: "ink",
   },
 
@@ -451,7 +451,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За руса и изрусена коса, която тегли към жълто. Лилавите пигменти неутрализират топлите оттенъци и държат тона чист.\n\nЕдновременно подсилва и реконструира изсветленото влакно, дава блясък и го пази от окисляване. С витамин C, LifeAlgae и UV филтър.",
     forHairType: "Руса или изрусена коса",
     keyIngredients: ["Витамин C (антиоксидант)", "LifeAlgae биотехнология", "UV филтър", "Лилави (неутрализиращи) пигменти"],
-    officialImage: "/images/montibello/blonde-glow-shampoo.jpg",
+    officialImage: "/images/montibello/blonde-glow-shampoo.webp",
     accent: "blush",
   },
   {
@@ -465,7 +465,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Маската от серията Blonde Glow подхранва изсветлената коса в дълбочина и заедно с лилавите пигменти поддържа студения, чист рус. С витамин C, LifeAlgae и UV филтър.",
     forHairType: "Руса или изрусена коса",
     keyIngredients: ["Витамин C (антиоксидант)", "LifeAlgae биотехнология", "UV филтър", "Лилави (неутрализиращи) пигменти"],
-    officialImage: "/images/montibello/blonde-glow-mask.jpg",
+    officialImage: "/images/montibello/blonde-glow-mask.webp",
     accent: "blush",
   },
 
@@ -481,7 +481,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Грижа за бяла и сива коса, която подчертава и подсилва естествения сребрист тон. Директните пигменти освежават цвета, а антиоксидантите и UV филтърът го пазят чист.\n\nLifeAlgae тук е подсилена с B-комплекс.",
     forHairType: "Бяла или сива коса",
     keyIngredients: ["LifeAlgae + B-комплекс", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/silver-white-shampoo.jpg",
+    officialImage: "/images/montibello/silver-white-shampoo.webp",
     accent: "ink",
   },
   {
@@ -495,7 +495,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Балсамът от Silver White приглажда косата и поддържа сребристия тон между измиванията. С директни пигменти, антиоксиданти, UV филтър и LifeAlgae с B-комплекс.",
     forHairType: "Бяла или сива коса",
     keyIngredients: ["LifeAlgae + B-комплекс", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/silver-white-rinse.jpg",
+    officialImage: "/images/montibello/silver-white-rinse.webp",
     accent: "ink",
   },
 
@@ -511,7 +511,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Подсилва отблясъците на средно кафявата коса при всяко измиване, така че цветът да не изглежда матов между боядисванията. Директни пигменти, B-комплекс, антиоксиданти, UV филтър и LifeAlgae.",
     forHairType: "Средно кафява коса",
     keyIngredients: ["B-комплекс", "LifeAlgae биотехнология", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/brown-reflects-shampoo.jpg",
+    officialImage: "/images/montibello/brown-reflects-shampoo.webp",
     accent: "sage",
   },
   {
@@ -525,7 +525,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Червеното избледнява по-бързо от всеки друг тон. Този шампоан подхранва пигмента при всяко измиване и удължава наситеността между посещенията.\n\nС директни пигменти, B-комплекс, антиоксиданти, UV филтър и LifeAlgae.",
     forHairType: "Червена коса",
     keyIngredients: ["B-комплекс", "LifeAlgae биотехнология", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/red-reflects-shampoo.jpg",
+    officialImage: "/images/montibello/red-reflects-shampoo.webp",
     accent: "blush",
   },
   {
@@ -539,7 +539,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Поддържа топлия меден тон жив и пълен със светлина между боядисванията. Директни пигменти, B-комплекс, антиоксиданти, UV филтър и LifeAlgae.",
     forHairType: "Медна коса",
     keyIngredients: ["B-комплекс", "LifeAlgae биотехнология", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/copper-reflects-shampoo.jpg",
+    officialImage: "/images/montibello/copper-reflects-shampoo.webp",
     accent: "blush",
   },
   {
@@ -553,7 +553,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За модни лилави тонове, които иначе бързо се измиват. Освежава пигмента при всяко измиване и пази цвета наситен. С директни пигменти, B-комплекс, антиоксиданти, UV филтър и LifeAlgae.",
     forHairType: "Лилава коса",
     keyIngredients: ["B-комплекс", "LifeAlgae биотехнология", "Директни пигменти", "Антиоксиданти", "UV филтър"],
-    officialImage: "/images/montibello/purple-reflects-shampoo.jpg",
+    officialImage: "/images/montibello/purple-reflects-shampoo.webp",
     accent: "ink",
   },
 
@@ -568,7 +568,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Салонна процедура от well-ageing линията на HOP. Концентратът се прилага от майстор, за да направи косата по-мека и да овладее непокорството.\n\nС LifeAlgae и молекулен ензимен комплекс.",
     keyIngredients: ["LifeAlgae биотехнология", "Молекулен ензимен комплекс"],
-    officialImage: "/images/montibello/smoothing-concentrate.jpg",
+    officialImage: "/images/montibello/smoothing-concentrate.webp",
     accent: "mint",
     professional: true,
   },
@@ -582,7 +582,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Well-ageing концентрат, който майсторът включва в салонната грижа, за да задържи цвета и блясъка след боядисване. С LifeAlgae и молекулен ензимен комплекс.",
     keyIngredients: ["LifeAlgae биотехнология", "Молекулен ензимен комплекс"],
-    officialImage: "/images/montibello/colour-concentrate.jpg",
+    officialImage: "/images/montibello/colour-concentrate.webp",
     accent: "blush",
     professional: true,
   },
@@ -597,7 +597,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Базата на салонната well-ageing процедура, дозирана за фина до средна коса. Майсторът я комбинира с концентратите според диагнозата. С LifeAlgae и молекулен ензимен комплекс.",
     forHairType: "Фина до средна коса",
     keyIngredients: ["LifeAlgae биотехнология", "Молекулен ензимен комплекс"],
-    officialImage: "/images/montibello/intensifier-fine-to-medium.jpg",
+    officialImage: "/images/montibello/intensifier-fine-to-medium.webp",
     accent: "sage",
     professional: true,
   },
@@ -612,7 +612,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "За по-плътна и устойчива коса майсторът избира тази база на well-ageing процедурата и я съчетава с концентратите според диагнозата. С LifeAlgae и молекулен ензимен комплекс.",
     forHairType: "Средна до плътна коса",
     keyIngredients: ["LifeAlgae биотехнология", "Молекулен ензимен комплекс"],
-    officialImage: "/images/montibello/intensifier-medium-to-coarse.jpg",
+    officialImage: "/images/montibello/intensifier-medium-to-coarse.webp",
     accent: "sage",
     professional: true,
   },
@@ -627,7 +627,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Well-ageing концентрат за крехка и увредена коса. Аминокиселините и овлажняващите фактори реконструират най-вътрешните слоеве на влакното и го пазят от чупене.\n\nСалонна процедура - прилага се от майстор. С LifeAlgae и молекулен ензимен комплекс.",
     forHairType: "Крехка и/или увредена коса",
     keyIngredients: ["LifeAlgae биотехнология", "Молекулен ензимен комплекс", "Аминокиселини", "Овлажняващи фактори"],
-    officialImage: "/images/montibello/recharge-strength.jpg",
+    officialImage: "/images/montibello/recharge-strength.webp",
     accent: "sage",
     professional: true,
   },
@@ -643,7 +643,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Гамата трайни оксидативни бои на Montibello. Покрива равномерно от корена до върха и постига наситен цвят или интензивни кичури, докато се грижи за косата по време на процеса.\n\nТехнически продукт, който се прилага само от майстор в салона. С патентованата SCP технология.",
     keyIngredients: ["SCP технология"],
-    officialImage: "/images/montibello/cromatone.jpg",
+    officialImage: "/images/montibello/cromatone.webp",
     accent: "blush",
     professional: true,
   },
@@ -657,7 +657,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Вариант на Cromatone за случаите, когато търсим максимална наситеност на тона. Технически продукт само за професионална употреба, с SCP технология.",
     keyIngredients: ["SCP технология"],
-    officialImage: "/images/montibello/cromaxtrem.jpg",
+    officialImage: "/images/montibello/cromaxtrem.webp",
     accent: "ink",
     professional: true,
   },
@@ -671,7 +671,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Поредица трайни нюанси от семейството Cromatone. Технически продукт само за професионална употреба, със SCP технология.",
     keyIngredients: ["SCP технология"],
-    officialImage: "/images/montibello/cromatone-meteorites.jpg",
+    officialImage: "/images/montibello/cromatone-meteorites.webp",
     accent: "ink",
     professional: true,
   },
@@ -685,7 +685,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Осем мултитонални нюанса от Cromatone за студени, металик финиши и комбинирани техники. Технически продукт само за професионална употреба, със SCP технология.",
     keyIngredients: ["SCP технология"],
-    officialImage: "/images/montibello/cromatone-metallics.jpg",
+    officialImage: "/images/montibello/cromatone-metallics.webp",
     accent: "ink",
     professional: true,
   },
@@ -700,7 +700,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Активиращ крем за боядисване и изсветляване, 1000 мл.",
     description:
       "Кремообразен оксидант, който задава точната текстура на всяка боя Cromatone и улеснява равномерното покритие при боядисване и изсветляване.\n\nПредлага се в пет обема - 7 vol (2%), 12.5 vol (3.75%), 20 vol (6%), 30 vol (9%) и 40 vol (12%). Технически продукт само за професионална употреба.",
-    officialImage: "/images/montibello/oxibel-activating-cream.jpg",
+    officialImage: "/images/montibello/oxibel-activating-cream.webp",
     accent: "mint",
     professional: true,
   },
@@ -715,7 +715,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Гамата за оформяне и финиш на Montibello.",
     description:
       "Decode е цялата стайлинг гама: дефиниция, фиксация, текстура и блясък за всяка прическа. Продуктите оформят, но и пазят косата, докато го правят.\n\nРазделена е на под-линии - Curl, Smooth, Finish, Volume, Texture и Texture Men.",
-    officialImage: "/images/montibello/decode.jpg",
+    officialImage: "/images/montibello/decode.webp",
     accent: "ink",
   },
   {
@@ -728,7 +728,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Под-линията на Decode за къдрава коса. Оформя дефинирани, меки или естествени къдрици според това какъв резултат търсиш.",
     forHairType: "Къдрава коса",
-    officialImage: "/images/montibello/decode-curl.jpg",
+    officialImage: "/images/montibello/decode-curl.webp",
     accent: "mint",
   },
   {
@@ -741,7 +741,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Професионалната под-линия на Decode за изправяне. Дава термозащита и контрол върху пухкавостта, за да остане косата гладка и с блясък след преса или сешоар.",
     forHairType: "Коса за изправяне / срещу пухкавост",
-    officialImage: "/images/montibello/decode-smooth.png",
+    officialImage: "/images/montibello/decode-smooth.webp",
     accent: "mint",
   },
   {
@@ -753,7 +753,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Под-линия за финиш и задържане на прическата.",
     description:
       "Финишната под-линия на Decode. Смолата, устойчива на влага, удължава задържането на прическата дори при влажен въздух.",
-    officialImage: "/images/montibello/decode-finish.jpg",
+    officialImage: "/images/montibello/decode-finish.webp",
     accent: "ink",
   },
   {
@@ -765,7 +765,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Под-линия за обем при оформяне.",
     description:
       "Стайлинг за обем от гамата Decode. Повдига косата при оформяне и придава плътност на прическата.",
-    officialImage: "/images/montibello/decode-volume.jpg",
+    officialImage: "/images/montibello/decode-volume.webp",
     accent: "mint",
   },
   {
@@ -777,7 +777,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Под-линия за текстура и матов финиш.",
     description:
       "Текстурата в гамата Decode. Добавя структура и грапавина на прическата за по-небрежен, оформен вид.",
-    officialImage: "/images/montibello/decode-texture.jpg",
+    officialImage: "/images/montibello/decode-texture.webp",
     accent: "sage",
   },
   {
@@ -790,7 +790,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Мъжката текстурираща под-линия на Decode. Включва моделиращ крем, гел и матов восък за бързо ежедневно оформяне.",
     forHairType: "Мъжка коса",
-    officialImage: "/images/montibello/decode-texture-men.jpg",
+    officialImage: "/images/montibello/decode-texture-men.webp",
     accent: "ink",
   },
 ];

@@ -23,7 +23,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
   if (variant === "mark") {
     const inner = (
       <Image
-        src="/images/brand/logo-mark.png"
+        src="/images/brand/logo-mark.webp"
         alt="Euphoria Hair & Beauty Bar"
         width={width}
         height={height}
@@ -45,7 +45,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
     variant === "auto" ? (
       <span className="relative inline-flex items-center">
         <Image
-          src="/images/brand/logo-black.png"
+          src="/images/brand/logo-black.webp"
           alt="Euphoria Hair & Beauty Bar"
           width={width}
           height={height}
@@ -54,7 +54,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
           className={cn(sharedClasses, "block dark:hidden")}
         />
         <Image
-          src="/images/brand/logo-white.png"
+          src="/images/brand/logo-white.webp"
           alt="Euphoria Hair & Beauty Bar"
           width={width}
           height={height}
@@ -64,7 +64,7 @@ export function Logo({ className, variant = "auto", width = 160, height = 48, hr
       </span>
     ) : (
       <Image
-        src={`/images/brand/logo-${variant}.png`}
+        src={`/images/brand/logo-${variant}.webp`}
         alt="Euphoria Hair & Beauty Bar"
         width={width}
         height={height}

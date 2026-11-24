@@ -68,7 +68,7 @@ export function GiftCardBanner() {
                 <div aria-hidden className="absolute -inset-8 rounded-full bg-mint/30 blur-2xl" />
                 <div className="relative aspect-[3/4] w-48 overflow-hidden rounded-md border border-background/15 bg-background/5 md:w-60">
                   <Image
-                    src="/images/brand/gift-card.png"
+                    src="/images/brand/gift-card.webp"
                     alt="Euphoria подаръчна карта"
                     fill
                     sizes="240px"
