@@ -5,7 +5,7 @@ import { db, schema } from "@/lib/db";
 import { toEur } from "@/lib/booking/offering";
 import { formatEuro } from "@/lib/booking/price";
 import { isClosed } from "@/lib/booking/closures";
-import { sofiaDateStr, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
+import { sofiaDateStr, sofiaFirstDayFrom, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
 import { lowestPriceLast30Days } from "@/lib/pricing/price-log";
 import { adminResourceUserIds, getConsentMap } from "@/lib/data/tenant-consent";
 import { notifyResource } from "@/lib/notify";
@@ -198,7 +198,8 @@ export async function gatherContext(
         lowest: {
           lowestEur: low?.lowestEur ?? null,
           discountAllowed: !!low?.discountAllowed,
-          discountAllowedFrom: low?.discountAllowedFrom ? sofiaDateStr(low.discountAllowedFrom) : null,
+          // Денят, в чието 00:00 (priceAt) намалението вече е позволено, а не денят на самия момент.
+          discountAllowedFrom: low?.discountAllowedFrom ? sofiaFirstDayFrom(low.discountAllowedFrom) : null,
           reason: low?.reason ?? "no_data",
           lastChangeOn: low?.lastChangeAt ? sofiaDateStr(low.lastChangeAt) : null,
           createdOn: o?.createdAt ? sofiaDateStr(o.createdAt) : null,
