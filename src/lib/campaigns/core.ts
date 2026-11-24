@@ -163,6 +163,12 @@ export async function lockedServiceIds(resourceId: string): Promise<Map<string, 
   return out;
 }
 
+/** Първият ден, чиято полунощ (София) е в момента `at` или след него. */
+const dayFrom = (at: Date) => {
+  const d = sofiaDateStr(at);
+  return sofiaWallToUtc(d, "00:00").getTime() < at.getTime() ? addDays(d, 1) : d;
+};
+
 /** Всичко, което checkCampaign иска, от базата и дневника на цените. */
 export async function gatherContext(
   resourceId: string,
@@ -198,7 +204,8 @@ export async function gatherContext(
         lowest: {
           lowestEur: low?.lowestEur ?? null,
           discountAllowed: !!low?.discountAllowed,
-          discountAllowedFrom: low?.discountAllowedFrom ? sofiaDateStr(low.discountAllowedFrom) : null,
+          // Промоцията почва в 00:00: ден, в който моментът е след полунощ, още не става; първият е следващият.
+          discountAllowedFrom: low?.discountAllowedFrom ? dayFrom(low.discountAllowedFrom) : null,
           reason: low?.reason ?? "no_data",
           lastChangeOn: low?.lastChangeAt ? sofiaDateStr(low.lastChangeAt) : null,
           createdOn: o?.createdAt ? sofiaDateStr(o.createdAt) : null,

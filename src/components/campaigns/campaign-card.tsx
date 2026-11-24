@@ -156,11 +156,11 @@ function MenuCard({
                 </p>
                 <div className="mt-1 flex items-baseline gap-2.5 lg:mt-0 lg:min-w-[40%] lg:flex-1" aria-hidden>
                   <span className="mb-1.5 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45" />
-                  <s className={cn("font-display text-[22px] leading-none text-muted-foreground decoration-[1.5px] lg:font-serif lg:text-[34px]", upright)}>
+                  <s className={cn("shrink-0 font-display text-[22px] leading-none text-muted-foreground decoration-[1.5px] lg:font-serif lg:text-[34px]", upright)}>
                     {formatEuro(s.prevEur)}
                   </s>
                   <span
-                    className={cn("font-display text-[36px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[58px] lg:font-semibold", upright)}
+                    className={cn("shrink-0 font-display text-[36px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[58px] lg:font-semibold", upright)}
                     style={{ fontVariantNumeric: "lining-nums" }}
                   >
                     {formatEuro(s.newEur)}

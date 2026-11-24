@@ -104,7 +104,7 @@ export default async function PromotionsPage({ searchParams }: { searchParams: P
                 <div className={cn(!first && "border-t border-border pt-6 lg:border-t-0 lg:pt-0", first && items[0].c.id !== c.id && "mt-4 lg:mt-0")}>
                   <h2
                     className={cn(
-                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:font-serif-semi lg:text-[36px] lg:font-semibold",
+                      "border-b border-border pb-1.5 font-display text-[26px] leading-tight font-medium lg:max-w-[440px] lg:font-serif-semi lg:text-[36px] lg:font-semibold lg:[font-feature-settings:'locl'_0,'lnum'_1]",
                       !first && "hidden lg:block",
                     )}
                   >
