@@ -11,7 +11,7 @@ import type { DaySlot } from "@/lib/booking/slots";
 import { formatServicePrice, priceVaries } from "@/lib/booking/price";
 import { BookingCalendar } from "@/components/booking/booking-calendar";
 import { serviceImageFor } from "@/lib/booking/length-icon";
-import { siteConfig } from "@/lib/site";
+import { siteConfig, cancellationPolicy } from "@/lib/site";
 import { searchServices } from "@/lib/booking/service-search";
 import { capitalize, humanDay, onHumanDay } from "@/lib/booking/day-label";
 import { formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
@@ -923,7 +923,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
         {hasSelection && performer && slot && !isOffline && (
           <section aria-labelledby="bf-summary" className="rounded-2xl border border-border bg-secondary/40 p-3 md:p-5">
             <h3 id="bf-summary" className="font-sans text-lg font-semibold tracking-normal md:text-xl">Твоят час</h3>
-            <dl className="mt-2 grid grid-cols-[88px_minmax(0,1fr)] gap-x-1.5 gap-y-1 text-sm leading-5 [&_dt]:text-[13px] md:[&_dt]:text-base md:grid-cols-[120px_minmax(0,1fr)] md:gap-x-3 md:gap-y-1.5 md:text-base md:leading-snug">
+            <dl className="mt-2 grid grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm leading-5 [&_dt]:text-[13px] md:[&_dt]:text-base md:grid-cols-[120px_minmax(0,1fr)] md:gap-x-3 md:gap-y-1.5 md:text-base md:leading-snug">
               <dt className="text-muted-foreground">Услуга</dt>
               <dd>
                 {selectedServices.map((s) => (
@@ -949,7 +949,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               <dd>
                 <a href={siteConfig.address.mapsUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-4 md:underline">
                   {siteConfig.address.full.replace(/ ул\..*$/, "")}{" "}
-                  <span className="underline">{siteConfig.address.full.replace(/^.*?(ул\..*)$/, "$1")}</span>
+                  <span className="underline">{siteConfig.address.full.replace(/^.*?(ул\..*)$/, "$1").replace(/ /g, "\u00a0")}</span>
                 </a>
               </dd>
             </dl>
@@ -958,7 +958,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
               <p className="mt-1 text-[13px] leading-normal text-muted-foreground md:text-sm md:leading-5">
                 Потвърждението идва на имейла ти.
                 <br />
-                Отказ: до 5 часа преди часа, от линка в имейла или по телефона. После се начисляват 50% от цената.
+                Отказ: до 5 часа преди часа, от линка в имейла или по телефона. После може да начислим 50% от цената при следващото ти посещение.
               </p>
             </div>
           </section>
@@ -976,7 +976,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
             >
               Общите условия
             </a>
-            : отказ или преместване най-късно 5 часа преди часа, онлайн от линка в имейла или по телефон. При по-късен отказ или неявяване се начисляват 50% от стойността на услугата. Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
+            : отказ или преместване най-късно 5 часа преди часа, онлайн от линка в имейла или по телефон. {cancellationPolicy.lateFee} Съгласявам се данните ми (име, телефон, имейл) да бъдат обработени за запазване на часа съгласно{" "}
             <a
               href="/politika-za-poveritelnost"
               target="_blank"
