@@ -15,6 +15,12 @@ import { slugify } from "@/lib/utils";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { JournalPosts } from "@/components/seo/journal-posts";
 import { hubAnswer, haircutPriceFaq, keratinPriceFaq } from "@/lib/seo/hub-answer";
+import { CategoryPromoStrip } from "@/components/campaigns/promo-blocks";
+import { loadRunningCampaigns } from "@/lib/campaigns/public";
+import { todaySofia } from "@/lib/campaigns/core";
+
+// Промоциите в категорията (№11) тръгват и свършват по дата: страницата се опреснява на 10 минути.
+export const revalidate = 600;
 
 interface ServiceDetailParams {
   params: Promise<{ slug: string }>;
@@ -56,6 +62,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
   if (!category) notFound();
 
   const otherCategories = allCategories.filter((c) => c.slug !== category.slug);
+  const promos = await loadRunningCampaigns().catch(() => []);
 
   // Прави anchor IDs за всяка група
   const groupSections = category.groups.map((g) => ({
@@ -82,6 +89,8 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
 
   return (
     <>
+      {/* Лентата с промоциите в категорията (кадър кръг-2/категория-1440): най-горе, над героя */}
+      <CategoryPromoStrip campaigns={promos} slug={category.slug} today={todaySofia()} />
       {/* HERO — реалната снимка на услугата във фон + топъл воал (като началната страница) */}
       <section id="info" className="relative isolate min-h-[70svh] overflow-hidden bg-cream lg:min-h-[76svh]">
         {/* Фон — реалната снимка на услугата */}

@@ -136,7 +136,10 @@ export function StaffShell({
         )}
       >
         {tabs.map((t) => {
-          const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
+          // «Промоции» се отваря от «Профил»: там свети «Профил» (кадри приложение-промоции-390, приложение-1440).
+          const active = t.exact
+            ? pathname === t.href
+            : pathname.startsWith(t.href) || (t.href === "/staff/profile" && pathname.startsWith("/staff/promotions"));
           return (
             <Link
               key={t.href}

@@ -83,7 +83,7 @@ export function StopCampaignSheet({
         ) : (
           <button
             type="button"
-            className="inline-flex h-14 w-full items-center justify-center rounded-full border-2 border-destructive text-lg font-medium text-destructive transition-colors hover:bg-destructive/5 lg:h-[4.5rem] lg:text-[2rem]"
+            className="inline-flex h-14 w-full items-center justify-center rounded-full border-2 border-destructive-line text-lg font-medium text-destructive-line transition-colors hover:bg-destructive-line/5 lg:h-[4.5rem] lg:text-[2rem]"
           >
             {CAMPAIGN_TEXT.stop}
           </button>
@@ -141,7 +141,7 @@ export function StopCampaignSheet({
             onClick={stop}
             disabled={!reason || busy}
             className={cn(
-              "mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-destructive text-lg font-semibold text-white transition-opacity",
+              "mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-destructive-deep text-lg font-semibold text-white transition-opacity",
               (!reason || busy) && "opacity-50",
             )}
           >

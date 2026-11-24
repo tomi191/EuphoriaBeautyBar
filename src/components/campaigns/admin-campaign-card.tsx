@@ -15,6 +15,9 @@ import { cn } from "@/lib/utils";
  * «Одобри», «Върни» и причините като бутони (поне 44 px, Канопус), по желание ред до специалиста.
  * ?return=<id> (бутонът «Друго» в Telegram) я отваря с избрано «Друго».
  */
+// Правият Cormorant: основните форми и равните цифри (БГ формите остават само в курсива).
+const UPRIGHT = "[font-feature-settings:'locl'_0,'lnum'_1]";
+
 export function AdminCampaignCard({
   v,
   name,
@@ -85,22 +88,22 @@ export function AdminCampaignCard({
         <p className="font-serif text-[26px] italic leading-tight text-primary lg:text-[2.5rem]">{v.who}</p>
         <div className="mt-2 divide-y divide-border/70 lg:max-w-[50rem]">
           {v.services.map((s) => (
-            <div key={s.serviceItemId} className="py-2 lg:flex lg:items-start lg:gap-5">
-              <p className="text-[21px] leading-snug lg:shrink-0 lg:pt-7 lg:font-serif lg:text-[2.25rem] lg:font-medium">{s.name}</p>
-              {v.kind === "discount" && <span className="mt-[3.75rem] hidden min-w-8 flex-1 border-b-2 border-dotted border-muted-foreground/50 lg:block" aria-hidden />}
+            <div key={s.serviceItemId} className={cn("py-2", v.kind === "discount" ? "lg:flex lg:items-baseline lg:gap-5" : "flex items-baseline gap-3 lg:gap-5")}>
+              <p className={cn("text-[21px] leading-snug lg:shrink-0 lg:font-serif-semi lg:text-[2.25rem] lg:font-semibold", UPRIGHT)}>{s.name}</p>
+              <span className={cn("mb-2 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/50 lg:mb-3", v.kind === "discount" && "hidden lg:block")} aria-hidden />
               {v.kind === "discount" && s.prevEur != null && s.newEur != null ? (
-                <div className="mt-1 flex items-end gap-4 lg:mt-0 lg:grid lg:grid-cols-[auto_auto] lg:gap-x-8 lg:gap-y-1">
-                  <s className="font-serif text-[30px] leading-none text-muted-foreground lg:mb-3 lg:text-[2.5rem]">{formatEuro(s.prevEur)}</s>
-                  <span className="font-serif text-[48px] italic leading-none text-primary lg:text-[5rem] lg:not-italic">{formatEuro(s.newEur)}</span>
+                <div className="mt-1 flex items-baseline gap-4 lg:mt-0 lg:grid lg:grid-cols-[auto_auto] lg:gap-x-8 lg:gap-y-1">
+                  <s className={cn("font-serif text-[30px] leading-none text-muted-foreground lg:text-[2.5rem]", UPRIGHT)}>{formatEuro(s.prevEur)}</s>
+                  <span className={cn("font-serif text-[48px] italic leading-none text-primary lg:font-serif-semi lg:text-[5rem] lg:font-semibold lg:not-italic", UPRIGHT)}>{formatEuro(s.newEur)}</span>
                   {s.percent != null && (
-                    <span className="ml-auto font-serif text-[30px] italic leading-none text-primary lg:col-start-2 lg:ml-0 lg:text-right lg:text-[3rem] lg:not-italic">−{s.percent}%</span>
+                    <span className={cn("ml-auto font-serif text-[30px] italic leading-none text-primary lg:col-start-2 lg:ml-0 lg:text-right lg:font-serif-semi lg:text-[3rem] lg:font-semibold lg:not-italic", UPRIGHT)}>−{s.percent}%</span>
                   )}
                   <span className="sr-only">
                     Предишна цена {formatEuro(s.prevEur)}, нова цена {formatEuro(s.newEur)}.
                   </span>
                 </div>
               ) : (
-                <p className="mt-1 text-[19px] lg:text-[1.75rem]">
+                <p className={cn("shrink-0 font-serif text-[24px] leading-none lg:text-[2.25rem]", UPRIGHT)}>
                   {s.regularEur != null ? `${s.priceFrom ? "от " : ""}${formatEuro(s.regularEur)}` : ""}
                 </p>
               )}
@@ -110,7 +113,7 @@ export function AdminCampaignCard({
         {v.kind === "gift" && v.gift && (
           <p className="mt-1 font-serif text-[22px] italic text-primary lg:text-[1.75rem]">Подарък в същия час: {v.gift}</p>
         )}
-        <p className="mt-3 border-t border-border pt-3 text-[19px] lg:border-0 lg:pt-0 lg:text-[1.75rem]">{dates}</p>
+        <p className="mt-3 border-t border-border pt-3 text-[19px] lg:border-0 lg:pt-0 lg:text-[1.3rem]">{dates}</p>
         {v.reason && <p className="mt-3 font-serif text-[21px] italic text-muted-foreground lg:text-[1.75rem]">Защо: {v.reason}</p>}
         <p className="mt-4 flex items-start gap-3 border-t border-border pt-4 text-[17px] text-primary lg:border-0 lg:pt-0 lg:text-xl lg:text-foreground">
           <Check className="mt-0.5 size-6 shrink-0 rounded-full bg-primary p-1 text-primary-foreground lg:bg-transparent lg:p-0 lg:text-primary" strokeWidth={3} aria-hidden />
@@ -136,7 +139,7 @@ export function AdminCampaignCard({
             {busy === "back" && <Loader2 className="size-5 animate-spin" aria-hidden />}
             Върни
           </button>
-          <div className="flex flex-wrap gap-2 lg:ml-6" role="radiogroup" aria-label="Причина за връщане">
+          <div className="grid w-full grid-cols-4 gap-1.5 max-[369px]:grid-cols-2 lg:ml-6 lg:flex lg:w-auto lg:flex-wrap lg:gap-2" role="radiogroup" aria-label="Причина за връщане">
             {RETURN_REASONS.map((r) => (
               <button
                 key={r.key}
@@ -148,7 +151,7 @@ export function AdminCampaignCard({
                   setError(null);
                 }}
                 className={cn(
-                  "inline-flex h-12 min-w-[5.5rem] items-center justify-center rounded-full border px-5 text-[17px] transition-colors",
+                  "inline-flex h-12 items-center justify-center rounded-full border px-1 text-[16px] transition-colors lg:min-w-[5.5rem] lg:px-5 lg:text-[17px]",
                   reason === r.key ? "border-foreground bg-foreground text-background" : "border-border bg-background hover:border-foreground/40",
                 )}
               >

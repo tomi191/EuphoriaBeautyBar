@@ -5,7 +5,9 @@ import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
 import { db } from "@/lib/db";
-import { formatAmount } from "@/lib/booking/price";
+import { formatAmount, formatEuro } from "@/lib/booking/price";
+import { loadRunningCampaigns, type PublicCampaign } from "@/lib/campaigns/public";
+import { longDay } from "@/lib/campaigns/rules";
 
 /**
  * Генератори за /llms.txt (компактен индекс) и /llms-full.txt (пълен fact sheet).
@@ -69,9 +71,31 @@ const AI_NOTE =
   "Салонът е в кв. Левски, Варна и събира коса, нокти и лице на едно място, с онлайн записване в реално време.";
 
 /** Компактен /llms.txt — индекс с категории „от X" + линк към llms-full.txt. */
+/** Течащите промоции (№11); при грешка файлът е без тях, не пада. */
+async function runningPromos(): Promise<PublicCampaign[]> {
+  try {
+    return await loadRunningCampaigns();
+  } catch {
+    return [];
+  }
+}
+
+/** Ред за llms-full.txt с двете цени по чл. 64 ЗЗП (Саиф 2.17): «нова цена …, предишна цена …». */
+function promoLine(c: PublicCampaign): string {
+  const until = `до ${longDay(c.endsOn)} включително`;
+  return c.services
+    .map((s) =>
+      c.kind === "discount" && s.newEur != null && s.prevEur != null
+        ? `- ${s.name} ${c.card.who}: нова цена ${formatEuro(s.newEur)}, предишна цена ${formatEuro(s.prevEur)}; ${until}.`
+        : `- ${s.name} ${c.card.who}: цена ${s.priceFrom ? "от " : ""}${s.regularEur != null ? formatEuro(s.regularEur) : ""}, подарък в същия час: ${c.card.gift ?? ""}; ${until}.`,
+    )
+    .join("\n");
+}
+
 export async function renderLlmsTxt(): Promise<string> {
   // Блогът е от БД; при грешка llms.txt не трябва да пада → празен списък.
   const posts = await getPublishedPosts().catch(() => []);
+  const promos = await runningPromos();
   let catalog: ServiceCategory[] = [];
   try {
     catalog = await getServiceCatalog();
@@ -120,6 +144,9 @@ export async function renderLlmsTxt(): Promise<string> {
           "",
         ]
       : []),
+    ...(promos.length
+      ? ["## Промоции", "", `- [Промоции в салона](${siteConfig.url}/promotsii): ${promos.length === 1 ? "1 промоция тече сега" : `${promos.length} промоции текат сега`}; услуга, специалист, цена преди и сега, дата на края`, ""]
+      : []),
     "## Ресурси",
     "",
     `- [Пълен ценоразпис, FAQ и детайли](${siteConfig.url}/llms-full.txt): актуален, генериран от каталога`,
@@ -144,6 +171,7 @@ export async function renderLlmsFullTxt(): Promise<string> {
     // DB недостъпна → файлът пак е валиден, без ценоразписа.
   }
   const rating = await reviewsLine();
+  const promos = await runningPromos();
 
   const catalogBlocks = catalog.map((c) => {
     const intro = (SERVICE_INTRO[c.slug] ?? []).join(" ");
@@ -177,6 +205,7 @@ export async function renderLlmsFullTxt(): Promise<string> {
     "",
     ...catalogBlocks,
     "",
+    ...(promos.length ? ["## Промоции", "", `Страницата: ${siteConfig.url}/promotsii`, "", ...promos.map(promoLine), ""] : []),
     "## Често задавани въпроси",
     "",
     allFaq.join("\n\n"),

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/sections/hero";
 import { FeaturedServices } from "@/components/sections/featured-services";
+import { PromotionsSection } from "@/components/sections/promotions-section";
 import { BrandsMarquee } from "@/components/sections/brands-marquee";
 import { ReviewsSplit } from "@/components/sections/reviews-split";
 import { GiftCardBanner } from "@/components/sections/gift-card-banner";
@@ -20,6 +21,9 @@ import { db } from "@/lib/db";
 
 // Canonical за началната (root layout вече не слага глобален).
 export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+// Промоциите тръгват и свършват по дата (№11): началната се опреснява на 10 минути.
+export const revalidate = 600;
 
 export default async function Home() {
   const [googleReviews, summaryRow, faq] = await Promise.all([
@@ -44,6 +48,8 @@ export default async function Home() {
       <div id="hero">
         <Hero rating={rating} />
       </div>
+      {/* Промоциите: веднага след първия екран (Канопус); без течаща промоция секцията я няма. */}
+      <PromotionsSection />
       <FeaturedServices />
       <BrandsMarquee />
       <FeaturedGallery />

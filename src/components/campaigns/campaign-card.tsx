@@ -27,14 +27,21 @@ export function CampaignCard({
   data,
   today,
   href,
+  phone,
+  variant = "app",
   className,
 }: {
   data: CampaignCardData;
   today: string;
   /** Без адрес бутонът е само за вид (прегледът в приложението). */
   href?: string;
+  /** Услугата се записва само по телефона (наемател без онлайн график): бутонът звъни. */
+  phone?: boolean;
+  /** «app»: карта в приложението и администрацията; «menu»: ред от менюто на сайта (кадри A-карта-*, кръг 2). */
+  variant?: "app" | "menu";
   className?: string;
 }) {
+  if (variant === "menu") return <MenuCard data={data} today={today} href={href} phone={phone} className={className} />;
   const lastDay = data.endsOn === today;
   const cta = data.kind === "discount" ? "Запиши с тази цена" : "Запиши час";
   const ctaLabel = `Запиши час за ${data.services.map((s) => s.name).join(", ")} ${data.who} по промоцията`;
@@ -52,13 +59,13 @@ export function CampaignCard({
               <>
                 <div className="mt-1 flex items-end gap-2" aria-hidden>
                   <span className="mb-2.5 min-w-4 flex-1 border-b-2 border-dotted border-muted-foreground/50" />
-                  <s className="font-serif text-[26px] leading-none text-muted-foreground decoration-[1.5px]">{formatEuro(s.prevEur)}</s>
-                  <span className="font-serif text-[40px] font-medium leading-none text-primary" style={{ fontVariantNumeric: "lining-nums" }}>
+                  <s className="font-serif text-[26px] leading-none text-muted-foreground decoration-[1.5px] [font-feature-settings:'locl'_0,'lnum'_1]">{formatEuro(s.prevEur)}</s>
+                  <span className="font-serif-semi text-[40px] font-semibold leading-none text-primary [font-feature-settings:'locl'_0,'lnum'_1]">
                     {formatEuro(s.newEur)}
                   </span>
                 </div>
                 {s.percent != null && (
-                  <p className="mt-0.5 text-right font-serif text-[22px] font-medium leading-none text-primary" aria-hidden>
+                  <p className="mt-0.5 text-right font-serif-semi text-[22px] font-semibold leading-none text-primary [font-feature-settings:'locl'_0,'lnum'_1]" aria-hidden>
                     −{s.percent}%
                   </p>
                 )}
@@ -71,7 +78,7 @@ export function CampaignCard({
               <>
                 <div className="mt-1 flex items-end gap-2">
                   <span className="mb-1.5 min-w-4 flex-1 border-b-2 border-dotted border-muted-foreground/50" aria-hidden />
-                  <span className="font-serif text-[24px] leading-none text-foreground">
+                  <span className="font-serif text-[24px] leading-none text-foreground [font-feature-settings:'locl'_0,'lnum'_1]">
                     {s.regularEur != null ? `${s.priceFrom ? "от " : ""}${formatEuro(s.regularEur)}` : ""}
                   </span>
                 </div>
@@ -83,7 +90,7 @@ export function CampaignCard({
       {data.kind === "gift" && data.gift && (
         <p className="mt-1 font-serif text-[19px] italic leading-snug text-primary">Подарък в същия час: {data.gift}</p>
       )}
-      <div className="mt-2 space-y-1 font-serif text-[19px] leading-snug">
+      <div className="mt-2 space-y-1 font-serif text-[19px] leading-snug [font-feature-settings:'locl'_0,'lnum'_1]">
         {data.firstVisitOnly && <p>Само за първо посещение при {data.sameWho}.</p>}
         {data.slotsLeft != null && (
           <p className="text-[21px] text-foreground/80">{data.slotsLeft === 1 ? "Остава 1 място." : `Остават ${data.slotsLeft} места.`}</p>
@@ -100,6 +107,111 @@ export function CampaignCard({
       ) : (
         <span className={cn(ctaCls, "pointer-events-none")} aria-hidden>
           {cta}
+        </span>
+      )}
+    </article>
+  );
+}
+
+/** Срокът (Саиф 1.10, 1.11): последният ден е «Последен ден: днес, …», иначе «Важи до … включително.». */
+export const endsLine = (endsOn: string, today: string) =>
+  endsOn === today ? `Последен ден: днес, ${longDay(endsOn, today)}.` : `Важи до ${longDay(endsOn, today)} включително.`;
+
+/** Името на бутона (Саиф 1.12–1.14); при запис само по телефона «Обади се за час». */
+export function campaignCta(data: CampaignCardData, phone?: boolean) {
+  const what = `${data.services.map((s) => s.name).join(", ")} ${data.who} по промоцията`;
+  if (phone) return { text: "Обади се за час", label: `Обади се за час за ${what}` };
+  return { text: data.kind === "discount" ? "Запиши с тази цена" : "Запиши час", label: `Запиши час за ${what}` };
+}
+
+// Правият Cormorant под lang=bg взема българските форми (д като g); кадърът на 1440 е с основните.
+const upright = "lg:[font-feature-settings:'locl'_0,'lnum'_1]";
+
+function MenuCard({
+  data,
+  today,
+  href,
+  phone,
+  className,
+}: {
+  data: CampaignCardData;
+  today: string;
+  href?: string;
+  phone?: boolean;
+  className?: string;
+}) {
+  const cta = campaignCta(data, phone);
+  const btn =
+    "mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground px-8 font-display text-[17px] font-semibold text-background transition-colors hover:bg-foreground/85 lg:mt-6 lg:h-[53px] lg:w-auto lg:min-w-[312px] lg:text-[19px]";
+  return (
+    <article className={cn("text-left", className)}>
+      <p className="font-serif text-[30px] italic leading-tight text-primary lg:text-[27px]">{data.who}</p>
+      {data.services.map((s) => (
+        <div key={s.name} className="mt-1.5">
+          {data.kind === "discount" && s.prevEur != null && s.newEur != null ? (
+            <>
+              <div className="lg:flex lg:items-baseline lg:gap-3">
+                <p className={cn("font-display text-[19px] leading-snug text-foreground lg:shrink lg:font-serif-semi lg:text-[28px] lg:font-semibold lg:leading-tight", upright)}>
+                  {s.name}
+                </p>
+                <div className="mt-1 flex items-baseline gap-2.5 lg:mt-0 lg:min-w-[40%] lg:flex-1" aria-hidden>
+                  <span className="mb-1.5 min-w-8 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45" />
+                  <s className={cn("font-display text-[22px] leading-none text-muted-foreground decoration-[1.5px] lg:font-serif lg:text-[34px]", upright)}>
+                    {formatEuro(s.prevEur)}
+                  </s>
+                  <span
+                    className={cn("font-display text-[36px] font-semibold leading-none text-primary lg:font-serif-semi lg:text-[58px] lg:font-semibold", upright)}
+                    style={{ fontVariantNumeric: "lining-nums" }}
+                  >
+                    {formatEuro(s.newEur)}
+                  </span>
+                  {s.percent != null && <span className="font-display text-[22px] font-medium leading-none text-primary lg:hidden">−{s.percent}%</span>}
+                </div>
+              </div>
+              {s.percent != null && (
+                <p className={cn("hidden text-right font-serif-semi text-[34px] font-semibold leading-none text-primary lg:mt-1 lg:block lg:pr-2", upright)} aria-hidden>
+                  −{s.percent}%
+                </p>
+              )}
+              <p className="sr-only">
+                Предишна цена {formatEuro(s.prevEur)}, нова цена {formatEuro(s.newEur)}
+                {s.percent != null ? `, ${s.percent}% по-малко` : ""}.
+              </p>
+            </>
+          ) : (
+            <div className="flex items-baseline gap-2.5">
+              <p className={cn("font-display text-[17px] leading-snug text-foreground lg:font-serif-semi lg:text-[28px] lg:font-semibold lg:leading-tight", upright)}>{s.name}</p>
+              <span className="mb-1.5 min-w-6 flex-1 self-end border-b-2 border-dotted border-muted-foreground/45" aria-hidden />
+              <span className={cn("shrink-0 font-display text-[19px] leading-none text-foreground lg:font-serif lg:text-[46px]", upright)}>
+                {s.regularEur != null ? `${s.priceFrom ? "от " : ""}${formatEuro(s.regularEur)}` : ""}
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+      {data.kind === "gift" && data.gift && (
+        <p className="mt-1.5 font-display text-[17px] leading-snug text-foreground lg:mt-5 lg:font-serif lg:text-[24px] lg:italic lg:text-muted-foreground">
+          Подарък в същия час: {data.gift}
+        </p>
+      )}
+      <div className={cn("mt-3 space-y-0.5 font-display text-[17px] leading-snug text-muted-foreground lg:font-serif lg:text-[24px] lg:text-foreground/70", upright)}>
+        {data.firstVisitOnly && <p>Само за първо посещение при {data.sameWho}.</p>}
+        {data.slotsLeft != null && <p>{data.slotsLeft === 1 ? "Остава 1 място." : `Остават ${data.slotsLeft} места.`}</p>}
+        <p className={cn(data.firstVisitOnly || data.slotsLeft != null ? "pt-3" : "pt-2", "lg:pt-3")}>{endsLine(data.endsOn, today)}</p>
+      </div>
+      {href ? (
+        phone ? (
+          <a href={href} aria-label={cta.label} className={btn}>
+            {cta.text}
+          </a>
+        ) : (
+          <Link href={href} aria-label={cta.label} className={btn}>
+            {cta.text}
+          </Link>
+        )
+      ) : (
+        <span className={cn(btn, "pointer-events-none")} aria-hidden>
+          {cta.text}
         </span>
       )}
     </article>

@@ -13,6 +13,9 @@ import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { formatAmount } from "@/lib/booking/price";
 import { slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
+import { ServicePromo } from "@/components/campaigns/promo-blocks";
+import { loadRunningCampaigns } from "@/lib/campaigns/public";
+import { todaySofia } from "@/lib/campaigns/core";
 
 interface Params {
   params: Promise<{ slug: string; service: string }>;
@@ -42,6 +45,9 @@ export async function generateStaticParams() {
 // услуги → notFound() в самата страница (SERVICE_CONTENT + getServiceDetail guard).
 export const dynamicParams = true;
 
+// Промоцията до цената (№11) тръгва и свършва по дата: страницата се опреснява на 10 минути.
+export const revalidate = 600;
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug, service } = await params;
   const content = SERVICE_CONTENT[service];
@@ -66,6 +72,10 @@ export default async function ServiceDetailPage({ params }: Params) {
   if (!content || !detail) notFound();
 
   const { category, item, siblings } = detail;
+  // Течащите промоции за тази услуга (по име в тази категория); Offer долу остава каталожният.
+  const promos = (await loadRunningCampaigns().catch(() => [])).filter((c) =>
+    c.services.some((s) => s.categorySlug === slug && s.name === item.name),
+  );
   const img = `/images/services/unique/${service}.webp`;
   const url = `${siteConfig.url}/uslugi/${slug}/${service}`;
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
@@ -123,14 +133,18 @@ export default async function ServiceDetailPage({ params }: Params) {
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">{category.shortTitle} · кв. Левски, Варна</p>
             <BlurText as="h1" text={`${item.name} във Варна`} className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl" stagger={0.025} />
             <p className="mt-6 font-serif text-xl italic text-muted-foreground">{content.tagline}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
-                <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час</Link>
-              </Button>
-              <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-4 py-2.5 font-display text-lg font-medium text-primary backdrop-blur">
-                {priceLabel}
-              </span>
-            </div>
+            {promos.length > 0 ? (
+              <ServicePromo campaigns={promos} serviceName={item.name} today={todaySofia()} />
+            ) : (
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
+                  <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час</Link>
+                </Button>
+                <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/60 px-4 py-2.5 font-display text-lg font-medium text-primary backdrop-blur">
+                  {priceLabel}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>

@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 
 const PILL: Record<CampaignPhase, string> = {
   pending: "bg-secondary text-foreground",
-  returned: "bg-destructive text-white",
-  upcoming: "bg-amber-100 text-foreground",
+  returned: "bg-destructive-deep text-white",
+  upcoming: "bg-sand-pill text-foreground",
   running: "bg-mint-soft text-primary",
   ended: "bg-secondary text-muted-foreground",
   stopped: "bg-secondary text-muted-foreground",
@@ -137,7 +137,7 @@ export function PromotionRow({ v, today, selected }: { v: CampaignView; today: s
           <Link
             href={`/staff/promotions?id=${v.id}`}
             aria-current={selected ? "true" : undefined}
-            className="text-[17px] font-medium leading-snug after:absolute after:inset-0 after:rounded-2xl"
+            className="text-[16px] font-medium leading-snug [text-wrap:pretty] after:absolute after:inset-0 after:rounded-2xl"
           >
             {campaignTitle(v)}
           </Link>

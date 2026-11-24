@@ -100,6 +100,23 @@ export function CampaignForm({
     };
   }
 
+  /** «Започни от ДД.ММ»: началото става датата, от която намалението е позволено, и сървърът смята пак към нея. */
+  async function startFrom(from: string) {
+    if (busy) return;
+    setStartsOn(from);
+    setProblems([]);
+    setBusy(true);
+    try {
+      const r = await checkCampaignDraft({ ...buildInput(2), startsOn: from }, editId);
+      setFacts(new Map(r.services.map((s) => [s.serviceItemId, s])));
+    } catch (e) {
+      console.error("[campaigns] проверката падна:", e);
+      setProblems([{ field: "price", text: "Няма връзка. Опитай пак." }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function go(n: number) {
     setStep(n);
     topRef.current?.scrollIntoView({ block: "start" });
@@ -179,8 +196,11 @@ export function CampaignForm({
 
   // Стъпка «Цената»: какво спира услуга сега (сменена цена, цена «от», пауза), по чистото правило; сървърът решава.
   const priceStart = startsOn || today;
+  // Проверката е към началото на промоцията: забрана «от ДД.ММ» не спира, ако началото вече е от тази дата.
   const blockers = new Map(
-    chosen.map((s) => [s.serviceItemId, serviceProblem(kind, s, priceStart, today)] as const).filter(([, p]) => !!p),
+    chosen
+      .map((s) => [s.serviceItemId, serviceProblem(kind, s, priceStart, today)] as const)
+      .filter(([, p]) => !!p && !(p.from && priceStart >= p.from)),
   );
 
   const card = {
@@ -259,11 +279,11 @@ export function CampaignForm({
                       className="size-7 shrink-0 rounded-full accent-primary"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className={cn("flex items-center gap-3 text-[18px] leading-snug", disabled && !on && "text-foreground/80")}>
+                      <span className={cn("flex items-center gap-3 text-[16px] leading-snug [text-wrap:pretty]", disabled && !on && "text-foreground/80")}>
                         {s.name}
                         {lockedUntil && <Lock className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.7} aria-hidden />}
                       </span>
-                      {lockedUntil && <span className="block text-[15px] text-muted-foreground">Вече има промоция до {shortDay(lockedUntil, today)}.</span>}
+                      {lockedUntil && <span className="block text-[15px] text-muted-foreground [text-wrap:pretty]">Вече има промоция до {shortDay(lockedUntil, today)}.</span>}
                       {!lockedUntil && !s.onlineBookable && <span className="block text-[15px] text-muted-foreground">{CAMPAIGN_TEXT.noOnline}</span>}
                       <Errors list={err} />
                     </span>
@@ -392,7 +412,7 @@ export function CampaignForm({
               <div key={id} className="mt-7">
                 <h3 className="font-display text-[26px] font-medium leading-tight">{s.name}</h3>
                 {block && (
-                  <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-[19px] leading-snug">
+                  <div className="mt-4 rounded-2xl border border-sand-line bg-sand px-5 py-4 text-[19px] leading-snug">
                     <p>{block.text}</p>
                     {block.giftOk && kind === "discount" && (
                       <button
@@ -404,6 +424,15 @@ export function CampaignForm({
                         className="mt-1 min-h-11 text-primary underline underline-offset-4"
                       >
                         Направи подарък
+                      </button>
+                    )}
+                    {kind === "discount" && block.from && block.from > today && (
+                      <button
+                        type="button"
+                        onClick={() => startFrom(block.from!)}
+                        className="mt-1 ml-4 min-h-11 text-primary underline underline-offset-4"
+                      >
+                        Започни от {shortDay(block.from, today)}
                       </button>
                     )}
                   </div>
