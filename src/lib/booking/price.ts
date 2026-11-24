@@ -28,7 +28,8 @@ const money = formatAmount;
  */
 export function formatServicePrice(p: PriceLike): string {
   const cur = p.currency || "лв";
-  if (p.priceMax && p.priceMax > p.price) return `${money(p.price)}–${money(p.priceMax)} ${cur}`;
+  // «от» и при интервал, както ценоразписът на /uslugi («от 5–7 €»): една цена навсякъде.
+  if (p.priceMax && p.priceMax > p.price) return `${p.priceFrom ? "от " : ""}${money(p.price)}–${money(p.priceMax)} ${cur}`;
   if (p.priceFrom) return `от ${money(p.price)} ${cur}`;
   return `${money(p.price)} ${cur}`;
 }
