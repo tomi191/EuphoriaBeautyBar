@@ -19,7 +19,7 @@ export function Hero({ rating }: HeroProps) {
     <section className="relative isolate min-h-[88svh] overflow-hidden bg-cream">
       {/* Фон — реалната снимка на салона */}
       <Image
-        src="/images/interior/hero-bg.png"
+        src="/images/interior/hero-bg.webp"
         alt="Интериорът на Euphoria Hair & Beauty Bar в кв. Левски, Варна — столове, огледала и зеленина"
         fill
         priority

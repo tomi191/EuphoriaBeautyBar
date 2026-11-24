@@ -220,7 +220,7 @@ export default async function BlogPostPage({ params }: Params) {
               "@type": "Organization",
               name: siteConfig.name,
               url: siteConfig.url,
-              logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.png` },
+              logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.webp` },
             },
           },
         ]}

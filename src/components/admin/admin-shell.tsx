@@ -50,8 +50,8 @@ function AdminBrand({ size }: { size: "md" | "sm" }) {
   const img = size === "md" ? "h-10 w-auto" : "h-8 w-auto";
   return (
     <Link href="/admin" aria-label="Към таблото" className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
-      <Image src="/images/brand/logo-mark.png" alt="" width={80} height={80} className={cn("select-none dark:hidden", img)} />
-      <Image src="/images/brand/logo-mark-white.png" alt="" width={80} height={80} className={cn("hidden select-none dark:block", img)} aria-hidden />
+      <Image src="/images/brand/logo-mark.webp" alt="" width={80} height={80} className={cn("select-none dark:hidden", img)} />
+      <Image src="/images/brand/logo-mark-white.webp" alt="" width={80} height={80} className={cn("hidden select-none dark:block", img)} aria-hidden />
       <span className={cn("truncate font-display font-medium tracking-tight", size === "md" ? "text-xl" : "text-lg")}>Euphoria</span>
     </Link>
   );

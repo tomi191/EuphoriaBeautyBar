@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BookingPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  // ?promo=&specialist=&usluga= от картата на промоцията; ?usluga= сам от галерията отваря записа с избраната услуга.
   const sp = await searchParams;
   const param = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string).slice(0, 40) : null);
   const [cats, items, activeResources, gallery, offerings, running] = await Promise.all([

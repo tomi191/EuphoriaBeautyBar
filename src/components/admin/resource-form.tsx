@@ -249,7 +249,7 @@ export function ResourceForm({
                 <Input
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
-                  placeholder="/images/team/име.jpg или URL"
+                  placeholder="/images/team/име.webp или URL"
                   aria-label="Адрес на снимка"
                   className="mt-2"
                 />

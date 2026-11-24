@@ -147,9 +147,9 @@ function PerformerAvatar({ image, size = 56 }: { image: string | null; size?: nu
       ) : (
         <div className="grid size-full place-items-center p-1.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/brand/logo-mark-black.png" alt="" className="size-full object-contain dark:hidden" />
+          <img src="/images/brand/logo-mark-black.webp" alt="" className="size-full object-contain dark:hidden" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/brand/logo-mark-white.png" alt="" className="hidden size-full object-contain dark:block" />
+          <img src="/images/brand/logo-mark-white.webp" alt="" className="hidden size-full object-contain dark:block" />
         </div>
       )}
     </div>

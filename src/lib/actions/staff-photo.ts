@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
-import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
+import { IMAGE_NOT_READABLE, stripToWebp } from "@/lib/images/strip-metadata";
 
 const BUCKET = "team";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -22,8 +22,7 @@ export async function uploadStaffPhoto(formData: FormData) {
   const { resource } = await requireStaff();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false as const, error: "Няма избран файл." };
-  const ext = ALLOWED_TYPES[file.type];
-  if (!ext) return { ok: false as const, error: "Позволени са само JPG, PNG и WebP изображения." };
+  if (!ALLOWED_TYPES[file.type]) return { ok: false as const, error: "Позволени са само JPG, PNG и WebP изображения." };
   if (file.size > MAX_BYTES) return { ok: false as const, error: "Снимката е над 5 MB." };
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,11 +35,11 @@ export async function uploadStaffPhoto(formData: FormData) {
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {}); // idempotent
 
   // Нов път всеки път → не се сблъсква с CDN кеша на стария файл.
-  const path = `${resource.id}-${Date.now()}.${ext}`;
-  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
-  const buffer = await stripImageMetadata(Buffer.from(await file.arrayBuffer()));
+  const path = `${resource.id}-${Date.now()}.webp`;
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни, в WebP.
+  const buffer = await stripToWebp(Buffer.from(await file.arrayBuffer()));
   if (!buffer) return { ok: false as const, error: IMAGE_NOT_READABLE };
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type, upsert: true });
+  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: "image/webp", upsert: true });
   if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
 
   const url = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`;

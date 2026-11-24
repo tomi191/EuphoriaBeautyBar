@@ -145,6 +145,10 @@ describe.skipIf(!RUN)("одобряване на снимките от спец�
       return d.reduce((a, v) => a + v, 0) / d.length;
     };
     expect(await mean(pubFile)).toBeGreaterThan((await mean(dark)) + 20);
+    // малкото копие за плочката в галерията (визия №32): до голямата, 600 px, WebP
+    const thumb = await fetch(got.src.replace(/\.webp$/, "-w600.webp"));
+    expect(thumb.status).toBe(200);
+    expect(await sharp(Buffer.from(await thumb.arrayBuffer())).metadata()).toMatchObject({ format: "webp", width: 600 });
 
     expect(await publicIds()).toContain(ids.withNote);
     expect(revalidated).toEqual(expect.arrayContaining(["/galeriya", "/", "/zapazi-chas"]));
@@ -184,6 +188,7 @@ describe.skipIf(!RUN)("одобряване на снимките от спец�
     const got = (await row(ids.plain2))!;
     expect(got).toMatchObject({ status: "rejected", src: "", rejectReason: "Махната от сайта." });
     expect((await fetch(before.src)).status).toBe(400);
+    expect((await fetch(before.src.replace(/\.webp$/, "-w600.webp"))).status).toBe(400);
     expect(store.buckets.get("gallery-originals")!.files.has(got.originalPath!)).toBe(true);
     expect(await publicIds()).not.toContain(ids.plain2);
     // старата снимка няма оригинал: маха се само с «Изтрий»

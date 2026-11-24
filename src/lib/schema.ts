@@ -23,8 +23,8 @@ export const localBusinessSchema = (rating?: { value: number; count: number }) =
   "@type": ["BeautySalon", "HairSalon", "LocalBusiness"],
   name: siteConfig.name,
   alternateName: siteConfig.shortName,
-  image: `${siteConfig.url}/images/brand/logo-black.png`,
-  logo: `${siteConfig.url}/images/brand/logo-black.png`,
+  image: `${siteConfig.url}/images/brand/logo-black.webp`,
+  logo: `${siteConfig.url}/images/brand/logo-black.webp`,
   "@id": siteConfig.url,
   url: siteConfig.url,
   telephone: siteConfig.contact.phone,
@@ -114,7 +114,7 @@ export const personSchema = {
     url: siteConfig.url,
   },
   url: `${siteConfig.url}/za-nas`,
-  image: `${siteConfig.url}/images/team/snezhana.jpg`,
+  image: `${siteConfig.url}/images/team/snezhana.webp`,
   description:
     "Снежана Саблева — стилист с над 25 години опит, основател на Euphoria Hair & Beauty Bar във Варна. Експерт по балаяж, кератинови терапии и корекция на цвят.",
   knowsAbout: ["Балаяж", "Goldwell Kerasilk", "Montibello", "Корекция на цвят", "Официални прически", "Сватбени стилове"],
@@ -159,7 +159,7 @@ export const organizationSchema = {
   "@id": `${siteConfig.url}#organization`,
   name: siteConfig.name,
   url: siteConfig.url,
-  logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.png` },
+  logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.webp` },
   contactPoint: {
     "@type": "ContactPoint",
     telephone: siteConfig.contact.phone,

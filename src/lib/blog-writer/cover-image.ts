@@ -5,7 +5,7 @@
  *   1. Генерира editorial снимка през KIE.ai (gpt-image-2-text-to-image),
  *      16:9, БЕЗ текст/лого в кадъра — image моделите грешат текст.
  *   2. Сваля URL-а (изтича за 24ч) и го качва в Supabase Storage
- *      (bucket "blog-images", path posts/<slug>.png), за да остане траен.
+ *      (bucket "blog-images", path posts/<slug>.webp), за да остане траен.
  *
  * Graceful fallback: ако KIE_AI_API_KEY или Supabase env vars липсват →
  * връща null и постът се записва без cover (текстът работи без изображение).
@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { stripToWebp } from "@/lib/images/strip-metadata";
 
 const KIE_CREATE_URL = "https://api.kie.ai/api/v1/jobs/createTask";
 const KIE_POLL_URL = "https://api.kie.ai/api/v1/jobs/recordInfo";
@@ -157,13 +158,15 @@ export async function generateCoverImage(
   if (!downloadRes.ok) {
     throw new Error(`Cover image download failed: ${downloadRes.status}`);
   }
-  const buffer = Buffer.from(await downloadRes.arrayBuffer());
+  // KIE връща PNG; в хранилището влиза WebP (решение 35).
+  const buffer = await stripToWebp(Buffer.from(await downloadRes.arrayBuffer()));
+  if (!buffer) throw new Error("Cover image is not a readable image");
 
-  // 3. Качи в Supabase Storage — bucket "blog-images", posts/<slug>.png
-  const path = `posts/${input.slug}.png`;
+  // 3. Качи в Supabase Storage — bucket "blog-images", posts/<slug>.webp
+  const path = `posts/${input.slug}.webp`;
   const { error: uploadErr } = await supabase.storage
     .from("blog-images")
-    .upload(path, buffer, { contentType: "image/png", upsert: true });
+    .upload(path, buffer, { contentType: "image/webp", upsert: true });
 
   if (uploadErr) {
     throw new Error(

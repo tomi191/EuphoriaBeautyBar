@@ -80,9 +80,9 @@ export function StaffShell({
         <div className="flex items-center gap-2.5">
           <span className="grid size-8 place-items-center overflow-hidden rounded-xl bg-cream">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/brand/logo-mark-black.png" alt="" className="size-6 object-contain dark:hidden" />
+            <img src="/images/brand/logo-mark-black.webp" alt="" className="size-6 object-contain dark:hidden" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/brand/logo-mark-white.png" alt="" className="hidden size-6 object-contain dark:block" />
+            <img src="/images/brand/logo-mark-white.webp" alt="" className="hidden size-6 object-contain dark:block" />
           </span>
           <span className="font-display text-base font-semibold tracking-tight">
             Euphoria <span className="font-normal text-muted-foreground">· Екип</span>

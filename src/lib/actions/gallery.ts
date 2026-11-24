@@ -7,9 +7,11 @@ import { nanoid } from "nanoid";
 import { db, schema } from "@/lib/db";
 import { galleryAlt } from "@/lib/data/gallery";
 import { requireAdmin } from "@/lib/actions/auth-guard";
-import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
+import { IMAGE_NOT_READABLE, stripToWebp } from "@/lib/images/strip-metadata";
 import { galleryCategories } from "@/lib/data/gallery";
 import { ORIGINALS_BUCKET } from "@/lib/gallery/storage";
+import { galleryThumbSrc } from "@/lib/gallery/thumb";
+import { makeGalleryThumb } from "@/lib/gallery/thumb-image";
 
 const BUCKET = "gallery";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -49,8 +51,7 @@ export async function uploadGalleryImage(formData: FormData) {
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false as const, error: "Няма избран файл." };
-  const ext = ALLOWED_TYPES[file.type];
-  if (!ext) return { ok: false as const, error: "Позволени са само JPG, PNG и WebP изображения." };
+  if (!ALLOWED_TYPES[file.type]) return { ok: false as const, error: "Позволени са само JPG, PNG и WebP изображения." };
   if (file.size > MAX_BYTES) return { ok: false as const, error: "Снимката е над 10 MB." };
 
   const category = String(formData.get("category") ?? "");
@@ -74,12 +75,22 @@ export async function uploadGalleryImage(formData: FormData) {
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {}); // idempotent
 
   const id = `gu-${nanoid(10)}`;
-  const path = `${id}.${ext}`;
-  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
-  const buffer = await stripImageMetadata(Buffer.from(await file.arrayBuffer()));
+  const path = `${id}.webp`;
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни, в WebP.
+  const buffer = await stripToWebp(Buffer.from(await file.arrayBuffer()));
   if (!buffer) return { ok: false as const, error: IMAGE_NOT_READABLE };
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type });
+  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: "image/webp" });
   if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
+  // Малкото копие за плочката в галерията (визия №32).
+  const thumbPath = galleryThumbSrc(path)!;
+  const thumb = await makeGalleryThumb(buffer).catch(() => null);
+  const thumbUp = thumb
+    ? await supabase.storage.from(BUCKET).upload(thumbPath, thumb, { contentType: "image/webp" })
+    : { error: new Error("thumb") };
+  if (thumbUp.error) {
+    await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    return { ok: false as const, error: "Грешка при качване. Опитай пак." };
+  }
 
   const src = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`;
   const [{ min }] = await db
@@ -147,7 +158,7 @@ export async function deleteGalleryImage(imageId: string) {
     const path = img.src.slice(prefix.length);
     if (path) {
       const supabase = createClient(supabaseUrl, serviceKey);
-      await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+      await supabase.storage.from(BUCKET).remove([path, galleryThumbSrc(path) ?? path]).catch(() => {});
     }
   }
   // Снимка от специалист: и оригиналът без знак в частното хранилище.

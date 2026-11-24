@@ -8,7 +8,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { postListingToFacebookPage, type FacebookPostResult } from "@/lib/facebook/page-post";
-import { IMAGE_NOT_READABLE, stripImageMetadata } from "@/lib/images/strip-metadata";
+import { IMAGE_NOT_READABLE, stripToWebp } from "@/lib/images/strip-metadata";
 import { RENTAL_BENEFIT_KEYS } from "@/lib/rental/benefits";
 import {
   effectiveStatus,
@@ -32,7 +32,6 @@ import { siteConfig } from "@/lib/site";
 const rp = schema.rentalPositions;
 const BUCKET = "rental";
 const MAX_BYTES = 5 * 1024 * 1024;
-const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 type Fail = { ok: false; error: string };
 const fail = (error: string): Fail => ({ ok: false, error });
@@ -327,8 +326,8 @@ export async function uploadListingImage(id: string, formData: FormData) {
   const original = Buffer.from(await file.arrayBuffer());
   const type = sniffImageType(original.subarray(0, 16));
   if (!type) return fail("Позволени са само JPG, PNG и WebP изображения.");
-  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни.
-  const buffer = await stripImageMetadata(original);
+  // Местоположението в снимката е лични данни: в хранилището влиза само копие без метаданни, в WebP.
+  const buffer = await stripToWebp(original);
   if (!buffer) return fail(IMAGE_NOT_READABLE);
 
   const row = await db.query.rentalPositions.findFirst({
@@ -342,8 +341,8 @@ export async function uploadListingImage(id: string, formData: FormData) {
   await s.client.storage.createBucket(BUCKET, { public: true }).catch(() => {}); // idempotent
 
   // Нов път всеки път: Facebook и CDN кешират картината по адрес.
-  const path = `${row.id}-${Date.now()}.${EXT[type]}`;
-  const { error } = await s.client.storage.from(BUCKET).upload(path, buffer, { contentType: type });
+  const path = `${row.id}-${Date.now()}.webp`;
+  const { error } = await s.client.storage.from(BUCKET).upload(path, buffer, { contentType: "image/webp" });
   if (error) return fail("Грешка при качване. Опитай пак.");
   const url = `${s.url}/storage/v1/object/public/${BUCKET}/${path}`;
 

@@ -137,7 +137,7 @@ describe.skipIf(!RUN)("снимки от приложението: качван�
     const r = await upload({ file: big });
     if (!r.ok) throw new Error(r.error);
     const [row] = (await rows(R.a)).filter((x) => x.id === r.id);
-    expect(row.originalPath).toBe(`${R.a}/${r.id}.jpg`);
+    expect(row.originalPath).toBe(`${R.a}/${r.id}.webp`);
     expect(store.buckets.get("gallery-originals")?.public).toBe(false);
     const saved = store.buckets.get("gallery-originals")!.files.get(row.originalPath!)!;
     expect((await sharp(saved.body).metadata()).exif).toBeUndefined();
