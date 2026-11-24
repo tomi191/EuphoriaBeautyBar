@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { getClosedDates } from "@/lib/booking/closures";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
@@ -30,7 +31,7 @@ export default async function BookingPage() {
       where: (r, { eq }) => eq(r.active, true),
       orderBy: (r, { asc }) => [asc(r.sortOrder)],
     }),
-    db.query.galleryImages.findMany({ orderBy: (g, { asc }) => [asc(g.sortOrder)] }),
+    listPublicGalleryImages(),
     db.query.resourceServices.findMany({ where: (rs, { eq }) => eq(rs.active, true) }),
   ]);
 

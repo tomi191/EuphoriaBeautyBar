@@ -178,6 +178,21 @@ export const galleryImages = pgTable("gallery_images", {
   resourceId: text("resource_id"),
   // Свободен текст от админа — показва се под снимката в lightbox-а на /galeriya.
   description: text("description"),
+  // Снимки от приложението за екипа (№8 В1а, миграция drizzle/manual/0002_staff_gallery.sql).
+  // Старите редове: status = "approved", другите нови колони са празни. FK-тата са на ниво БД.
+  uploadedBy: text("uploaded_by"), // resources.id на специалиста, който я е качил
+  // pending: само при специалиста и в администрацията (src = ""); approved: на сайта; rejected: върната.
+  status: text("status").notNull().default("approved").$type<"pending" | "approved" | "rejected">(),
+  rejectReason: text("reject_reason"),
+  rejectedAt: ts("rejected_at"),
+  noFaceConfirmedAt: ts("no_face_confirmed_at"),
+  staffNote: text("staff_note"), // думите на специалиста, до 60 знака
+  serviceItemId: text("service_item_id"),
+  bookingId: text("booking_id"),
+  originalPath: text("original_path"), // в частното хранилище gallery-originals, без знак
+  approvedBy: text("approved_by"), // user.id на администратора
+  approvedAt: ts("approved_at"),
+  createdAt: ts("created_at"),
 });
 
 export const googleReviews = pgTable("google_reviews", {

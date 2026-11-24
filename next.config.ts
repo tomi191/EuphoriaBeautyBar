@@ -16,7 +16,8 @@ const nextConfig: NextConfig = {
   // OG генераторът чете Manrope.ttf през fs → трасирай го в serverless bundle-а,
   // иначе dynamic OG routes (напр. blog/[slug]) гърмят на runtime с ENOENT.
   outputFileTracingIncludes: {
-    "/**": ["./src/lib/og/*.woff", "./src/lib/og/*.png"],
+    // Водният знак на галерията (lib/gallery/watermark.ts) чете знаците от логото през fs.
+    "/**": ["./src/lib/og/*.woff", "./src/lib/og/*.png", "./src/lib/gallery/marks/*.png"],
   },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion"],

@@ -85,6 +85,14 @@ export async function editMessageText(chatId: string | number, messageId: number
   return !!r && r.ok;
 }
 
+/** Редактира подписа на съобщение със снимка (бутоните за одобрение на снимка). Не хвърля. */
+export async function editMessageCaption(chatId: string | number, messageId: number, caption: string, keyboard?: InlineKeyboard): Promise<boolean> {
+  const body: Record<string, unknown> = { chat_id: chatId, message_id: messageId, caption, parse_mode: "HTML" };
+  body.reply_markup = keyboard ?? { inline_keyboard: [] };
+  const r = await call("editMessageCaption", body);
+  return !!r && r.ok;
+}
+
 /** Затваря „часовника" на inline бутон (иначе клиентът вижда зареждане). Не хвърля. */
 export async function answerCallback(callbackId: string, text?: string): Promise<void> {
   await call("answerCallbackQuery", { callback_query_id: callbackId, ...(text ? { text } : {}) });
@@ -126,4 +134,21 @@ export async function sendTelegramToAdmin(text: string, keyboard?: InlineKeyboar
   const chatId = await getAdminChatId();
   if (!chatId) return false;
   return sendTelegram(chatId, text, keyboard);
+}
+
+/**
+ * Снимка с подпис и бутони до админ канала (нова снимка от специалист за одобрение). Telegram
+ * сваля снимката от адреса сам (подписан адрес към частното хранилище). Ако снимката не мине,
+ * праща само текста със същите бутони. Връща "photo", "text" или null (несвързан канал или провал).
+ */
+export async function sendTelegramPhotoToAdmin(photoUrl: string | null, caption: string, keyboard: InlineKeyboard): Promise<"photo" | "text" | null> {
+  const chatId = await getAdminChatId();
+  if (!chatId) return null;
+  if (photoUrl) {
+    const r = await call("sendPhoto", { chat_id: chatId, photo: photoUrl, caption, parse_mode: "HTML", reply_markup: keyboard });
+    if (r?.ok) return "photo";
+    const t = r ? await r.text().catch(() => "") : "";
+    console.warn("[telegram] sendPhoto провал %s: %s (пращам само текста)", r?.status ?? "-", t.slice(0, 200));
+  }
+  return (await sendTelegram(chatId, caption, keyboard)) ? "text" : null;
 }

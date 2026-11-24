@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarX2, MessageCircle, Phone, Plus, TrendingUp, Users } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
+import { listMyPhotoBookingIds } from "@/lib/actions/staff-gallery";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
@@ -18,6 +19,7 @@ import { ClientFileTrigger } from "@/components/staff/client-file-sheet";
 import { ScheduleSearch, type UpcomingBooking } from "@/components/staff/schedule-search";
 import { BiometricPrompt } from "@/components/staff/biometric-prompt";
 import { ScheduleDateJump } from "@/components/staff/schedule-date-jump";
+import { WorkPhotoSheet, type PhotoServiceOpt } from "@/components/staff/work-photo-sheet";
 
 export const dynamic = "force-dynamic";
 
@@ -97,6 +99,15 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
   const clientIds = [...new Set([...bookings, ...upcomingRows].map((b) => b.clientId).filter(Boolean) as string[])];
   const clients = clientIds.length ? await db.query.clients.findMany({ where: (c, { inArray }) => inArray(c.id, clientIds) }) : [];
   const clientById = new Map(clients.map((c) => [c.id, c]));
+
+  // Снимка от работата (№8 В2): само за завършените часове; услугите са само неговите включени.
+  const completedIds = bookings.filter((b) => b.status === "completed").map((b) => b.id);
+  const bookingsWithPhoto = await listMyPhotoBookingIds(completedIds);
+  const svcItemById = new Map(svcItems.map((i) => [i.id, i]));
+  const photoServices: PhotoServiceOpt[] = mySvc.flatMap((m) => {
+    const item = m.active ? svcItemById.get(m.serviceItemId) : undefined;
+    return item ? [{ id: item.id, name: item.name }] : [];
+  });
 
   // Услуги за edit формата: каталог по вида на изпълнителя, стеснен до собствените, ако са куратирани.
   const svcCatById = new Map(svcCats.map((c) => [c.id, c]));
@@ -384,6 +395,14 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
                       <BookingStatusActions id={b.id} status={b.status} />
                     )}
                     {b.notes && <p className="mt-1 text-xs text-muted-foreground">{b.notes}</p>}
+                    {b.status === "completed" && (
+                      <WorkPhotoSheet
+                        services={photoServices}
+                        booking={{ id: b.id, serviceItemId: b.serviceItemId, timeLabel: timeFmt.format(b.startAt) }}
+                        label={bookingsWithPhoto.has(b.id) ? "Добави още една снимка" : "Добави снимка от работата"}
+                        className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-3xl border border-border bg-background text-sm font-medium text-foreground transition-colors hover:border-foreground/40"
+                      />
+                    )}
                     <p className="mt-1.5 text-[11px] text-muted-foreground/80">
                       Записан {sourceLabel(b.source)} · {createdAtLabel(b.createdAt)}
                     </p>

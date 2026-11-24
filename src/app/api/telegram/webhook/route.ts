@@ -4,11 +4,12 @@ import { db, schema } from "@/lib/db";
 import { sendTelegram, editMessageText, answerCallback, findResourceByChatId, ADMIN_CHAT_KEY, ADMIN_LINK_TOKEN_KEY } from "@/lib/telegram";
 import { buildDaySchedule } from "@/lib/telegram-schedule";
 import { sofiaDateStr } from "@/lib/booking/time";
+import { handleGalleryCallback } from "@/lib/gallery/review";
 
 export const dynamic = "force-dynamic";
 
 type TgChat = { id?: number | string };
-type TgMessage = { message_id?: number; text?: string; chat?: TgChat };
+type TgMessage = { message_id?: number; text?: string; chat?: TgChat; photo?: unknown[] };
 type TgCallback = { id: string; data?: string; message?: TgMessage };
 type TgUpdate = { message?: TgMessage; callback_query?: TgCallback };
 
@@ -19,6 +20,7 @@ const HELP = "За да получаваш известия, свържи ака
  *  - /start <token> → свързва изпълнител (еднократен код от профила)
  *  - /today (+ /grafik /dnes) → дневен график с навигация
  *  - callback day:YYYY-MM-DD → редактира съобщението към друг ден (inline бутони)
+ *  - callback gal:* → одобрение на снимка от специалист (само от админ канала)
  * Валидира secret header. Винаги връща 200, за да не кара Telegram да повтаря.
  */
 export async function POST(req: Request) {
@@ -39,6 +41,8 @@ export async function POST(req: Request) {
   // 1) Натиснат inline бутон → навигация по дни (редактира същото съобщение).
   const cb = update.callback_query;
   if (cb) {
+    // Бутоните под нова снимка за галерията: отговарят на натискането сами (с кратък текст).
+    if (await handleGalleryCallback(cb)) return NextResponse.json({ ok: true });
     await answerCallback(cb.id);
     const chatId = cb.message?.chat?.id;
     const messageId = cb.message?.message_id;
