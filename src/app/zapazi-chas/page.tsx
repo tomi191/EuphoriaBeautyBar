@@ -22,7 +22,9 @@ export const metadata: Metadata = {
 // (важно за актуални слотове) + премахва DB зависимостта от build-а.
 export const dynamic = "force-dynamic";
 
-export default async function BookingPage() {
+export default async function BookingPage({ searchParams }: { searchParams: Promise<{ usluga?: string | string[] }> }) {
+  // ?usluga=<id на услугата>: «Запиши час за …» от галерията отваря записа с избраната услуга.
+  const { usluga } = await searchParams;
   const [cats, items, activeResources, gallery, offerings] = await Promise.all([
     db.query.serviceCategories.findMany(),
     db.query.serviceItems.findMany({
@@ -126,7 +128,14 @@ export default async function BookingPage() {
         <p className="mt-3 mb-6 md:mb-8 text-sm text-muted-foreground">
           Плащането е в салона: в брой, с карта или през Revolut. Запазването е без депозит.
         </p>
-        {services.length > 0 && <PublicBookingForm services={services} performers={performers} closedDates={closed} />}
+        {services.length > 0 && (
+          <PublicBookingForm
+            services={services}
+            performers={performers}
+            closedDates={closed}
+            initialServiceId={services.find((s) => s.id === usluga)?.id}
+          />
+        )}
       </div>
     </section>
   );

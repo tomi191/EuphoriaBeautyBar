@@ -4,6 +4,8 @@ import sharp from "sharp";
 import { db, schema } from "@/lib/db";
 import { buildGalleryAlt, ALT_MAX } from "@/lib/gallery/alt";
 import { applyWatermark } from "@/lib/gallery/watermark";
+import { galleryThumbSrc } from "@/lib/gallery/thumb";
+import { makeGalleryThumb } from "@/lib/gallery/thumb-image";
 import { REJECT_REASON_MAX } from "@/lib/gallery/upload-rules";
 import { galleryCategories } from "@/lib/data/gallery";
 import {
@@ -113,6 +115,16 @@ export async function approveImageCore(
     console.error("[gallery-review] не успях да запиша публичния файл:", up.error);
     return fail("Снимката не излезе. Опитай пак след малко.");
   }
+  // Малкото копие за плочката в галерията (визия №32): без него плочката тегли голямата снимка.
+  const thumbPath = galleryThumbSrc(path)!;
+  const upThumb = await storage.client.storage
+    .from(GALLERY_BUCKET)
+    .upload(thumbPath, await makeGalleryThumb(marked.buffer), { contentType: "image/webp", upsert: true });
+  if (upThumb.error) {
+    console.error("[gallery-review] не успях да запиша малкото копие:", upThumb.error);
+    await storage.client.storage.from(GALLERY_BUCKET).remove([path]);
+    return fail("Снимката не излезе. Опитай пак след малко.");
+  }
 
   const [{ min }] = await db
     .select({ min: sql<number | null>`min(${schema.galleryImages.sortOrder})` })
@@ -137,7 +149,7 @@ export async function approveImageCore(
     .returning({ id: schema.galleryImages.id });
   if (updated.length === 0) {
     // Друг е одобрил междувременно: махаме излишния файл.
-    await storage.client.storage.from(GALLERY_BUCKET).remove([path]);
+    await storage.client.storage.from(GALLERY_BUCKET).remove([path, thumbPath]);
     return fail("Снимката вече е в галерията.");
   }
 
@@ -183,7 +195,8 @@ export async function removeImageFromSiteCore(imageId: string, reason?: string) 
   const storage = galleryStorage();
   const path = storage ? publicGalleryPath(storage, img.src) : null;
   if (storage && path) {
-    const { error } = await storage.client.storage.from(GALLERY_BUCKET).remove([path]);
+    // И малкото копие: свалената снимка не остава публична и в размера за плочката.
+    const { error } = await storage.client.storage.from(GALLERY_BUCKET).remove([path, galleryThumbSrc(path) ?? path]);
     if (error) console.error("[gallery-review] не успях да изтрия публичния файл:", path, error);
   }
   revalidateGallery();
