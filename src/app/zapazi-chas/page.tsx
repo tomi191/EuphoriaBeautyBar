@@ -80,7 +80,8 @@ export default async function BookingPage() {
       tenant,
       kind: r.kind,
       bio: tenant ? null : (r.bio ?? null),
-      phone: r.phone ?? null,
+      // Личният телефон само със съгласие; без него карето «Обади се за час» звъни на салона (решение 21).
+      phone: tenant && !consent[r.id] ? null : (r.phone ?? null),
       portfolio: portfolioByResource.get(r.id) ?? [],
       curated: offeringsByResource.has(r.id),
       offerings: offeringsByResource.get(r.id) ?? {},

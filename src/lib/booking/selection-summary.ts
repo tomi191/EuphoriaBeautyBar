@@ -7,12 +7,15 @@ interface PricedOffering {
   currency: string;
 }
 
-/** „45 мин“, „1 ч“, „1 ч 15 мин“, „2 ч 10 мин“: блокираното време, без „~“. */
+/**
+ * „45 мин“, „1 ч“, „1 ч 15 мин“, „2 ч 10 мин“: блокираното време, без „~“. Числото и мярката
+ * са с неразделим интервал, за да не се чупи «1» / «ч» на края на реда (Bulgarian Cyrillic UX).
+ */
 export function formatDurationShort(min: number): string {
-  if (min < 60) return `${min} мин`;
+  if (min < 60) return `${min}\u00a0мин`;
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return m ? `${h} ч ${m} мин` : `${h} ч`;
+  return m ? `${h}\u00a0ч ${m}\u00a0мин` : `${h}\u00a0ч`;
 }
 
 /**

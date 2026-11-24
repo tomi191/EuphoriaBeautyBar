@@ -622,14 +622,14 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                   <>
                     <span className="font-medium">{selectedServices[0].name}</span>
                     <span className="text-muted-foreground tabular-nums">
-                      {" "}· {formatPrice(resolveOffering(selectedServices[0], performer))} · {formatDurationShort(totalDuration)}
+                      {" "}· {formatPrice(resolveOffering(selectedServices[0], performer))} ·{"\u00a0"}{formatDurationShort(totalDuration)}
                     </span>
                   </>
                 ) : (
                   <>
                     <span className="font-medium">{selectedServices.length} услуги</span>
                     <span className="text-muted-foreground tabular-nums">
-                      {" "}· {sumPriceLabel(selectedServices.map((s) => resolveOffering(s, performer)))} ·{" "}
+                      {" "}· {sumPriceLabel(selectedServices.map((s) => resolveOffering(s, performer)))} ·{"\u00a0"}
                       {formatDurationShort(totalDuration)}
                     </span>
                   </>
