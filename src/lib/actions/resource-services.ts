@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { validatePrice, validateServiceTiming } from "@/lib/booking/service-rules";
+import { withPriceLog } from "@/lib/pricing/price-log";
 
 function revalidate() {
   revalidatePath("/staff/services");
@@ -30,7 +31,7 @@ function revalidate() {
  * стартира със стойности по подразбиране от каталога.
  */
 export async function toggleMyService(serviceItemId: string) {
-  const { resource } = await requireStaff();
+  const { session, resource } = await requireStaff();
   // Ownership по kind (като в updateMyService): иначе крафтнат serviceItemId от чужд тип
   // би създал оферта за услуга, която изпълнителят не може да извършва.
   const target = await db.query.serviceItems.findFirst({ where: (s, { eq }) => eq(s.id, serviceItemId) });
@@ -49,20 +50,22 @@ export async function toggleMyService(serviceItemId: string) {
       .where(eq(schema.resourceServices.id, existing.id));
   } else {
     const item = target;
-    await db.insert(schema.resourceServices).values({
-      id: nanoid(),
-      resourceId: resource.id,
-      serviceItemId,
-      price: item.price,
-      priceMax: item.priceMax,
-      priceFrom: item.priceFrom,
-      currency: item.currency,
-      durationMin: item.durationMin,
-      bufferMin: item.bufferMin,
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    await withPriceLog("staff_app", session.user.id, (tx) =>
+      tx.insert(schema.resourceServices).values({
+        id: nanoid(),
+        resourceId: resource.id,
+        serviceItemId,
+        price: item.price,
+        priceMax: item.priceMax,
+        priceFrom: item.priceFrom,
+        currency: item.currency,
+        durationMin: item.durationMin,
+        bufferMin: item.bufferMin,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
   }
   revalidate();
   return { ok: true as const };
@@ -86,7 +89,7 @@ const updateSchema = z.object({
  * цена я СЪЗДАВА — иначе UPDATE без съществуващ ред мълчаливо губи промяната.
  */
 export async function updateMyService(serviceItemId: string, input: z.infer<typeof updateSchema>) {
-  const { resource } = await requireStaff();
+  const { session, resource } = await requireStaff();
   const parsedInput = updateSchema.safeParse(input);
   if (!parsedInput.success) return { ok: false as const, error: "Провери въведените данни." };
   const d = parsedInput.data;
@@ -132,23 +135,25 @@ export async function updateMyService(serviceItemId: string, input: z.infer<type
       };
     }
   }
-  if (existing) {
-    await db
-      .update(schema.resourceServices)
-      .set({ ...own, priceMax: own.priceMax ?? null, updatedAt: new Date() })
-      .where(eq(schema.resourceServices.id, existing.id));
-  } else {
-    await db.insert(schema.resourceServices).values({
-      id: nanoid(),
-      resourceId: resource.id,
-      serviceItemId,
-      ...own,
-      priceMax: own.priceMax ?? null,
-      active: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
+  await withPriceLog("staff_app", session.user.id, async (tx) => {
+    if (existing) {
+      await tx
+        .update(schema.resourceServices)
+        .set({ ...own, priceMax: own.priceMax ?? null, updatedAt: new Date() })
+        .where(eq(schema.resourceServices.id, existing.id));
+    } else {
+      await tx.insert(schema.resourceServices).values({
+        id: nanoid(),
+        resourceId: resource.id,
+        serviceItemId,
+        ...own,
+        priceMax: own.priceMax ?? null,
+        active: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  });
   // Престоят е характеристика на услугата (глобален) → пише се в каталога.
   if (activeMin !== undefined || processingMin !== undefined) {
     await db
@@ -204,7 +209,7 @@ const createSchema = z.object({
  * (/uslugi), и при записване на час — пълна симбиоза с каталога.
  */
 export async function createMyService(input: z.infer<typeof createSchema>) {
-  const { resource } = await requireStaff();
+  const { session, resource } = await requireStaff();
   const parsedInput = createSchema.safeParse(input);
   if (!parsedInput.success) return { ok: false as const, error: parsedInput.error.issues[0]?.message ?? "Провери въведените данни." };
   const d = parsedInput.data;
@@ -241,35 +246,37 @@ export async function createMyService(input: z.infer<typeof createSchema>) {
   const currency = sibling?.currency ?? "€";
 
   const itemId = nanoid();
-  await db.insert(schema.serviceItems).values({
-    id: itemId,
-    categoryId,
-    groupTitle: d.groupTitle.trim(),
-    name: d.name.trim(),
-    price: d.price,
-    priceMax: null,
-    priceFrom: d.priceFrom,
-    currency,
-    duration: null,
-    description: null,
-    sortOrder: 999, // в края на групата; admin може да пренареди
-    durationMin: d.durationMin,
-    bufferMin: d.bufferMin,
-    bookableOnline: true,
-  });
-  await db.insert(schema.resourceServices).values({
-    id: nanoid(),
-    resourceId: resource.id,
-    serviceItemId: itemId,
-    price: d.price,
-    priceMax: null,
-    priceFrom: d.priceFrom,
-    currency,
-    durationMin: d.durationMin,
-    bufferMin: d.bufferMin,
-    active: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+  await withPriceLog("staff_app", session.user.id, async (tx) => {
+    await tx.insert(schema.serviceItems).values({
+      id: itemId,
+      categoryId,
+      groupTitle: d.groupTitle.trim(),
+      name: d.name.trim(),
+      price: d.price,
+      priceMax: null,
+      priceFrom: d.priceFrom,
+      currency,
+      duration: null,
+      description: null,
+      sortOrder: 999, // в края на групата; admin може да пренареди
+      durationMin: d.durationMin,
+      bufferMin: d.bufferMin,
+      bookableOnline: true,
+    });
+    await tx.insert(schema.resourceServices).values({
+      id: nanoid(),
+      resourceId: resource.id,
+      serviceItemId: itemId,
+      price: d.price,
+      priceMax: null,
+      priceFrom: d.priceFrom,
+      currency,
+      durationMin: d.durationMin,
+      bufferMin: d.bufferMin,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   });
   revalidate();
   revalidatePath("/admin/services");

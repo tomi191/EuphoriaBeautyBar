@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { validatePrice, validateServiceTiming } from "@/lib/booking/service-rules";
+import { withPriceLog } from "@/lib/pricing/price-log";
 
 const serviceItemSchema = z.object({
   categoryId: z.string(),
@@ -56,36 +57,40 @@ function revalidateCatalog() {
 }
 
 export async function createServiceItem(input: ServiceItemInput): Promise<SaveResult> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const parsed = parseInput(input);
   if (!parsed.ok) return { ok: false, error: parsed.error };
   const data = parsed.data;
-  await db.insert(schema.serviceItems).values({
-    id: nanoid(),
-    ...data,
-    priceMax: data.priceMax ?? null,
-    duration: data.duration ?? null,
-    description: data.description ?? null,
-    sortOrder: 0,
-  });
+  await withPriceLog("admin", session.user.id, (tx) =>
+    tx.insert(schema.serviceItems).values({
+      id: nanoid(),
+      ...data,
+      priceMax: data.priceMax ?? null,
+      duration: data.duration ?? null,
+      description: data.description ?? null,
+      sortOrder: 0,
+    }),
+  );
   revalidateCatalog();
   return { ok: true };
 }
 
 export async function updateServiceItem(id: string, input: ServiceItemInput): Promise<SaveResult> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const parsed = parseInput(input);
   if (!parsed.ok) return { ok: false, error: parsed.error };
   const data = parsed.data;
-  await db
-    .update(schema.serviceItems)
-    .set({
-      ...data,
-      priceMax: data.priceMax ?? null,
-      duration: data.duration ?? null,
-      description: data.description ?? null,
-    })
-    .where(eq(schema.serviceItems.id, id));
+  await withPriceLog("admin", session.user.id, (tx) =>
+    tx
+      .update(schema.serviceItems)
+      .set({
+        ...data,
+        priceMax: data.priceMax ?? null,
+        duration: data.duration ?? null,
+        description: data.description ?? null,
+      })
+      .where(eq(schema.serviceItems.id, id)),
+  );
   revalidateCatalog();
   return { ok: true };
 }
