@@ -165,7 +165,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
                   aria-pressed={isActive}
                   onClick={() => chooseFilter(cat.value)}
                   className={cn(
-                    "h-11 shrink-0 cursor-pointer rounded-full border px-4 text-[15px] font-medium transition-colors",
+                    "h-11 shrink-0 cursor-pointer rounded-full border px-3 text-[15px] min-[380px]:px-[14px] lg:px-4 font-medium transition-colors",
                     focusRing,
                     isActive
                       ? "border-primary bg-primary text-primary-foreground"
