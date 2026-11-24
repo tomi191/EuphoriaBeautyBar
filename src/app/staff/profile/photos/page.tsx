@@ -89,7 +89,7 @@ export default async function StaffPhotosPage({ searchParams }: { searchParams: 
   }));
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell kind={resource.kind} wide>
       <Link
         href="/staff/profile"
         className="-ml-1 -mt-3 inline-flex h-12 items-center gap-6 px-1 text-[17px] text-foreground transition-colors hover:text-foreground/70"

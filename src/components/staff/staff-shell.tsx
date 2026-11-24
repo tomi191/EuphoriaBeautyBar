@@ -16,7 +16,7 @@ const SERVICE_ICON: Record<string, LucideIcon> = {
   cosmetics: Flower2,
 };
 
-export function StaffShell({ children, kind }: { children: React.ReactNode; kind?: string }) {
+export function StaffShell({ children, kind, wide }: { children: React.ReactNode; kind?: string; wide?: boolean }) {
   const pathname = usePathname();
 
   // Tabs се строят на render, защото иконата на „Услуги" зависи от kind.
@@ -92,7 +92,17 @@ export function StaffShell({ children, kind }: { children: React.ReactNode; kind
         </div>
       )}
 
-      <div className="mx-auto max-w-lg px-4 py-6">{children}</div>
+      {/* wide: «Моите снимки» на компютър е по-широка (3 колони) и отстъпва вляво, докато панелът
+          «Снимка от работата» е отворен (листът слага data-work-panel на body). */}
+      <div
+        className={cn(
+          "mx-auto max-w-lg px-4 py-6",
+          wide &&
+            "lg:max-w-[38rem] lg:transition-[translate] lg:duration-300 lg:[body[data-work-panel]_&]:translate-x-[min(0px,calc(50vw-859px))]",
+        )}
+      >
+        {children}
+      </div>
 
       {/* Глобален „Нов час" — достъпен от всеки екран (не само от графика). */}
       {pathname !== "/staff/new" && (
@@ -105,7 +115,12 @@ export function StaffShell({ children, kind }: { children: React.ReactNode; kind
         </Link>
       )}
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
+      <nav
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background pb-[env(safe-area-inset-bottom)]",
+          wide && "lg:transition-[translate] lg:duration-300 lg:[body[data-work-panel]_&]:translate-x-[min(0px,calc(50vw-859px))]",
+        )}
+      >
         {tabs.map((t) => {
           const active = t.exact ? pathname === t.href : pathname.startsWith(t.href);
           return (
