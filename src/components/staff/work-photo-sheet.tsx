@@ -23,9 +23,10 @@ type Errors = Partial<Record<UploadErrorField, string>>;
 
 /**
  * «Снимка от работата» (№8 В2, кадър «В-приложение-390» екран 2 и «В-приложение-1440» панелът вдясно).
- * Бутонът отваря избора на снимка; след избора листът показва прегледа, услугата, думите за описанието
- * и потвърждението «без лице». Снимката се смалява в телефона (prepareFile) и тръгва към
- * uploadStaffGalleryImage; после екранът «Изпратена е».
+ * Бутонът отваря листа и камерата направо (capture="environment"; на компютър без камера е изборът на файл);
+ * после листът показва прегледа, услугата, думите за описанието и потвърждението «без лице».
+ * В прегледа: «Снимай пак» и малка връзка «Избери от галерията» (без capture) за снимка, направена по-рано.
+ * Снимката се смалява в телефона (prepareFile) и тръгва към uploadStaffGalleryImage; после екранът «Изпратена е».
  * На телефон е лист отдолу, от 1024 px нагоре е панел вдясно.
  */
 export function WorkPhotoSheet({
@@ -41,7 +42,8 @@ export function WorkPhotoSheet({
   className?: string;
 }) {
   const router = useRouter();
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const cameraRef = React.useRef<HTMLInputElement>(null);
+  const galleryRef = React.useRef<HTMLInputElement>(null);
   const noFaceRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [picked, setPicked] = React.useState<Picked>(null);
@@ -162,11 +164,20 @@ export function WorkPhotoSheet({
 
   return (
     <>
-      <button type="button" onClick={() => inputRef.current?.click()} className={className}>
+      <button
+        type="button"
+        onClick={() => {
+          // Листът се отваря веднага: ако камерата се затвори без снимка, остават «Снимай» и «Избери от галерията».
+          setOpen(true);
+          cameraRef.current?.click();
+        }}
+        className={className}
+      >
         <Camera className="size-5" strokeWidth={1.7} aria-hidden />
         {label}
       </button>
-      <input ref={inputRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden onChange={onPick} />
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} aria-hidden onChange={onPick} />
+      <input ref={galleryRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden onChange={onPick} />
 
       <Dialog.Root
         open={open}
@@ -219,12 +230,12 @@ export function WorkPhotoSheet({
                 <div className="flex justify-center lg:justify-start">
                   <button
                     type="button"
-                    onClick={() => inputRef.current?.click()}
+                    onClick={() => cameraRef.current?.click()}
                     aria-describedby={errors.file ? "wp-file-err" : undefined}
                     className="inline-flex h-12 items-center gap-2 px-2 text-sm font-medium text-foreground/75 transition-colors hover:text-foreground lg:-ml-2 lg:text-base lg:font-semibold lg:text-primary"
                   >
                     <RefreshCw className="size-4 lg:size-5" strokeWidth={1.8} aria-hidden />
-                    Смени снимката
+                    {picked ? "Снимай пак" : "Снимай"}
                   </button>
                 </div>
 
@@ -344,6 +355,15 @@ export function WorkPhotoSheet({
                     {sending && <Loader2 className="size-4 animate-spin" aria-hidden />}
                     {sending ? "Изпращане…" : retry ? "Изпрати пак" : "Изпрати за одобрение"}
                   </button>
+                  <div className="mt-1 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => galleryRef.current?.click()}
+                      className="inline-flex h-11 items-center px-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
+                    >
+                      Избери от галерията
+                    </button>
+                  </div>
                 </div>
               </div>
             </form>

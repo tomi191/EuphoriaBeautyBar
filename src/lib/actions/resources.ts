@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
 import { releaseListingsFilledBy } from "@/lib/rental/release";
 import { setConsent } from "@/lib/data/tenant-consent";
+import { processTeamPhoto, removeTeamPhotoIfUnused, TEAM_BUCKET, TEAM_PHOTO_ERRORS, teamStorage } from "@/lib/images/team-photo";
 
 const resourceSchema = z.object({
   name: z.string().min(2, "Минимум 2 символа"),
@@ -55,13 +56,43 @@ export async function createResource(input: ResourceInput) {
 export async function updateResource(id: string, input: ResourceInput) {
   await requireAdmin();
   const d = resourceSchema.parse(input);
+  const before = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, id), columns: { image: true } });
   // „Активен" е само видимостта пред клиентите. Скрит изпълнител пази входа, Telegram и известията.
   await db
     .update(schema.resources)
     .set({ name: d.name, kind: d.kind, color: d.color ?? null, image: d.image ?? null, bio: d.bio ?? null, active: d.active, updatedAt: new Date() })
     .where(eq(schema.resources.id, id));
   if (d.publicConsent !== undefined) await setConsent(id, d.publicConsent);
+  // Сменена или махната снимка: старият файл в хранилището се трие (само ако е наш и никой не го ползва).
+  if (before?.image && before.image !== (d.image ?? null)) await removeTeamPhotoIfUnused(before.image);
   revalidate();
+}
+
+/**
+ * «Качи снимка» във формата на изпълнителя: проверка по байтовете, без данни за място, WebP.
+ * Връща адреса; записва се в изпълнителя чак със «Запази» (updateResource/createResource).
+ */
+export async function uploadResourcePhoto(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false as const, error: TEAM_PHOTO_ERRORS.none };
+  if (file.size > 5 * 1024 * 1024) return { ok: false as const, error: TEAM_PHOTO_ERRORS.tooBig };
+  const res = await processTeamPhoto(Buffer.from(await file.arrayBuffer()));
+  if (!res.ok) return res;
+  const s = teamStorage();
+  if (!s) return { ok: false as const, error: "Качването не е настроено (липсват ключовете за хранилището)." };
+  await s.client.storage.createBucket(TEAM_BUCKET, { public: true }).catch(() => {}); // idempotent
+  // Нов адрес всеки път: CDN и картините в сайта кешират по адрес.
+  const path = `admin-${nanoid(10)}-${Date.now()}.webp`;
+  const { error } = await s.client.storage.from(TEAM_BUCKET).upload(path, res.webp, { contentType: "image/webp" });
+  if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
+  return { ok: true as const, url: `${s.prefix}${path}` };
+}
+
+/** Качена, но незапазена снимка (затворена форма, «Махни» или нова снимка): трие се, ако никой не я ползва. */
+export async function discardResourcePhoto(url: string) {
+  await requireAdmin();
+  await removeTeamPhotoIfUnused(url);
 }
 
 /**
