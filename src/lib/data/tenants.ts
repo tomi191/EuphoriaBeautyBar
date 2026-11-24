@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { adminResourceUserIds, getConsentMap } from "@/lib/data/tenant-consent";
 import { publicIdentity } from "@/lib/data/tenant-identity";
+import { listPublicGalleryImages } from "@/lib/data/public-gallery";
 
 export interface TenantCard {
   id: string;
@@ -36,11 +37,8 @@ export async function getTenantCards(): Promise<TenantCard[]> {
       where: (rs, { and, eq, inArray }) => and(eq(rs.active, true), inArray(rs.resourceId, ids)),
       columns: { resourceId: true, onlineBookable: true },
     }),
-    db.query.galleryImages.findMany({
-      where: (g, { inArray }) => inArray(g.resourceId, ids),
-      orderBy: (g, { asc }) => [asc(g.sortOrder)],
-      columns: { src: true, alt: true, resourceId: true },
-    }),
+    // Само одобрените снимки (№8 В): чакаща или върната не стига до «Виж работа».
+    listPublicGalleryImages(),
   ]);
   const online = new Set(offers.filter((o) => o.onlineBookable).map((o) => o.resourceId));
   return tenants
