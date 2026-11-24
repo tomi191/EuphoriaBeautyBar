@@ -1,4 +1,5 @@
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
+import { formatAmount } from "@/lib/booking/price";
 
 /**
  * AEO за хъба /uslugi/frizorski-uslugi: answer-first абзац и FAQ „Колко струва
@@ -6,7 +7,7 @@ import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
  * никога не се пишат на ръка: промяна в админа се отразява веднага.
  */
 
-const fmt = (i: ServiceItem) => `${i.priceFrom ? "от " : ""}${i.price} ${i.currency}`;
+const fmt = (i: ServiceItem) => `${i.priceFrom ? "от " : ""}${formatAmount(i.price)} ${i.currency}`;
 
 /** Всички позиции „подстригване" в категорията, най-евтината първа. */
 export function haircutItems(category: ServiceCategory): ServiceItem[] {
@@ -19,7 +20,7 @@ export function haircutItems(category: ServiceCategory): ServiceItem[] {
 /** Answer-first абзац (~50 думи): какво, къде, кой, цена „от", записване. */
 export function hubAnswer(category: ServiceCategory): string {
   const cheapest = haircutItems(category)[0];
-  const price = cheapest ? ` Подстригване от ${cheapest.price} ${cheapest.currency}.` : "";
+  const price = cheapest ? ` Подстригване от ${formatAmount(cheapest.price)} ${cheapest.currency}.` : "";
   return (
     "Фризьорски салон Euphoria е в кв. Левски, Варна, на ул. Петър Райчев 18. Косата поема Снежана, с над 25 години опит: " +
     "подстригване, боядисване, кичури, балаяж и официални прически." +
@@ -35,7 +36,7 @@ export function haircutPriceFaq(category: ServiceCategory): { question: string; 
   const list = items.map((i) => `${i.name.toLowerCase()}: ${fmt(i)}`).join("; ");
   return {
     question: "Колко струва подстригване във Варна?",
-    answer: `В Euphoria подстригването започва от ${items[0].price} ${items[0].currency}. Според вида и дължината на косата: ${list}. Целият ценоразпис е на тази страница, а час запазваш онлайн.`,
+    answer: `В Euphoria подстригването започва от ${formatAmount(items[0].price)} ${items[0].currency}. Според вида и дължината на косата: ${list}. Целият ценоразпис е на тази страница, а час запазваш онлайн.`,
   };
 }
 
@@ -54,6 +55,6 @@ export function keratinPriceFaq(category: ServiceCategory): { question: string; 
   const list = items.map((i) => `${i.name}: ${fmt(i)}`).join("; ");
   return {
     question: "Колко струва кератинова терапия във Варна?",
-    answer: `В Euphoria кератиновата терапия започва от ${items[0].price} ${items[0].currency}. Процедурите и цените: ${list}. Кое подхожда на твоята коса, Снежана преценява на консултацията, а час запазваш онлайн.`,
+    answer: `В Euphoria кератиновата терапия започва от ${formatAmount(items[0].price)} ${items[0].currency}. Процедурите и цените: ${list}. Кое подхожда на твоята коса, Снежана преценява на консултацията, а час запазваш онлайн.`,
   };
 }

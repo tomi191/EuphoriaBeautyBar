@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, Flower2, HandHeart, Scissors, Sparkles } from "lucide-react";
 import type { ServiceCategory } from "@/lib/data/services";
 import { SpotlightCard } from "@/components/reactbits/spotlight-card";
+import { formatAmount } from "@/lib/booking/price";
 
 const iconMap = {
   scissors: Scissors,
@@ -56,7 +57,7 @@ export function ServiceCard({
                 {item.name}{" "}
                 <span className="ml-1 font-display text-base font-medium text-foreground">
                   {item.priceFrom ? "от " : ""}
-                  {item.price}{" "}
+                  {formatAmount(item.price)}{" "}
                   <span className="text-xs font-normal text-muted-foreground">{item.currency}</span>
                 </span>
               </span>

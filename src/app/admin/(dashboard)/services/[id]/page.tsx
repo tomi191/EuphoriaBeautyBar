@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { ServiceItemForm } from "@/components/admin/service-item-form";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { deleteServiceItem } from "@/lib/actions/service-items";
+import { formatAmount } from "@/lib/booking/price";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -75,8 +76,8 @@ export default async function CategoryEditPage({ params }: Params) {
                   <TableCell className="min-w-44 whitespace-normal font-medium">{i.name}</TableCell>
                   <TableCell className="font-display text-base font-medium">
                     {i.priceFrom && <span className="text-xs text-muted-foreground">от </span>}
-                    {i.price}
-                    {i.priceMax && <span className="text-muted-foreground">–{i.priceMax}</span>}
+                    {formatAmount(i.price)}
+                    {i.priceMax && <span className="text-muted-foreground">–{formatAmount(i.priceMax)}</span>}
                     <span className="ml-1 text-xs text-muted-foreground">{i.currency}</span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm">

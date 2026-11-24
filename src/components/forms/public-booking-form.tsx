@@ -33,9 +33,13 @@ export interface PublicServiceOpt {
   priceMax: number | null;
   priceFrom: boolean;
   currency: string;
+  /** Цената от ценоразписа (през всички специалисти), показвана преди избор на специалист. */
+  listPrice: { price: number; priceMax: number | null; priceFrom: boolean };
 }
 
 const formatPrice = formatServicePrice;
+/** Цената на услугата, както е в ценоразписа на /uslugi. */
+const formatListPrice = (s: PublicServiceOpt) => formatServicePrice({ ...s.listPrice, currency: s.currency });
 
 /** Уникални стойности, запазвайки реда на въвеждане. */
 function uniq(values: string[]): string[] {
@@ -492,8 +496,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       </span>
                     </span>
                     <span className="whitespace-nowrap font-display text-sm font-medium text-primary">
-                      {s.priceFrom && <span className="font-normal text-muted-foreground">от </span>}
-                      {s.price} {s.currency}
+                      {formatListPrice(s)}
                     </span>
                   </button>
                 );
@@ -604,7 +607,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                       </span>
                     </span>
                     <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
-                      {s.durationMin} мин · {formatPrice(s)}
+                      {s.durationMin} мин · {formatListPrice(s)}
                     </span>
                   </button>
                 );

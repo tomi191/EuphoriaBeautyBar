@@ -10,6 +10,7 @@ import { BlurText } from "@/components/reactbits/blur-text";
 import { getServiceCatalog, getServiceDetail } from "@/lib/data/service-catalog";
 import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
+import { formatAmount } from "@/lib/booking/price";
 import { slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
 
@@ -68,7 +69,7 @@ export default async function ServiceDetailPage({ params }: Params) {
   const img = `/images/services/unique/${service}.webp`;
   const url = `${siteConfig.url}/uslugi/${slug}/${service}`;
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
-  const priceLabel = `${item.priceFrom ? "от " : ""}${item.price} ${item.currency}`;
+  const priceLabel = `${item.priceFrom ? "от " : ""}${formatAmount(item.price)} ${item.currency}`;
 
   // Service schema — Offer (единична цена), provider чрез @id референция (E-E-A-T консолидация).
   const serviceLd = {

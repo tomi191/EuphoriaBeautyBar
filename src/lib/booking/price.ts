@@ -5,11 +5,22 @@ interface PriceLike {
   currency: string;
 }
 
-/** Форматира пари: цели числа без стотинки, иначе 2 знака с десетична запетая (бг). */
-function money(v: number): string {
+/**
+ * Сумата на цена, както я вижда човек (бг): цяло число без десетични («13»), иначе 2 знака с
+ * десетична запетая («7,50»). Единственото място, където число става цена за очите; JSON-LD
+ * остава число с точка и не минава оттук.
+ */
+export function formatAmount(v: number): string {
   const r = Math.round(v * 100) / 100;
   return (Number.isInteger(r) ? String(r) : r.toFixed(2)).replace(".", ",");
 }
+
+/** Цена в евро за човек: «7,50 €», «13 €». */
+export function formatEuro(v: number): string {
+  return `${formatAmount(v)} €`;
+}
+
+const money = formatAmount;
 
 /**
  * Една ясна цена в записаната валута — фиксирана, диапазон (X–Y) или „от X".

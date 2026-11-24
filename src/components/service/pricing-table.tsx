@@ -5,6 +5,7 @@ import { Reveal } from "@/components/reactbits/reveal";
 import { serviceImageFor } from "@/lib/booking/length-icon";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
 import { slugify } from "@/lib/utils";
+import { formatAmount } from "@/lib/booking/price";
 
 interface PricingTableProps {
   groups: ServiceGroup[];
@@ -61,11 +62,11 @@ export function PricingTable({ groups, hideHeader = false, categorySlug }: Prici
                     <span aria-hidden className="hidden flex-1 translate-y-[-3px] border-b border-dotted border-border/60 sm:block" />
                     <div className="ml-auto flex items-baseline gap-1 whitespace-nowrap font-display text-lg font-medium text-primary">
                       {item.priceFrom && <span className="text-sm font-normal text-muted-foreground">от</span>}
-                      <span>{item.price}</span>
+                      <span>{formatAmount(item.price)}</span>
                       {item.priceMax && (
                         <>
                           <span className="text-sm font-normal text-muted-foreground">–</span>
-                          <span>{item.priceMax}</span>
+                          <span>{formatAmount(item.priceMax)}</span>
                         </>
                       )}
                       <span className="text-sm font-normal text-muted-foreground">{item.currency}</span>

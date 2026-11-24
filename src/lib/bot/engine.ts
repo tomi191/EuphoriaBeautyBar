@@ -5,6 +5,7 @@
  * при непокрит въпрос ескалира честно към телефон/Viber, никога не импровизира.
  */
 import { siteConfig } from "@/lib/site";
+import { formatAmount } from "@/lib/booking/price";
 
 export interface BotService {
   name: string;
@@ -78,7 +79,7 @@ function tokens(s: string): string[] {
 }
 
 function formatPrice(s: BotService): string {
-  const range = s.priceMax && s.priceMax > s.price ? `${s.price}–${s.priceMax} ${s.currency}` : `${s.price} ${s.currency}`;
+  const range = s.priceMax && s.priceMax > s.price ? `${formatAmount(s.price)}–${formatAmount(s.priceMax)} ${s.currency}` : `${formatAmount(s.price)} ${s.currency}`;
   return s.priceFrom ? `от ${range}` : range;
 }
 

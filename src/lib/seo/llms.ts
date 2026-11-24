@@ -5,6 +5,7 @@ import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
 import { db } from "@/lib/db";
+import { formatAmount } from "@/lib/booking/price";
 
 /**
  * Генератори за /llms.txt (компактен индекс) и /llms-full.txt (пълен fact sheet).
@@ -17,7 +18,7 @@ const BOOKING_URL = `${siteConfig.url}/zapazi-chas`;
 
 function formatPrice(i: ServiceItem): string {
   const cur = i.currency === "€" ? "€" : "лв";
-  let p = i.priceMax && i.priceMax > i.price ? `${i.price}–${i.priceMax} ${cur}` : `${i.price} ${cur}`;
+  let p = i.priceMax && i.priceMax > i.price ? `${formatAmount(i.price)}–${formatAmount(i.priceMax)} ${cur}` : `${formatAmount(i.price)} ${cur}`;
   if (i.priceFrom) p = `от ${p}`;
   return p;
 }
@@ -83,7 +84,7 @@ export async function renderLlmsTxt(): Promise<string> {
     const items = c.groups.flatMap((g) => g.items);
     const min = Math.min(...items.map((i) => i.price));
     const cur = items[0]?.currency === "€" ? "€" : "лв";
-    return `- [${c.title}](${siteConfig.url}/uslugi/${c.slug}): ${c.description} Цени от ${min} ${cur}, ${items.length} услуги.`;
+    return `- [${c.title}](${siteConfig.url}/uslugi/${c.slug}): ${c.description} Цени от ${formatAmount(min)} ${cur}, ${items.length} услуги.`;
   });
 
   return [
