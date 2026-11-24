@@ -18,6 +18,14 @@ import { getTestimonials } from "@/lib/data/testimonials-db";
 import { TestimonialsSection } from "@/components/sections/testimonials-section";
 import { siteConfig } from "@/lib/site";
 import { hasOpenListings } from "@/lib/data/rental-listings";
+import { getTenantCards } from "@/lib/data/tenants";
+import { TenantCards } from "@/components/sections/tenant-cards";
+import { JsonLd } from "@/components/seo/json-ld";
+import { tenantPersonSchema } from "@/lib/schema";
+
+// Картите на специалистите следят снимки, услуги и галерия, които се сменят от /staff без
+// ревалидиране на тази страница; съгласието и «Скрит»/«Приключил» я ревалидират веднага.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "За нас — салон за красота в кв. Левски, Варна",
@@ -47,6 +55,8 @@ export default async function AboutPage() {
   const testimonials = await getTestimonials();
   // Банерът само при поне една публикувана обява (иначе води към «няма свободни места»).
   const rentalOpen = await hasOpenListings();
+  const tenants = await getTenantCards();
+  const tenantSchemas = tenants.filter((t) => t.name).map(tenantPersonSchema);
 
   return (
     <>
@@ -125,12 +135,16 @@ export default async function AboutPage() {
                   ))}
                 </div>
               </div>
-              <Button asChild size="lg" className="rounded-full bg-foreground text-background hover:bg-foreground/90">
+              <Button asChild size="lg" className="h-12 rounded-full bg-foreground text-background hover:bg-foreground/90">
                 <Link href="/zapazi-chas">Запиши час при Снежана <ArrowRight className="size-4" /></Link>
               </Button>
             </div>
           </Reveal>
         </div>
+        <div className="mx-auto max-w-7xl px-4 lg:px-8">
+          <TenantCards tenants={tenants} rentalOpen={rentalOpen} />
+        </div>
+        {tenantSchemas.length > 0 && <JsonLd data={tenantSchemas} />}
       </section>
 
       {/* Останалите активни от /admin/team; без тях секцията не се рисува */}

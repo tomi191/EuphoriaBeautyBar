@@ -15,6 +15,7 @@ import { siteConfig } from "@/lib/site";
 import { searchServices } from "@/lib/booking/service-search";
 import { capitalize, humanDay, onHumanDay } from "@/lib/booking/day-label";
 import { formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
+import { TENANT_LINE, TENANT_ROLE, TENANT_ROLE_SHORT, firstName } from "@/lib/data/tenant-identity";
 
 const SALON_PHONE = siteConfig.contact.phone;
 const SALON_PHONE_DISPLAY = siteConfig.contact.phoneFormatted;
@@ -68,7 +69,10 @@ export interface OfferingData {
 
 export interface PerformerOpt {
   id: string;
-  name: string;
+  /** null = специалист под наем без писмено съгласие: картата казва само с какво се занимава. */
+  name: string | null;
+  /** Специалист под наем (не Снежана): вместо описанието стои «Самостоятелен специалист в салона». */
+  tenant: boolean;
   kind: string;
   image: string | null;
   bio: string | null;
@@ -723,8 +727,15 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
                   >
                     <PerformerAvatar image={p.image} />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium leading-tight">{p.name}</p>
-                      {p.bio && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.bio}</p>}
+                      <p className="font-medium leading-tight">{p.name ?? TENANT_ROLE[p.kind] ?? p.kind}</p>
+                      {p.tenant ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {TENANT_LINE}
+                          {p.name && TENANT_ROLE_SHORT[p.kind] ? ` · ${TENANT_ROLE_SHORT[p.kind]}` : ""}
+                        </p>
+                      ) : (
+                        p.bio && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.bio}</p>
+                      )}
                       {p.portfolio.length > 0 && (
                         <button
                           type="button"
@@ -749,14 +760,14 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
           <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-5 text-center">
             <Phone className="mx-auto size-7 text-primary" />
             <p className="font-display text-lg font-medium leading-snug">
-              {performer?.name} приема часове за „{offlineService?.name}" по телефона
+              {performer?.name ?? "Специалистът"} приема часове за „{offlineService?.name}“ по телефона
             </p>
             <p className="text-sm text-muted-foreground">
               Тази услуга не се записва онлайн при този специалист. Обади се, за да запазиш час.
             </p>
             <Button asChild size="lg" className="h-12 w-full rounded-full bg-foreground text-background hover:bg-primary">
               <a href={`tel:${contactPhone.replace(/\s/g, "")}`}>
-                <Phone className="size-4" /> {contactPhone}
+                <Phone className="size-4" /> {performer?.name ? `Обади се на ${firstName(performer.name)}` : "Обади се за час"}
               </a>
             </Button>
           </div>
@@ -949,7 +960,7 @@ export function PublicBookingForm({ services, performers, closedDates }: { servi
       <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
         <DialogContent className="max-w-3xl" description="Галерия със снимки от работата на избрания специалист.">
           <DialogHeader>
-            <DialogTitle>Работа на {lightbox?.name}</DialogTitle>
+            <DialogTitle>{lightbox?.name ? `Работа на ${lightbox.name}` : "Работа на специалиста"}</DialogTitle>
           </DialogHeader>
           <div className="grid max-h-[70vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
             {lightbox?.portfolio.map((img, idx) => (

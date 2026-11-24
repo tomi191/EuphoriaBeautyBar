@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/site";
+import { TENANT_ROLE } from "@/lib/data/tenant-identity";
 
 /** JS getDay() → името на деня, което schema.org очаква. */
 const SCHEMA_DAYS = [
@@ -123,6 +124,22 @@ export const personSchema = {
   })),
   nationality: { "@type": "Country", name: "България" },
 };
+
+/**
+ * Специалист под наем на «За нас» (само с писмено съгласие, т.е. с видимо име). Самостоятелна
+ * фирма: `affiliation` към салона, НЕ `worksFor`/`employee` (няма трудово правоотношение).
+ * Само видимото на картата: първо име, ролята, снимката.
+ */
+export const tenantPersonSchema = (t: { id: string; kind: string; name: string | null; image: string | null }) => ({
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": `${siteConfig.url}/za-nas#specialist-${t.id}`,
+  name: t.name,
+  jobTitle: TENANT_ROLE[t.kind] ?? t.kind,
+  ...(t.image ? { image: t.image.startsWith("http") ? t.image : `${siteConfig.url}${t.image}` } : {}),
+  // Същият @id като LocalBusiness на началната; с името и адреса на сайта, за да се чете и сам на /za-nas.
+  affiliation: { "@type": "BeautySalon", "@id": siteConfig.url, name: siteConfig.name, url: siteConfig.url },
+});
 
 export const websiteSchema = {
   "@context": "https://schema.org",

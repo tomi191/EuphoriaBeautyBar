@@ -11,6 +11,7 @@ import { ResourceForm } from "@/components/admin/resource-form";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { StaffAccountButton } from "@/components/admin/staff-account-button";
 import { deleteResource } from "@/lib/actions/resources";
+import { getConsentMap } from "@/lib/data/tenant-consent";
 
 const KIND_LABEL: Record<string, string> = {
   hair: "Коса",
@@ -40,6 +41,7 @@ export default async function AdminResourcesPage({
     where: (b, { and, gt, inArray }) => and(gt(b.startAt, new Date()), inArray(b.status, FUTURE_STATUSES)),
     columns: { resourceId: true },
   });
+  const consent = await getConsentMap();
   const futureCount = new Map<string, number>();
   for (const b of future) futureCount.set(b.resourceId, (futureCount.get(b.resourceId) ?? 0) + 1);
 
@@ -116,6 +118,7 @@ export default async function AdminResourcesPage({
                     <div className="flex justify-end gap-1">
                       <ResourceForm
                         initial={r}
+                        consentAt={consent[r.id]?.at ?? null}
                         futureBookings={futureCount.get(r.id) ?? 0}
                         trigger={
                           <Button variant="outline" size="sm">
