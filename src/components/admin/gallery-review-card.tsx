@@ -151,15 +151,15 @@ export function GalleryReviewCard({ card, initial }: { card: ReviewCard; initial
   const reasonLen = [...reason].length;
 
   return (
-    <article ref={rootRef} className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="aspect-[2/1] bg-secondary lg:aspect-[11/16]">
+    <article ref={rootRef} className="overflow-hidden rounded-lg border border-border bg-card lg:flex lg:flex-col">
+      <div className="aspect-[2/1] bg-secondary lg:aspect-[11/16] lg:shrink-0">
         {card.previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={card.previewUrl} alt={alt} className="size-full object-cover" />
         )}
       </div>
 
-      <div className="p-4 lg:p-3.5">
+      <div className="p-4 lg:flex lg:flex-1 lg:flex-col lg:p-3.5">
         {mode === "edit" ? (
           <form onSubmit={saveAlt} noValidate>
             <label htmlFor={`${ids}-alt`} className="mb-1.5 block text-sm font-medium">
@@ -230,7 +230,7 @@ export function GalleryReviewCard({ card, initial }: { card: ReviewCard; initial
         )}
 
         {pending && mode === "view" && (
-          <div className="mt-3.5 grid grid-cols-2 gap-2.5 lg:mt-3 lg:gap-3">
+          <div className="mt-3.5 grid grid-cols-2 gap-2.5 lg:mt-auto lg:gap-3 lg:pt-3">
             <button type="button" onClick={approve} disabled={!!busy} className={black}>
               {busy === "approve" && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Одобри

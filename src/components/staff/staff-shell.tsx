@@ -118,7 +118,8 @@ export function StaffShell({ children, kind, wide }: { children: React.ReactNode
       <nav
         className={cn(
           "fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-lg border-t border-border bg-background pb-[env(safe-area-inset-bottom)]",
-          wide && "lg:transition-[translate] lg:duration-300 lg:[body[data-work-panel]_&]:translate-x-[min(0px,calc(50vw-859px))]",
+          wide &&
+            "lg:max-w-[38rem] lg:transition-[translate] lg:duration-300 lg:[body[data-work-panel]_&]:translate-x-[min(0px,calc(50vw-859px))]",
         )}
       >
         {tabs.map((t) => {

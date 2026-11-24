@@ -201,7 +201,7 @@ export function WorkPhotoSheet({
             <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 lg:px-8">
                 {/* Снимката */}
-                <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-secondary lg:aspect-[6/5]">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-secondary lg:aspect-auto lg:h-[17rem]">
                   {picked ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={picked.previewUrl} alt="Избраната снимка" className="size-full object-cover" />
