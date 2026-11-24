@@ -37,11 +37,24 @@ describe("галерията: няма публично четене покра�
   });
 
   it("публичните страници с галерия, картата на сайта и картите за споделяне ползват само одобрените", () => {
-    for (const rel of ["app/galeriya/page.tsx", "app/zapazi-chas/page.tsx", "components/sections/featured-gallery.tsx"]) {
+    for (const rel of ["app/galeriya/page.tsx", "app/zapazi-chas/page.tsx", "components/sections/featured-gallery.tsx", "components/sections/instagram-section.tsx"]) {
       expect(fs.readFileSync(path.join(ROOT, rel), "utf8")).toContain("listPublicGalleryImages");
     }
     const seo = ["lib/seo/sitemap.ts", "app/galeriya/opengraph-image.tsx"].map((rel) => fs.readFileSync(path.join(ROOT, rel), "utf8"));
     for (const src of seo) expect(src).not.toMatch(/galleryImages|gallery_images|gallery-originals/);
+  });
+
+  it("началната няма снимки от галерията, записани в кода: скритата в базата не може да остане там", () => {
+    // Регресия от 24.11.2026: блокът Instagram държеше /images/gallery/g-21.webp в кода и скриването
+    // по решение 30 (status = rejected) не го стигаше. Всяка снимка от галерията на началната идва
+    // от listPublicGalleryImages.
+    const page = fs.readFileSync(path.join(ROOT, "app/page.tsx"), "utf8");
+    const parts = [...page.matchAll(/from "@\/(components\/sections\/[\w-]+)"/g)].map((m) => `${m[1]}.tsx`);
+    expect(parts).toContain("components/sections/instagram-section.tsx");
+    for (const rel of ["app/page.tsx", ...parts]) {
+      const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+      expect(src, rel).not.toMatch(/\/images\/gallery\/|\/object\/public\/gallery\//);
+    }
   });
 
   it("частното хранилище се споменава само в кода на сървъра", () => {
