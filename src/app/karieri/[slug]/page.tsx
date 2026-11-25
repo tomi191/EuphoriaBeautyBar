@@ -64,7 +64,7 @@ export default async function ListingPage({ params }: Props) {
         rent: listing.rent,
         rentExcludes: listing.rentExcludes,
         seats: listing.seats,
-        specialty: specialtyForCategory(listing.category?.slug),
+        specialty: specialtyForCategory(listing.category?.slug, listing.services.map((s) => s.groupTitle)),
       }}
     />
   );

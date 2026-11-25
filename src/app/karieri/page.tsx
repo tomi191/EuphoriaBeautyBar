@@ -3,7 +3,7 @@ import { ListArchFigure, ListMobileLine } from "@/components/rental/arch-figure"
 import { MenuLinkRow } from "@/components/rental/bar-menu";
 import { RentalCallBar, RentalCallButtons } from "@/components/rental/rental-contact";
 import { getOpenListings, type PublicListing } from "@/lib/data/rental-listings";
-import { listingPosition } from "@/lib/rental/listing-rules";
+import { listingCategoryLabel, listingPosition } from "@/lib/rental/listing-rules";
 import { LIST_INTRO, RENTAL_FALLBACK_IMAGE } from "@/lib/rental/public-copy";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -27,12 +27,11 @@ function capitalize(s: string) {
  * своето заглавие; ако няма и своя страница, редът води към телефона.
  */
 function row(l: PublicListing) {
-  const left = l.category
-    ? capitalize(listingPosition(l.category.slug, l.services.map((s) => s.groupTitle)))
-    : l.title;
+  const groups = l.services.map((s) => s.groupTitle);
+  const left = l.category ? capitalize(listingPosition(l.category.slug, groups)) : l.title;
   // Повече от едно място: вдясно бройката («2 места») вместо категорията, за да не се пренася редът на телефон.
   const right =
-    l.seats > 1 ? `${l.seats} места` : l.category ? l.category.title.toLocaleLowerCase("bg-BG") : "обади се";
+    l.seats > 1 ? `${l.seats} места` : l.category ? listingCategoryLabel(l.category.title, groups) : "обади се";
   const href = l.slug ? `/karieri/${l.slug}` : `tel:${siteConfig.contact.phone}`;
   const label = l.slug ? `${l.title}: виж обявата` : `${l.title}: обади се на салона`;
   return { key: l.id, left, right, href, label };

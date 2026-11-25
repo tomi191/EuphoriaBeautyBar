@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   effectiveStatus,
   fillSeat,
+  isMakeupOnly,
+  listingCategoryLabel,
   listingPosition,
   listingTitle,
   nextStatus,
@@ -64,6 +66,13 @@ describe("заглавие и адрес", () => {
     expect(listingPosition("frizorski-uslugi", ["Грим", "Дамско подстригване"])).toBe("фризьор");
     expect(listingPosition("frizorski-uslugi", [])).toBe("фризьор");
     expect(listingPosition("manikyur-i-pedikyur", ["Маникюр"])).toBe("маникюрист");
+  });
+  it("/karieri вдясно: «грим» за обява само с грим, иначе категорията с малки букви", () => {
+    expect(isMakeupOnly(["Грим"])).toBe(true);
+    expect(isMakeupOnly([])).toBe(false);
+    expect(listingCategoryLabel("Фризьорски услуги", ["Грим"])).toBe("грим");
+    expect(listingCategoryLabel("Фризьорски услуги", ["Грим", "Дамско подстригване"])).toBe("фризьорски услуги");
+    expect(listingCategoryLabel("Маникюр и педикюр")).toBe("маникюр и педикюр");
   });
   it("постът за грима: позицията и наемът с уточнението", () => {
     const post = listingFacebookPost("гримьор", "https://x/karieri/myasto-pod-naem-za-grimyor", {

@@ -68,8 +68,17 @@ export const MAKEUP_GROUP = "Грим";
  * 25.11.2026: «1 място за грим»), без нова категория; иначе по категорията.
  */
 export function listingPosition(categorySlug: string, serviceGroups: readonly string[] = []): string {
-  if (serviceGroups.length > 0 && serviceGroups.every((g) => g === MAKEUP_GROUP)) return "гримьор";
-  return positionForCategory(categorySlug);
+  return isMakeupOnly(serviceGroups) ? "гримьор" : positionForCategory(categorySlug);
+}
+
+/** Избраните услуги са само от група «Грим». */
+export function isMakeupOnly(serviceGroups: readonly string[]): boolean {
+  return serviceGroups.length > 0 && serviceGroups.every((g) => g === MAKEUP_GROUP);
+}
+
+/** Дясната част на реда в /karieri: «грим» за обява само с грим, иначе категорията с малки букви. */
+export function listingCategoryLabel(categoryTitle: string, serviceGroups: readonly string[] = []): string {
+  return isMakeupOnly(serviceGroups) ? "грим" : categoryTitle.toLocaleLowerCase("bg-BG");
 }
 
 /** Заглавието се смята, не се пише на ръка: «Място под наем за маникюрист». */

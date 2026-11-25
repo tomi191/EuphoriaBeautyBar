@@ -200,11 +200,11 @@ export function ListingForm({
   const galleryRef = React.useRef<HTMLInputElement>(null);
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
+  const chosenGroups = category
+    ? category.services.filter((s) => serviceIds.includes(s.id)).map((s) => s.groupTitle)
+    : [];
   const title = category
-    ? listingTitle(
-        category.slug,
-        category.services.filter((s) => serviceIds.includes(s.id)).map((s) => s.groupTitle),
-      )
+    ? listingTitle(category.slug, chosenGroups)
     : (listing?.title ?? "Място под наем");
   const isDraft = status === null || status === "draft";
   const heading = isDraft ? "Нова обява" : "Редакция на обявата";
@@ -220,7 +220,7 @@ export function ListingForm({
     rent: rentPublic && rentText.trim() ? rentText.trim() : null,
     rentExcludes: rentExcludes.trim() || null,
     seats,
-    specialty: specialtyForCategory(category?.slug),
+    specialty: specialtyForCategory(category?.slug, chosenGroups),
   };
 
   function goTo(n: number) {

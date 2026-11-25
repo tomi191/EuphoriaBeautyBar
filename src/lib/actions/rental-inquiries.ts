@@ -10,7 +10,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getListingBySlug } from "@/lib/data/rental-listings";
-import { positionForCategory } from "@/lib/rental/listing-rules";
+import { listingPosition } from "@/lib/rental/listing-rules";
 import { notifyRentalInquiry } from "@/lib/rental/inquiry-notify";
 import {
   INQUIRY_COPY,
@@ -118,7 +118,9 @@ export async function submitRentalInquiry(input: z.input<typeof submitSchema>): 
   // Две заявки с един ключ едновременно: втората не пише и не праща известие.
   if (inserted.length === 0) return { ok: true };
 
-  const position = listing.category ? positionForCategory(listing.category.slug) : "специалист";
+  const position = listing.category
+    ? listingPosition(listing.category.slug, listing.services.map((s) => s.groupTitle))
+    : "специалист";
   // Известието тръгва след отговора към госта: бавен Telegram не го задържа (и има свой таймаут).
   after(() => notifyAndLog({ id, position, name: v.name, phone: v.phone, message: v.message }));
   revalidatePath("/admin/positions");

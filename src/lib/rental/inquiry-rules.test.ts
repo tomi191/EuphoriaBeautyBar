@@ -86,6 +86,9 @@ describe("текстовете", () => {
     expect(specialtyForCategory("kozmetika")).toBe("Козметика");
     expect(specialtyForCategory("frizorski-uslugi")).toBe("Коса");
     expect(specialtyForCategory("nyama")).toBe("");
+    // Обява само с грим: «Грим», не «Коса»; смесена остава по категорията.
+    expect(specialtyForCategory("frizorski-uslugi", ["Грим"])).toBe("Грим");
+    expect(specialtyForCategory("frizorski-uslugi", ["Грим", "Дамско подстригване"])).toBe("Коса");
     expect(specialtyForCategory(null)).toBe("");
   });
 
