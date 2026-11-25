@@ -222,8 +222,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
       <BiometricPrompt />
 
       <ScheduleSearch upcoming={upcoming}>
-        <ScheduleDateJump selected={selectedKey} todayKey={todayKey} />
-        <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
+        <ScheduleDateJump selected={selectedKey} todayKey={todayKey}>
           {pills.map((p) => {
             const active = p.key === selectedKey;
             return (
@@ -240,7 +239,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
               </Link>
             );
           })}
-        </div>
+        </ScheduleDateJump>
 
         <InstallBanner />
 
