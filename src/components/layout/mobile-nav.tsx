@@ -57,7 +57,7 @@ export function MobileNav() {
           ))}
         </nav>
         <Separator />
-        <div className="space-y-3 p-6 text-sm">
+        <div data-call-spot="menu" className="space-y-3 p-6 text-sm">
           <a
             href={`tel:${siteConfig.contact.phone}`}
             className="flex items-center gap-3 text-foreground transition-colors hover:text-primary"
