@@ -15,6 +15,7 @@ import { localBusinessSchema, breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { getTeam } from "@/lib/data/team-db";
 import { db } from "@/lib/db";
 import { siteConfig } from "@/lib/site";
+import { ConsentMap } from "@/components/sections/consent-map";
 
 export const metadata: Metadata = {
   // Хипер-локална landing — таргетира „салон за красота кв. Левски Варна" +
@@ -404,15 +405,12 @@ export default async function SalonVarnaLevskiPage() {
           <Reveal className="lg:col-span-7" delay={0.15}>
             <div className="relative h-full">
               <div aria-hidden className="absolute -inset-3 -z-10 rounded-3xl bg-mint/50" />
-              <div className="h-full min-h-[360px] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary shadow-soft">
-                <iframe
-                  title="Карта — Euphoria Hair & Beauty Bar, кв. Левски, Варна"
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(siteConfig.address.full)}&output=embed`}
-                  className="h-full min-h-[360px] w-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
+              <ConsentMap
+                plan="levski"
+                title="Карта — Euphoria Hair & Beauty Bar, кв. Левски, Варна"
+                frameClassName="h-full min-h-[360px] w-full overflow-hidden rounded-2xl border border-border/60 bg-secondary shadow-soft"
+                className="rounded-2xl lg:h-full lg:min-h-[360px]"
+              />
             </div>
           </Reveal>
         </div>
