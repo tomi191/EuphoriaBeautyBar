@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   effectiveStatus,
+  fillSeat,
   listingTitle,
   nextStatus,
   sniffImageType,
@@ -9,6 +10,7 @@ import {
   type ListingStatus,
 } from "./listing-rules";
 import { RENTAL_BENEFITS, RENTAL_BENEFIT_KEYS, benefitsFromKeys } from "./benefits";
+import { listingFacebookPost, seatsLine } from "./public-copy";
 
 describe("предимствата", () => {
   it("12 реда, уникални ключове, дословно първият и последният", () => {
@@ -79,5 +81,35 @@ describe("снимката по първите байтове", () => {
     expect(sniffImageType(new TextEncoder().encode("<html>"))).toBeNull();
     expect(sniffImageType(u())).toBeNull();
     expect(sniffImageType(u(0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x41, 0x56, 0x49, 0x20))).toBeNull();
+  });
+});
+
+describe("местата", () => {
+  it("«заето» при повече места затваря едно и пази състоянието; при последното става заета", () => {
+    expect(fillSeat("published", 2)).toEqual({ status: "published", seats: 1 });
+    expect(fillSeat("published", 5)).toEqual({ status: "published", seats: 4 });
+    expect(fillSeat("paused", 3)).toEqual({ status: "paused", seats: 2 });
+    expect(fillSeat("published", 1)).toEqual({ status: "filled", seats: 1 });
+    expect(fillSeat("paused", 1)).toEqual({ status: "filled", seats: 1 });
+    expect(fillSeat("draft", 2)).toBeNull();
+    expect(fillSeat("filled", 2)).toBeNull();
+  });
+  it("множествено число само при повече от едно място", () => {
+    expect(seatsLine(1)).toBeNull();
+    expect(seatsLine(2)).toBe("Свободни са 2 места");
+  });
+  it("постът във Facebook: бройката и наемът с уточнението", () => {
+    const link = "https://www.euphoriabeauty.eu/karieri/x";
+    const one = listingFacebookPost("фризьор", link);
+    expect(one.split("\n\n")[0]).toBe("Свободно е едно място под наем за фризьор в Euphoria Hair & Beauty Bar, кв. Левски, Варна.");
+    expect(one).not.toContain("Наем");
+    const two = listingFacebookPost("маникюрист", link, { seats: 2, rent: "200", rentExcludes: "без ток, вода и общи консумативи" });
+    expect(two.split("\n\n")).toEqual([
+      "Свободни са 2 места под наем за маникюрист в Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
+      "Работиш самостоятелно, със свои цени и часове. Не е трудов договор. Личен график в приложението. Подходящо и за започващи.",
+      `Наем 200${String.fromCharCode(0xa0)}€ на месец, без ток, вода и общи консумативи.`,
+      `Изпрати запитване от обявата: ${link}`,
+    ]);
+    expect(listingFacebookPost("фризьор", link, { rent: "280,5" })).toContain(`Наем 280,5${String.fromCharCode(0xa0)}€ на месец.`);
   });
 });

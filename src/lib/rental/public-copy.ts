@@ -37,15 +37,39 @@ export const LIST_INTRO =
 /** Истинска снимка на салона: за списъка и за обява без своя снимка. */
 export const RENTAL_FALLBACK_IMAGE = "/images/interior/hero-bg.webp";
 
+/** «Свободни са 2 места» в обявата, при повече от едно място; при едно бройката не се пише (както досега). */
+export function seatsLine(seats: number): string | null {
+  return seats > 1 ? `Свободни са ${seats} места` : null;
+}
+
+/** Сумата на наема: «200 €», «250,50 €». */
+export function rentAmount(rent: string): string {
+  return `${rent.replace(".", ",")}\u00a0€`;
+}
+
 /**
  * Постът във Facebook от името на салона (Саиф, «обяви-маникюр-фризьор» от 25.11, част 3; «за започващи» по
- * думата на собственика от 25.11): без наем, емоджи и хаштагове; сменя се само позицията. Една обява е
- * едно място. Връзката е най-долу (Facebook прави картата от нея).
+ * думата на собственика от 25.11): без емоджи и хаштагове; сменя се позицията. При повече от едно място
+ * първият ред е в множествено число; наемът е ред само при включен ключ «Показвай в обявата» (думата на
+ * собственика от 25.11: «да се виждат» и във Facebook), с уточнението след него. Връзката е най-долу
+ * (Facebook прави картата от нея).
  */
-export function listingFacebookPost(position: string, link: string): string {
+export function listingFacebookPost(
+  position: string,
+  link: string,
+  opts: { seats?: number; rent?: string | null; rentExcludes?: string | null } = {},
+): string {
+  const seats = opts.seats ?? 1;
+  const where = `под наем за ${position} в Euphoria Hair & Beauty Bar, кв. Левски, Варна.`;
+  const rent = opts.rent
+    ? `Наем ${rentAmount(opts.rent)} на месец${opts.rentExcludes ? `, ${opts.rentExcludes}` : ""}.`
+    : null;
   return [
-    `Свободно е едно място под наем за ${position} в Euphoria Hair & Beauty Bar, кв. Левски, Варна.`,
+    seats > 1 ? `Свободни са ${seats} места ${where}` : `Свободно е едно място ${where}`,
     "Работиш самостоятелно, със свои цени и часове. Не е трудов договор. Личен график в приложението. Подходящо и за започващи.",
+    rent,
     `Изпрати запитване от обявата: ${link}`,
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }

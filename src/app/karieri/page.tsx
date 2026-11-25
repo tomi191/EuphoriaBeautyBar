@@ -28,7 +28,9 @@ function capitalize(s: string) {
  */
 function row(l: PublicListing) {
   const left = l.category ? capitalize(positionForCategory(l.category.slug)) : l.title;
-  const right = l.category ? l.category.title.toLocaleLowerCase("bg-BG") : "обади се";
+  // Повече от едно място: вдясно бройката («2 места») вместо категорията, за да не се пренася редът на телефон.
+  const right =
+    l.seats > 1 ? `${l.seats} места` : l.category ? l.category.title.toLocaleLowerCase("bg-BG") : "обади се";
   const href = l.slug ? `/karieri/${l.slug}` : `tel:${siteConfig.contact.phone}`;
   const label = l.slug ? `${l.title}: виж обявата` : `${l.title}: обади се на салона`;
   return { key: l.id, left, right, href, label };

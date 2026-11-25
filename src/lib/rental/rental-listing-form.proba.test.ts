@@ -179,18 +179,18 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
       process.env.FACEBOOK_PAGE_ACCESS_TOKEN = "proba-token";
     };
 
-    it("излезе: номерът на поста се пази, текстът е без наем и с адреса на обявата", async () => {
+    it("излезе: номерът на поста се пази, текстът е с показания наем (решение от 25.11) и с адреса на обявата", async () => {
       keys();
       const calls = graph(async () => Response.json({ id: "1234567890_42" }));
       const d = await draft();
-      await A.updateListing(d.id, { rentText: "555", rentPublic: true });
+      await A.updateListing(d.id, { rentText: "555", rentPublic: true, rentExcludes: "без консумативите" });
       const res = await A.publishListing(d.id);
       expect(res).toMatchObject({ ok: true, status: "published", facebook: { status: "posted", postId: "1234567890_42" } });
       expect(calls).toHaveLength(1);
       const body = new URLSearchParams(calls[0].body);
       expect(body.get("link")).toBe(`https://www.euphoriabeauty.eu/karieri/${d.slug}`);
       expect(body.get("message")).toContain("Свободно е едно място под наем за специалист");
-      expect(body.get("message")).not.toContain("555");
+      expect(body.get("message")).toContain(`Наем 555${String.fromCharCode(0xa0)}€ на месец, без консумативите.`);
       expect(JSON.stringify(res)).not.toContain("proba-token");
       const row = await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) });
       expect(row).toMatchObject({ status: "published", fbPostId: "1234567890_42" });

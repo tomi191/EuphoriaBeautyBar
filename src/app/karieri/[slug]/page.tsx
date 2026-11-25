@@ -62,6 +62,8 @@ export default async function ListingPage({ params }: Props) {
         benefits,
         customBenefits: listing.customBenefits,
         rent: listing.rent,
+        rentExcludes: listing.rentExcludes,
+        seats: listing.seats,
         specialty: specialtyForCategory(listing.category?.slug),
       }}
     />

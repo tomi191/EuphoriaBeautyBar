@@ -35,6 +35,20 @@ export function nextStatus(current: ListingStatus, action: ListingAction): Listi
   return t.from.includes(current) ? t.to : null;
 }
 
+/** Свободните места по една обява (поле «Свободни места» във формата). */
+export const MAX_SEATS = 5;
+
+/**
+ * «Отбележи като заето» при N свободни места: при повече от едно затваря едно място и обявата остава,
+ * каквато е (публикувана или спряна); при последното става «заета», а бройката остава 1 (при «Отвори
+ * отново» обявата е за едно място). null, ако «заето» не важи за сегашното състояние.
+ */
+export function fillSeat(current: ListingStatus, seats: number): { status: ListingStatus; seats: number } | null {
+  const to = nextStatus(current, "fill");
+  if (!to) return null;
+  return seats > 1 ? { status: current, seats: seats - 1 } : { status: to, seats: 1 };
+}
+
 const POSITION_BY_KIND: Record<string, string> = {
   hair: "фризьор",
   nails: "маникюрист",

@@ -274,7 +274,12 @@ function FillBody({
         return;
       }
       const who = resources.find((r) => r.id === choice)?.name.split(/\s+/)[0] ?? "";
-      toast.success(`Заето от ${who}. Обявата излезе от сайта.`);
+      // При повече места обявата остава с едно място по-малко.
+      toast.success(
+        res.status === "filled"
+          ? `Заето от ${who}. Обявата излезе от сайта.`
+          : `Заето от ${who}. Обявата остава с ${res.seats > 1 ? `още ${res.seats} свободни места` : "още едно свободно място"}.`,
+      );
       onDone();
       // Махаме ?fill и ?picked от адреса, за да не се отвори листът пак.
       router.replace("/admin/positions");

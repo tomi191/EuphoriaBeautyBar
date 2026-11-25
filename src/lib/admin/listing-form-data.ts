@@ -27,6 +27,8 @@ export interface FormListing {
   image: string | null;
   rentText: string;
   rentPublic: boolean;
+  rentExcludes: string;
+  seats: number;
   adminNote: string;
 }
 
@@ -68,6 +70,8 @@ export async function loadFormListing(id: string): Promise<FormListing | null> {
     image: row.image,
     rentText: row.rentText ?? "",
     rentPublic: row.rentPublic,
+    rentExcludes: row.rentExcludes ?? "",
+    seats: row.seats,
     adminNote: row.adminNote ?? "",
   };
 }
