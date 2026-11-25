@@ -239,6 +239,10 @@ export const rentalPositions = pgTable(
     rentPublic: boolean("rent_public").notNull().default(false),
     // Свои редове в «Какво получаваш» (текстът на Снежана, до 60 знака): в обявата са без дясна част.
     customBenefits: jsonb("custom_benefits").notNull().default([]).$type<string[]>(),
+    // Свободните места по обявата, 1 до 5 (миграция 0006). «Заето» затваря по едно; при последното обявата става заета.
+    seats: integer("seats").notNull().default(1),
+    // Какво не е включено в наема (до 80 знака, публично под сумата): «без ток, вода и общи консумативи».
+    rentExcludes: text("rent_excludes"),
   },
   (t) => [
     uniqueIndex("rental_positions_slug_uq").on(t.slug),
@@ -267,6 +271,7 @@ export const rentalInquiries = pgTable(
     clientToken: text("client_token").notNull(), // двойно натискане → един ред
     ipHash: text("ip_hash"),
     notifyLog: jsonb("notify_log").$type<Record<string, unknown>>(),
+    cameFrom: text("came_from"), // метката от адреса на обявата (utm_*, from): откъде е дошло запитването
   },
   (t) => [
     uniqueIndex("rental_inquiries_client_token_uq").on(t.clientToken),

@@ -94,7 +94,7 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     expect(JSON.stringify([one, open])).not.toContain(SECRET);
     expect(await R.hasOpenListings()).toBe(true);
 
-    expect(await A.markListingFilled(d1.id, `${T}-r`)).toEqual({ ok: true, status: "filled" });
+    expect(await A.markListingFilled(d1.id, `${T}-r`)).toEqual({ ok: true, status: "filled", seats: 1 });
     expect((await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d1.id) }))).toMatchObject({ active: false, filledByResourceId: `${T}-r` });
     expect((await R.getListingBySlug(d1.slug))?.status).toBe("filled");
     expect((await R.getOpenListings()).map((l) => l.id)).not.toContain(d1.id);
@@ -103,7 +103,7 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     expect(ended).toMatchObject({ ok: true, pausedListings: [{ id: d1.id }] });
     expect(await R.getListingBySlug(d1.slug)).toBeNull(); // спряната не е публична
 
-    expect(await A.reopenListing(d1.id)).toEqual({ ok: true, status: "published" });
+    expect(await A.reopenListing(d1.id)).toEqual({ ok: true, status: "published", seats: 1 });
     const reopened = await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d1.id) });
     expect(reopened).toMatchObject({ status: "published", active: true, filledByResourceId: null, filledAt: null, adminNote: SECRET });
   });
@@ -130,9 +130,58 @@ describe.skipIf(!RUN)("обявата срещу пробната база", () 
     expect((await R.getListingBySlug(d.slug))?.rent).toBeNull();
   });
 
+  it("местата: «заето» затваря по едно, обявата остава публикувана до последното", async () => {
+    const cat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.slug, "manikyur-i-pedikyur") });
+    const d = await A.createListingDraft({ categoryId: cat!.id });
+    if (!d.ok) throw new Error("черновата не стана");
+    ids.push(d.id);
+    const row = () => db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) });
+    expect(await row()).toMatchObject({ seats: 1, rentExcludes: null });
+    // Извън 1 до 5 не се пази.
+    expect((await A.updateListing(d.id, { seats: 0 })).ok).toBe(false);
+    expect((await A.updateListing(d.id, { seats: 6 })).ok).toBe(false);
+    expect(await A.updateListing(d.id, { seats: 2 })).toMatchObject({ ok: true });
+    expect(await A.publishListing(d.id)).toMatchObject({ ok: true, status: "published" });
+    expect((await R.getListingBySlug(d.slug))?.seats).toBe(2);
+
+    // Първото «заето»: едно място по-малко, обявата е още на сайта, специалистът е записан.
+    expect(await A.markListingFilled(d.id, `${T}-r`)).toEqual({ ok: true, status: "published", seats: 1 });
+    expect(await row()).toMatchObject({ status: "published", active: true, seats: 1, filledByResourceId: `${T}-r` });
+    expect((await R.getOpenListings()).find((l) => l.id === d.id)).toMatchObject({ seats: 1, status: "published" });
+
+    // Последното място: обявата става заета и излиза от списъка.
+    expect(await A.markListingFilled(d.id, `${T}-r`)).toEqual({ ok: true, status: "filled", seats: 1 });
+    expect(await row()).toMatchObject({ status: "filled", active: false, seats: 1 });
+    expect((await R.getOpenListings()).map((l) => l.id)).not.toContain(d.id);
+    expect((await A.markListingFilled(d.id, `${T}-r`)).ok).toBe(false); // заета: няма какво да се затвори
+
+    // Две «заето» едновременно при 3 места затварят точно две места, не едно.
+    expect(await A.reopenListing(d.id)).toMatchObject({ ok: true, status: "published" });
+    expect(await A.updateListing(d.id, { seats: 3 })).toMatchObject({ ok: true });
+    const both = await Promise.all([A.markListingFilled(d.id, `${T}-r`), A.markListingFilled(d.id, `${T}-r`)]);
+    const okCount = both.filter((r) => r.ok).length;
+    expect((await row())!.seats).toBe(3 - okCount);
+  });
+
+  it("уточнението под наема излиза само заедно със сумата", async () => {
+    const cat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.slug, "manikyur-i-pedikyur") });
+    const d = await A.createListingDraft({ categoryId: cat!.id });
+    if (!d.ok) throw new Error("черновата не стана");
+    ids.push(d.id);
+    const note = "без ток, вода и общи консумативи";
+    expect((await A.updateListing(d.id, { rentExcludes: "х".repeat(81) })).ok).toBe(false);
+    expect(await A.updateListing(d.id, { rentText: "200", rentExcludes: ` ${note} ` })).toMatchObject({ ok: true });
+    expect(await A.publishListing(d.id)).toMatchObject({ ok: true });
+    expect(await R.getListingBySlug(d.slug)).toMatchObject({ rent: null, rentExcludes: null });
+    expect(await A.updateListing(d.id, { rentPublic: true })).toMatchObject({ ok: true });
+    expect(await R.getListingBySlug(d.slug)).toMatchObject({ rent: "200", rentExcludes: note });
+    expect(await A.updateListing(d.id, { rentExcludes: "" })).toMatchObject({ ok: true });
+    expect((await R.getListingBySlug(d.slug))?.rentExcludes).toBeNull();
+  });
+
   it("стар ред: спиране и отваряне вървят, публикуване не (няма категория)", async () => {
     expect((await A.publishListing(`${T}-legacy`)).ok).toBe(false);
-    expect(await A.pauseListing(`${T}-legacy`)).toEqual({ ok: true, status: "paused" });
-    expect(await A.reopenListing(`${T}-legacy`)).toEqual({ ok: true, status: "published" });
+    expect(await A.pauseListing(`${T}-legacy`)).toEqual({ ok: true, status: "paused", seats: 1 });
+    expect(await A.reopenListing(`${T}-legacy`)).toEqual({ ok: true, status: "published", seats: 1 });
   });
 });

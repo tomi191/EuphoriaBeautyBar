@@ -35,6 +35,20 @@ export function nextStatus(current: ListingStatus, action: ListingAction): Listi
   return t.from.includes(current) ? t.to : null;
 }
 
+/** Свободните места по една обява (поле «Свободни места» във формата). */
+export const MAX_SEATS = 5;
+
+/**
+ * «Отбележи като заето» при N свободни места: при повече от едно затваря едно място и обявата остава,
+ * каквато е (публикувана или спряна); при последното става «заета», а бройката остава 1 (при «Отвори
+ * отново» обявата е за едно място). null, ако «заето» не важи за сегашното състояние.
+ */
+export function fillSeat(current: ListingStatus, seats: number): { status: ListingStatus; seats: number } | null {
+  const to = nextStatus(current, "fill");
+  if (!to) return null;
+  return seats > 1 ? { status: current, seats: seats - 1 } : { status: to, seats: 1 };
+}
+
 const POSITION_BY_KIND: Record<string, string> = {
   hair: "фризьор",
   nails: "маникюрист",
@@ -46,9 +60,30 @@ export function positionForCategory(categorySlug: string): string {
   return POSITION_BY_KIND[KIND_BY_SLUG[categorySlug] ?? ""] ?? "специалист";
 }
 
+/** Групата на услугата «Грим» в ценоразписа (тя е във «Фризьорски услуги»; своя категория няма). */
+export const MAKEUP_GROUP = "Грим";
+
+/**
+ * Позицията на обявата: обява само с услуги от група «Грим» е за гримьор (думата на собственика от
+ * 25.11.2026: «1 място за грим»), без нова категория; иначе по категорията.
+ */
+export function listingPosition(categorySlug: string, serviceGroups: readonly string[] = []): string {
+  return isMakeupOnly(serviceGroups) ? "гримьор" : positionForCategory(categorySlug);
+}
+
+/** Избраните услуги са само от група «Грим». */
+export function isMakeupOnly(serviceGroups: readonly string[]): boolean {
+  return serviceGroups.length > 0 && serviceGroups.every((g) => g === MAKEUP_GROUP);
+}
+
+/** Дясната част на реда в /karieri: «грим» за обява само с грим, иначе категорията с малки букви. */
+export function listingCategoryLabel(categoryTitle: string, serviceGroups: readonly string[] = []): string {
+  return isMakeupOnly(serviceGroups) ? "грим" : categoryTitle.toLocaleLowerCase("bg-BG");
+}
+
 /** Заглавието се смята, не се пише на ръка: «Място под наем за маникюрист». */
-export function listingTitle(categorySlug: string): string {
-  return `Място под наем за ${positionForCategory(categorySlug)}`;
+export function listingTitle(categorySlug: string, serviceGroups: readonly string[] = []): string {
+  return `Място под наем за ${listingPosition(categorySlug, serviceGroups)}`;
 }
 
 /** Адрес от латиница; при зает добавя -2, -3 … до първия свободен. */

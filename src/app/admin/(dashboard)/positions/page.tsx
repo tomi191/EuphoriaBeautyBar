@@ -465,6 +465,7 @@ function InquiriesTab({ sp, inquiries, listings }: { sp: SP; inquiries: BoardInq
                 <p className="mt-1 text-base text-muted-foreground">
                   {i.specialty ? `${i.specialty} · ` : ""}за {i.place}
                 </p>
+                {i.cameFromLabel && <p className="text-base text-muted-foreground">{i.cameFromLabel}</p>}
                 {i.message && <p className="mt-3 font-serif text-[1.3125rem] italic leading-snug text-primary">{i.message}</p>}
                 {i.handledLabel && i.status === "handled" && (
                   <p className="mt-3 flex items-center gap-2 text-[0.9375rem] text-primary">
@@ -513,7 +514,10 @@ function InquiriesTab({ sp, inquiries, listings }: { sp: SP; inquiries: BoardInq
                       {i.undelivered && i.status === "new" && <Undelivered />}
                     </td>
                     <td className="border-l border-border px-4 py-5 text-[1.0625rem]">{i.place}</td>
-                    <td className="whitespace-nowrap border-l border-border px-4 py-5 text-[1.0625rem] text-muted-foreground">{i.whenLabel}</td>
+                    <td className="whitespace-nowrap border-l border-border px-4 py-5 text-[1.0625rem] text-muted-foreground">
+                      {i.whenLabel}
+                      {i.cameFromLabel && <div className="mt-1 max-w-[93px] truncate" title={i.cameFromLabel}>{i.cameFromLabel}</div>}
+                    </td>
                     <td className="border-l border-border px-4 py-5">
                       <InquiryActions layout="table" inquiry={i} />
                     </td>

@@ -178,6 +178,72 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
     expect(await rowsFor("+359888000007")).toHaveLength(0);
   });
 
+  it("обява само с грим: Telegram, камбанката и «Места под наем» казват «гримьор»", async () => {
+    currentIp = "10.0.1.9";
+    await flushAfter();
+    const { eq } = await import("drizzle-orm");
+    const now = new Date();
+    const GRIM = `${T}-grimyor`;
+    // Своя категория (не «Фризьорски услуги» на пробата), с една услуга от група «Грим».
+    await db.insert(schema.serviceCategories).values({
+      id: `${T}-hcat`, slug: `${T}-frizorski`, title: "Фризьорски проба", shortTitle: "Фризьор",
+      tagline: "-", description: "-", longDescription: "-", icon: "-", heroImage: "-", createdAt: now, updatedAt: now,
+    });
+    await db.insert(schema.serviceItems).values({ id: `${T}-grim`, categoryId: `${T}-hcat`, groupTitle: "Грим", name: "Грим", price: 60 });
+    await db.insert(schema.rentalPositions).values({
+      id: `${T}-p3`, title: "Място под наем за гримьор", slug: GRIM, status: "published", active: true, type: "Под наем",
+      description: "-", skills: [], categoryId: `${T}-hcat`, serviceIds: [`${T}-grim`], createdAt: now, updatedAt: now, publishedAt: now,
+    });
+    const key = "telegram_admin_chat_id";
+    const before = await db.query.siteSettings.findFirst({ where: (s, { eq: e }) => e(s.key, key) });
+    await db.insert(schema.siteSettings).values({ key, value: { chatId: "proba-chat-1" }, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: schema.siteSettings.key, set: { value: { chatId: "proba-chat-1" } } });
+    const oldToken = process.env.TELEGRAM_BOT_TOKEN;
+    process.env.TELEGRAM_BOT_TOKEN = "proba-fake-token";
+    const sent: string[] = [];
+    const realFetch = globalThis.fetch;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url, init) => {
+      if (String(url).startsWith("https://api.telegram.org/")) {
+        sent.push(String(init?.body ?? ""));
+        return Response.json({ ok: true, result: {} });
+      }
+      return realFetch(url as RequestInfo, init);
+    });
+    try {
+      // Дошло от поста във Facebook: метката се пази изчистена (fbclid отпада).
+      const cameFrom = `?utm_source=facebook&utm_medium=post&utm_campaign=${GRIM}&fbclid=IwAR0x`;
+      expect(await A.submitRentalInquiry(form({ slug: GRIM, phone: "0888 000 009", specialty: "Грим", cameFrom }))).toEqual({ ok: true });
+      await flushAfter();
+    } finally {
+      fetchSpy.mockRestore();
+      process.env.TELEGRAM_BOT_TOKEN = oldToken;
+      if (before) await db.update(schema.siteSettings).set({ value: before.value }).where(eq(schema.siteSettings.key, key));
+      else await db.delete(schema.siteSettings).where(eq(schema.siteSettings.key, key));
+    }
+    expect(sent).toHaveLength(1);
+    expect((JSON.parse(sent[0]) as { text: string }).text).toBe("Запитване за място под наем: гримьор\nПроба Тест · 0888 000 009\nБез съобщение.");
+    const bell = await loadAdminNotifications();
+    expect(bell.items.find((i) => i.kind === "rental_inquiry" && i.detail.includes("0888 000 009"))?.detail).toBe(
+      "Проба Тест, 0888 000 009 · гримьор",
+    );
+    const { loadRentalBoard } = await import("@/lib/admin/rental-board");
+    const board = await loadRentalBoard();
+    expect(board.listings.find((l) => l.id === `${T}-p3`)?.place).toBe("Гримьор");
+    expect(board.inquiries.find((i) => i.phone === "+359888000009")).toMatchObject({
+      place: "Гримьор",
+      cameFromLabel: "Facebook",
+    });
+    expect((await rowsFor("+359888000009"))[0].cameFrom).toBe(
+      `utm_source=facebook&utm_medium=post&utm_campaign=${GRIM}`,
+    );
+    // Без метка в адреса: празно, без ред в администрацията.
+    expect((await rowsFor("+359888000001"))[0]?.cameFrom ?? null).toBeNull();
+    // Публичната обява носи групата, от която страницата попълва «Специалност» с «Грим».
+    const { specialtyForCategory } = await import("@/lib/rental/inquiry-rules");
+    const pub = await R.getListingBySlug(GRIM);
+    expect(specialtyForCategory(pub?.category?.slug, pub?.services.map((s) => s.groupTitle))).toBe("Грим");
+  });
+
   it("известието пада: записът остава, грешката е в дневника и в лога, камбанката го показва", async () => {
     currentIp = "10.0.1.8";
     await flushAfter(); // известията на предишните проби тръгват преди чатът да е свързан

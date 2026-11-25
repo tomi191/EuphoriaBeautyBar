@@ -10,6 +10,7 @@ import {
   LISTING_STEPS,
   LISTING_SUBTITLE,
   RENTAL_FALLBACK_IMAGE,
+  seatsLine,
 } from "@/lib/rental/public-copy";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,10 @@ export interface ListingViewData {
   customBenefits: string[];
   /** Сумата на месец («350»), само при включен ключ «Показвай в обявата». */
   rent: string | null;
+  /** Какво не е включено в наема: ред под сумата (само заедно с нея). */
+  rentExcludes: string | null;
+  /** Свободните места: при повече от едно обявата казва «Свободни са N места». */
+  seats: number;
   specialty: string;
 }
 
@@ -72,7 +77,10 @@ export function ListingView({ data, priority }: { data: ListingViewData; priorit
               <span className="block">{LISTING_SUBTITLE[0]}</span> <span className="block">{LISTING_SUBTITLE[1]}</span>
             </p>
             <p className="mt-4 max-w-[17rem] text-[0.95rem] leading-snug text-muted-foreground lg:mt-6 lg:max-w-none lg:text-xl">{LISTING_BEGINNERS}</p>
-            <p className="mt-5 text-sm tracking-[0.06em] text-muted-foreground lg:mt-8 lg:text-lg">кв. Левски, Варна</p>
+            <p className="mt-5 text-sm tracking-[0.06em] text-muted-foreground lg:mt-8 lg:text-lg">
+              {!filled && seatsLine(data.seats) && <span className="block">{seatsLine(data.seats)}</span>}
+              кв. Левски, Варна
+            </p>
             {filled ? (
               <div className="hidden lg:block">{filledNotice}</div>
             ) : (
@@ -99,7 +107,7 @@ export function ListingView({ data, priority }: { data: ListingViewData; priorit
             {data.customBenefits.map((text, i) => (
               <MenuRow key={`custom-${i}`} left={text} />
             ))}
-            <MenuRow left="Наем" right={rent} />
+            <MenuRow left="Наем" right={rent} note={data.rent ? data.rentExcludes : null} />
           </ul>
         </div>
         <div>

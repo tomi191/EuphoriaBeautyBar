@@ -12,9 +12,11 @@ import { IMAGE_NOT_READABLE, stripToWebp } from "@/lib/images/strip-metadata";
 import { RENTAL_BENEFIT_KEYS } from "@/lib/rental/benefits";
 import {
   effectiveStatus,
+  fillSeat,
+  listingPosition,
   listingTitle,
+  MAX_SEATS,
   nextStatus,
-  positionForCategory,
   sniffImageType,
   uniqueSlug,
   type ListingAction,
@@ -59,6 +61,16 @@ async function categoryServiceIds(categoryId: string) {
     columns: { id: true },
   });
   return items.map((i) => i.id);
+}
+
+/** Групите на избраните услуги (за заглавието «за гримьор»). */
+async function serviceGroups(ids: string[]) {
+  if (ids.length === 0) return [];
+  const items = await db.query.serviceItems.findMany({
+    where: (s, { inArray }) => inArray(s.id, ids),
+    columns: { groupTitle: true },
+  });
+  return items.map((i) => i.groupTitle);
 }
 
 /** Първият свободен адрес за заглавието (без адреса на самата обява). */
@@ -131,10 +143,15 @@ const updateSchema = z.object({
     .optional(),
   /** Ключът «показвай в обявата». */
   rentPublic: z.boolean().optional(),
+  /** Какво не е включено в наема (публично, под сумата): до 80 знака; празно или null = няма уточнение. */
+  rentExcludes: z.string().trim().max(80).nullable().optional(),
+  /** «Свободни места»: 1 до 5. */
+  seats: z.number().int().min(1).max(MAX_SEATS).optional(),
 });
 
 /**
- * Обновява мястото, услугите, предимствата, бележката, наема и ключа му; image: null маха снимката.
+ * Обновява мястото, услугите, предимствата, бележката, наема с ключа и уточнението му и броя на местата;
+ * image: null маха снимката.
  * Връща заглавието и адреса (сменят се, когато се смени мястото).
  */
 export async function updateListing(id: string, input: z.input<typeof updateSchema>) {
@@ -171,6 +188,15 @@ export async function updateListing(id: string, input: z.input<typeof updateSche
       if (wanted.some((sid) => !ownIds.has(sid))) return fail("Услугата не е от категорията на обявата.");
     }
     set.serviceIds = wanted;
+    // Заглавието следва и услугите: обява само с грим е «за гримьор». Адресът се сменя само в черновата.
+    if (categoryId) {
+      const cat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, categoryId), columns: { slug: true } });
+      const title = cat ? listingTitle(cat.slug, await serviceGroups(wanted)) : null;
+      if (title && title !== (set.title ?? row.title)) {
+        set.title = title;
+        if (!row.slug || row.status === "draft") set.slug = await freeSlug(title, row.id);
+      }
+    }
   }
   if (d.benefits) set.benefits = [...new Set(d.benefits)];
   if (d.customBenefits) set.customBenefits = d.customBenefits;
@@ -178,6 +204,8 @@ export async function updateListing(id: string, input: z.input<typeof updateSche
   if (d.image === null) set.image = null;
   if (d.rentText !== undefined) set.rentText = d.rentText ? d.rentText : null;
   if (d.rentPublic !== undefined) set.rentPublic = d.rentPublic;
+  if (d.rentExcludes !== undefined) set.rentExcludes = d.rentExcludes ? d.rentExcludes : null;
+  if (d.seats !== undefined) set.seats = d.seats;
   // Включен ключ без сума не се пази (текстът на Саиф за грешката, част 4).
   const rentPublic = set.rentPublic ?? row.rentPublic;
   const rentText = set.rentText !== undefined ? set.rentText : row.rentText;
@@ -213,18 +241,29 @@ async function transition(id: string, action: ListingAction, extra: Partial<type
   const row = await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, id) });
   if (!row) return fail("Обявата не е намерена.");
   const current = effectiveStatus(row);
-  const to = nextStatus(current, action);
+  // «Заето» при повече от едно място затваря едно място и обявата остава в сегашното си състояние.
+  const seat = action === "fill" ? fillSeat(current, row.seats) : null;
+  const to = seat ? seat.status : nextStatus(current, action);
   if (!to) return fail(NOT_ALLOWED[action]);
+  const more = seat ? { ...extra, seats: seat.seats } : extra;
   if (action === "publish" && (!row.categoryId || !row.slug)) return fail("Обявата няма категория.");
 
+  // Пише само ако редът е още в същото състояние и със същия брой места (две «заето» наведнъж не
+  // затварят едно място два пъти).
   const updated = await db
     .update(rp)
-    .set({ ...extra, status: to, active: to === "published", updatedAt: new Date() })
-    .where(and(eq(rp.id, id), row.status === null ? isNull(rp.status) : eq(rp.status, row.status)))
-    .returning({ id: rp.id });
+    .set({ ...more, status: to, active: to === "published", updatedAt: new Date() })
+    .where(
+      and(
+        eq(rp.id, id),
+        row.status === null ? isNull(rp.status) : eq(rp.status, row.status),
+        eq(rp.seats, row.seats),
+      ),
+    )
+    .returning({ id: rp.id, seats: rp.seats });
   if (updated.length === 0) return fail("Обявата се смени междувременно. Отвори я пак.");
   revalidateListing(row.slug);
-  return { ok: true as const, status: to };
+  return { ok: true as const, status: to, seats: updated[0].seats };
 }
 
 /** «Публикувай»: чернова → публикувана, после опит за пост във Facebook (резултатът е в `facebook`). */
@@ -244,16 +283,21 @@ async function postToFacebook(id: string): Promise<FacebookPostResult> {
   try {
     const row = await db.query.rentalPositions.findFirst({
       where: (p, { eq }) => eq(p.id, id),
-      columns: { slug: true, categoryId: true, fbPostId: true },
+      columns: { slug: true, categoryId: true, serviceIds: true, fbPostId: true, seats: true, rentText: true, rentPublic: true, rentExcludes: true },
     });
     if (!row?.slug) return { status: "error", reason: "no_slug" };
     if (row.fbPostId) return { status: "posted", postId: row.fbPostId, postUrl: `https://www.facebook.com/${row.fbPostId}` };
     const category = row.categoryId
       ? await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, row.categoryId!), columns: { slug: true } })
       : null;
-    const link = `${siteConfig.url}/karieri/${row.slug}`;
+    // Метката различава кликовете от поста (came_from на запитването); без бисквитки.
+    const link = `${siteConfig.url}/karieri/${row.slug}?utm_source=facebook&utm_medium=post&utm_campaign=${row.slug}`;
     const result = await postListingToFacebookPage({
-      message: listingFacebookPost(positionForCategory(category?.slug ?? ""), link),
+      message: listingFacebookPost(listingPosition(category?.slug ?? "", await serviceGroups(row.serviceIds ?? [])), link, {
+        seats: row.seats,
+        rent: row.rentPublic ? row.rentText : null,
+        rentExcludes: row.rentExcludes,
+      }),
       link,
     });
     if (result.status === "posted") {
@@ -279,7 +323,10 @@ export async function pauseListing(id: string) {
   return transition(id, "pause");
 }
 
-/** «Заето от <специалист>». */
+/**
+ * «Заето от <специалист>»: затваря едно място. При повече свободни обявата остава публикувана с едно място
+ * по-малко; при последното става заета. Специалистът се записва (последният, заел място).
+ */
 export async function markListingFilled(id: string, resourceId: string) {
   await requireAdmin();
   if (!idSchema.safeParse(resourceId).success) return fail("Избери специалист.");

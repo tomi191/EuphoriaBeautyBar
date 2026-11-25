@@ -22,7 +22,7 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
   let R: typeof import("@/lib/data/rental-listings");
   let F: typeof import("@/lib/admin/listing-form-data");
   const ids: string[] = [];
-  const cats = { nails: `${T}-nails`, cosm: `${T}-cosm` };
+  const cats = { nails: `${T}-nails`, cosm: `${T}-cosm`, hair: `${T}-hair` };
 
   async function draft(categoryId = cats.nails) {
     const d = await A.createListingDraft({ categoryId });
@@ -48,11 +48,14 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
     await db.insert(schema.serviceCategories).values([
       { id: cats.nails, slug: `${T}-manikyur`, title: "Маникюр проба", shortTitle: "Маникюр", ...base },
       { id: cats.cosm, slug: `${T}-kozmetika`, title: "Козметика проба", shortTitle: "Козметика", ...base },
+      { id: cats.hair, slug: `${T}-frizyor`, title: "Фризьор проба", shortTitle: "Фризьор", ...base },
     ]);
     await db.insert(schema.serviceItems).values([
       { id: `${T}-n1`, categoryId: cats.nails, groupTitle: "Маникюр", name: "Гел лак", price: 30, sortOrder: 1 },
       { id: `${T}-n2`, categoryId: cats.nails, groupTitle: "Маникюр", name: "Изграждане", price: 50, sortOrder: 2 },
       { id: `${T}-c1`, categoryId: cats.cosm, groupTitle: "Лице", name: "Почистване", price: 40, sortOrder: 1 },
+      { id: `${T}-h1`, categoryId: cats.hair, groupTitle: "Дамски", name: "Подстригване", price: 30, sortOrder: 1 },
+      { id: `${T}-h2`, categoryId: cats.hair, groupTitle: "Грим", name: "Грим", price: 60, sortOrder: 2 },
     ]);
     await db.insert(schema.rentalPositions).values({
       id: `${T}-legacy`, title: "Маникюристка", type: "Под наем", description: "Стара", skills: [], active: true, createdAt: now, updatedAt: now,
@@ -179,22 +182,58 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
       process.env.FACEBOOK_PAGE_ACCESS_TOKEN = "proba-token";
     };
 
-    it("излезе: номерът на поста се пази, текстът е без наем и с адреса на обявата", async () => {
+    it("излезе: номерът на поста се пази, текстът е с показания наем (решение от 25.11) и с адреса на обявата", async () => {
       keys();
       const calls = graph(async () => Response.json({ id: "1234567890_42" }));
       const d = await draft();
-      await A.updateListing(d.id, { rentText: "555", rentPublic: true });
+      await A.updateListing(d.id, { rentText: "555", rentPublic: true, rentExcludes: "без консумативите" });
       const res = await A.publishListing(d.id);
       expect(res).toMatchObject({ ok: true, status: "published", facebook: { status: "posted", postId: "1234567890_42" } });
       expect(calls).toHaveLength(1);
       const body = new URLSearchParams(calls[0].body);
-      expect(body.get("link")).toBe(`https://www.euphoriabeauty.eu/karieri/${d.slug}`);
+      // Адресът носи метка, за да се различават запитванията от поста (came_from).
+      const tagged = `https://www.euphoriabeauty.eu/karieri/${d.slug}?utm_source=facebook&utm_medium=post&utm_campaign=${d.slug}`;
+      expect(body.get("link")).toBe(tagged);
+      expect(body.get("message")).toContain(`Изпрати запитване от обявата: ${tagged}`);
       expect(body.get("message")).toContain("Свободно е едно място под наем за специалист");
-      expect(body.get("message")).not.toContain("555");
+      expect(body.get("message")).toContain(`Наем 555${String.fromCharCode(0xa0)}€ на месец, без консумативите.`);
       expect(JSON.stringify(res)).not.toContain("proba-token");
       const row = await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) });
       expect(row).toMatchObject({ status: "published", fbPostId: "1234567890_42" });
       expect(row!.fbPostedAt).toBeInstanceOf(Date);
+    });
+
+    it("само грим (думата от 25.11): заглавие, адрес и пост «за гримьор», наемът с уточнението; без грим се връща", async () => {
+      keys();
+      const calls = graph(async () => Response.json({ id: "1234567890_43" }));
+      const d = await draft(cats.hair);
+      expect(d.title).toBe("Място под наем за специалист");
+      const only = await A.updateListing(d.id, { serviceIds: [`${T}-h2`] });
+      expect(only).toMatchObject({ ok: true, title: "Място под наем за гримьор" });
+      expect(only.ok && only.slug).toMatch(/^myasto-pod-naem-za-grimyor(-\d+)?$/);
+      // С още една услуга вече не е само грим: заглавието и адресът на черновата се връщат.
+      const both = await A.updateListing(d.id, { serviceIds: [`${T}-h1`, `${T}-h2`] });
+      expect(both).toMatchObject({ ok: true, title: "Място под наем за специалист" });
+      expect(both.ok && both.slug).toMatch(/^myasto-pod-naem-za-spetsialist/);
+      const back = await A.updateListing(d.id, {
+        serviceIds: [`${T}-h2`],
+        rentText: "150",
+        rentPublic: true,
+        rentExcludes: "разходите се уговарят на място според това колко често идваш",
+      });
+      expect(back).toMatchObject({ ok: true, title: "Място под наем за гримьор" });
+      const slug = back.ok ? back.slug! : "";
+      expect(await A.publishListing(d.id)).toMatchObject({ ok: true, facebook: { status: "posted" } });
+      const msg = new URLSearchParams(calls[0].body).get("message");
+      expect(msg).toContain("Свободно е едно място под наем за гримьор");
+      expect(msg).toContain(
+        `Наем 150${String.fromCharCode(0xa0)}€ на месец, разходите се уговарят на място според това колко често идваш.`,
+      );
+      const pub = await R.getListingBySlug(slug);
+      expect(pub?.title).toBe("Място под наем за гримьор");
+      // Пуснатата обява пази адреса си (връзката от Facebook), дори заглавието да се смени.
+      const after = await A.updateListing(d.id, { serviceIds: [`${T}-h1`, `${T}-h2`] });
+      expect(after).toMatchObject({ ok: true, slug });
     });
 
     it("не е настроено: обявата е публикувана, Facebook казва «off», заявка няма", async () => {

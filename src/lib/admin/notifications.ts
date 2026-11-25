@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
-import { positionForCategory } from "@/lib/rental/listing-rules";
+import { listingPosition } from "@/lib/rental/listing-rules";
 import { INQUIRY_BELL_TITLE, inquiryBellDetail } from "@/lib/rental/inquiry-rules";
 import { pendingPhotoBellItems } from "@/lib/gallery/review";
 import { pendingCampaignBellItems } from "@/lib/campaigns/core";
@@ -83,18 +83,33 @@ export async function loadAdminNotifications(): Promise<AdminNotificationsState>
     const positionIds = [...new Set(inquiries.map((i) => i.positionId))];
     const positions = await db.query.rentalPositions.findMany({
       where: (p, { inArray }) => inArray(p.id, positionIds),
-      columns: { id: true, categoryId: true },
+      columns: { id: true, categoryId: true, serviceIds: true },
     });
     const categories = await db.query.serviceCategories.findMany({ columns: { id: true, slug: true } });
     const catSlug = new Map(categories.map((c) => [c.id, c.slug]));
-    const posMap = new Map(positions.map((p) => [p.id, p.categoryId ? catSlug.get(p.categoryId) : undefined]));
+    // Групите на услугите: обява само с грим е «гримьор».
+    const serviceIds = [...new Set(positions.flatMap((p) => p.serviceIds ?? []))];
+    const serviceRows = serviceIds.length
+      ? await db.query.serviceItems.findMany({
+          where: (s, { inArray }) => inArray(s.id, serviceIds),
+          columns: { id: true, groupTitle: true },
+        })
+      : [];
+    const groupOf = new Map(serviceRows.map((s) => [s.id, s.groupTitle]));
+    const posMap = new Map(
+      positions.map((p) => {
+        const slug = p.categoryId ? catSlug.get(p.categoryId) : undefined;
+        const groups = (p.serviceIds ?? []).flatMap((id) => groupOf.get(id) ?? []);
+        return [p.id, slug ? listingPosition(slug, groups) : undefined];
+      }),
+    );
     for (const i of inquiries) {
-      const slug = posMap.get(i.positionId);
+      const position = posMap.get(i.positionId);
       items.push({
         id: `${i.id}:rental_inquiry`,
         kind: "rental_inquiry",
         title: INQUIRY_BELL_TITLE,
-        detail: inquiryBellDetail({ name: i.name, phone: i.phone, position: slug ? positionForCategory(slug) : "специалист" }),
+        detail: inquiryBellDetail({ name: i.name, phone: i.phone, position: position ?? "специалист" }),
         at: i.createdAt.toISOString(),
         href: "/admin/positions?tab=inquiries",
       });

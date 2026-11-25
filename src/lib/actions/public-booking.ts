@@ -1,6 +1,7 @@
 "use server";
 
 import { nanoid } from "nanoid";
+import { cleanCameFrom } from "@/lib/came-from";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
@@ -96,20 +97,6 @@ export async function quotePublicBooking(input: z.infer<typeof quoteSchema>): Pr
     promoId: d.promoId ?? null,
   });
   return toQuote(priced);
-}
-
-/** Откъде е дошъл клиентът (bookings.came_from): само «from» и UTM от адреса, изчистени, до 200 знака. */
-function cleanCameFrom(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const q = new URLSearchParams(raw.startsWith("?") ? raw.slice(1) : raw);
-  const out = new URLSearchParams();
-  for (const k of ["from", "utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
-    const v = (q.get(k) ?? "").replace(/[^\p{L}\p{N}_.\-]/gu, "").slice(0, 60);
-    if (v) out.set(k, v);
-  }
-  if (![...out.keys()].length && q.get("promo")) out.set("from", "promo");
-  const s = out.toString();
-  return s ? s.slice(0, 200) : null;
 }
 
 export async function verifyEmailToken(token: string): Promise<boolean> {

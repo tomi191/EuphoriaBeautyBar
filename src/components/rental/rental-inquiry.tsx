@@ -191,6 +191,8 @@ export function RentalInquiryProvider({
         token,
         ...fields,
         website: honeyRef.current?.value ?? "",
+        // Метката от адреса (например от поста във Facebook): без бисквитки, само адресът.
+        cameFrom: window.location.search || null,
       });
       if (res.ok) {
         setErrors({});

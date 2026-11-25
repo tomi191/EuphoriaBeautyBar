@@ -9,9 +9,10 @@ import { requireAdmin } from "@/lib/actions/auth-guard";
 import { listRentalInquiries } from "@/lib/actions/rental-inquiries";
 import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { isEnded } from "@/lib/booking/ended";
-import { effectiveStatus, positionForCategory, type ListingStatus } from "@/lib/rental/listing-rules";
+import { effectiveStatus, listingPosition, type ListingStatus } from "@/lib/rental/listing-rules";
 import { formatBgPhone } from "@/lib/rental/inquiry-rules";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { cameFromLabel } from "@/lib/came-from";
 
 export interface BoardListing {
   id: string;
@@ -53,6 +54,8 @@ export interface BoardInquiry {
   handledLabel: string | null;
   /** Известието не стигна до нито един получател (няма свързан Telegram или всички опити паднаха). */
   undelivered: boolean;
+  /** Откъде е дошло: «Facebook»; null = без метка. */
+  cameFromLabel: string | null;
 }
 
 const KIND_LABEL: Record<string, string> = { hair: "Коса", nails: "Маникюр", cosmetics: "Козметика" };
@@ -81,13 +84,15 @@ export function whenLabel(at: Date, now = new Date()): string {
 export async function loadRentalBoard() {
   await requireAdmin();
   const ri = schema.rentalInquiries;
-  const [rows, categories, resources, counts, inquiries] = await Promise.all([
+  const [rows, categories, resources, counts, inquiries, items] = await Promise.all([
     db.query.rentalPositions.findMany({ orderBy: (p, { desc }) => [desc(p.updatedAt)] }),
     db.query.serviceCategories.findMany({ columns: { id: true, slug: true } }),
     db.query.resources.findMany({ orderBy: (r, { asc }) => [asc(r.sortOrder), asc(r.name)] }),
     db.select({ positionId: ri.positionId, n: count() }).from(ri).groupBy(ri.positionId),
     listRentalInquiries(),
+    db.query.serviceItems.findMany({ columns: { id: true, groupTitle: true } }),
   ]);
+  const groupOf = new Map(items.map((s) => [s.id, s.groupTitle]));
   const catSlug = new Map(categories.map((c) => [c.id, c.slug]));
   const resName = new Map(resources.map((r) => [r.id, r.name]));
   const countBy = new Map(counts.map((c) => [c.positionId, Number(c.n)]));
@@ -98,7 +103,10 @@ export async function loadRentalBoard() {
     const filledName = row.filledByResourceId ? resName.get(row.filledByResourceId) : undefined;
     return {
       id: row.id,
-      place: slug ? capitalize(positionForCategory(slug)) : row.title,
+      // Обява само с грим: «Гримьор».
+      place: slug
+        ? capitalize(listingPosition(slug, (row.serviceIds ?? []).flatMap((id) => groupOf.get(id) ?? [])))
+        : row.title,
       kind: slug ? (KIND_BY_SLUG[slug] ?? null) : null,
       slug: row.slug,
       image: row.image,
@@ -129,6 +137,7 @@ export async function loadRentalBoard() {
     whenLabel: whenLabel(i.createdAt, now),
     handledLabel: i.handledAt ? `Обработено на ${dayMonth(i.handledAt)}` : null,
     undelivered: i.notifyDelivered === false,
+    cameFromLabel: cameFromLabel(i.cameFrom),
   }));
 
   // В листа: само изпълнителите, които работят (приключилите и скритите не заемат място).

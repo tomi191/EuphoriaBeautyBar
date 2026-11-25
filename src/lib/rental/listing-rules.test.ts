@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   effectiveStatus,
+  fillSeat,
+  isMakeupOnly,
+  listingCategoryLabel,
+  listingPosition,
   listingTitle,
   nextStatus,
   sniffImageType,
@@ -9,6 +13,7 @@ import {
   type ListingStatus,
 } from "./listing-rules";
 import { RENTAL_BENEFITS, RENTAL_BENEFIT_KEYS, benefitsFromKeys } from "./benefits";
+import { listingFacebookPost, seatsLine } from "./public-copy";
 
 describe("предимствата", () => {
   it("12 реда, уникални ключове, дословно първият и последният", () => {
@@ -55,6 +60,28 @@ describe("заглавие и адрес", () => {
     expect(listingTitle("frizorski-terapii")).toBe("Място под наем за фризьор");
     expect(listingTitle("nova-kategoriya")).toBe("Място под наем за специалист");
   });
+  it("само услуги от група «Грим» → гримьор (думата на собственика от 25.11), без нова категория", () => {
+    expect(listingTitle("frizorski-uslugi", ["Грим"])).toBe("Място под наем за гримьор");
+    expect(uniqueSlug(listingTitle("frizorski-uslugi", ["Грим"]), [])).toBe("myasto-pod-naem-za-grimyor");
+    expect(listingPosition("frizorski-uslugi", ["Грим", "Дамско подстригване"])).toBe("фризьор");
+    expect(listingPosition("frizorski-uslugi", [])).toBe("фризьор");
+    expect(listingPosition("manikyur-i-pedikyur", ["Маникюр"])).toBe("маникюрист");
+  });
+  it("/karieri вдясно: «грим» за обява само с грим, иначе категорията с малки букви", () => {
+    expect(isMakeupOnly(["Грим"])).toBe(true);
+    expect(isMakeupOnly([])).toBe(false);
+    expect(listingCategoryLabel("Фризьорски услуги", ["Грим"])).toBe("грим");
+    expect(listingCategoryLabel("Фризьорски услуги", ["Грим", "Дамско подстригване"])).toBe("фризьорски услуги");
+    expect(listingCategoryLabel("Маникюр и педикюр")).toBe("маникюр и педикюр");
+  });
+  it("постът за грима: позицията и наемът с уточнението", () => {
+    const post = listingFacebookPost("гримьор", "https://x/karieri/myasto-pod-naem-za-grimyor", {
+      rent: "150",
+      rentExcludes: "разходите се уговарят на място според това колко често идваш",
+    });
+    expect(post).toContain("Свободно е едно място под наем за гримьор в Euphoria Hair & Beauty Bar");
+    expect(post).toContain(`Наем 150${String.fromCharCode(0xa0)}€ на месец, разходите се уговарят на място според това колко често идваш.`);
+  });
   it("адресът е латиница от кирилицата и е уникален", () => {
     const title = listingTitle("manikyur-i-pedikyur");
     expect(uniqueSlug(title, [])).toBe("myasto-pod-naem-za-manikyurist");
@@ -79,5 +106,35 @@ describe("снимката по първите байтове", () => {
     expect(sniffImageType(new TextEncoder().encode("<html>"))).toBeNull();
     expect(sniffImageType(u())).toBeNull();
     expect(sniffImageType(u(0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x41, 0x56, 0x49, 0x20))).toBeNull();
+  });
+});
+
+describe("местата", () => {
+  it("«заето» при повече места затваря едно и пази състоянието; при последното става заета", () => {
+    expect(fillSeat("published", 2)).toEqual({ status: "published", seats: 1 });
+    expect(fillSeat("published", 5)).toEqual({ status: "published", seats: 4 });
+    expect(fillSeat("paused", 3)).toEqual({ status: "paused", seats: 2 });
+    expect(fillSeat("published", 1)).toEqual({ status: "filled", seats: 1 });
+    expect(fillSeat("paused", 1)).toEqual({ status: "filled", seats: 1 });
+    expect(fillSeat("draft", 2)).toBeNull();
+    expect(fillSeat("filled", 2)).toBeNull();
+  });
+  it("множествено число само при повече от едно място", () => {
+    expect(seatsLine(1)).toBeNull();
+    expect(seatsLine(2)).toBe("Свободни са 2 места");
+  });
+  it("постът във Facebook: бройката и наемът с уточнението", () => {
+    const link = "https://www.euphoriabeauty.eu/karieri/x";
+    const one = listingFacebookPost("фризьор", link);
+    expect(one.split("\n\n")[0]).toBe("Свободно е едно място под наем за фризьор в Euphoria Hair & Beauty Bar, кв. Левски, Варна.");
+    expect(one).not.toContain("Наем");
+    const two = listingFacebookPost("маникюрист", link, { seats: 2, rent: "200", rentExcludes: "без ток, вода и общи консумативи" });
+    expect(two.split("\n\n")).toEqual([
+      "Свободни са 2 места под наем за маникюрист в Euphoria Hair & Beauty Bar, кв. Левски, Варна.",
+      "Работиш самостоятелно, със свои цени и часове. Не е трудов договор. Личен график в приложението. Подходящо и за започващи.",
+      `Наем 200${String.fromCharCode(0xa0)}€ на месец, без ток, вода и общи консумативи.`,
+      `Изпрати запитване от обявата: ${link}`,
+    ]);
+    expect(listingFacebookPost("фризьор", link, { rent: "280,5" })).toContain(`Наем 280,5${String.fromCharCode(0xa0)}€ на месец.`);
   });
 });

@@ -40,7 +40,11 @@ import {
   type RentalBenefitKey,
 } from "@/lib/rental/benefits";
 import { specialtyForCategory } from "@/lib/rental/inquiry-rules";
-import { listingTitle, type ListingStatus } from "@/lib/rental/listing-rules";
+import {
+  listingTitle,
+  MAX_SEATS,
+  type ListingStatus,
+} from "@/lib/rental/listing-rules";
 import { cn } from "@/lib/utils";
 
 /*
@@ -185,6 +189,8 @@ export function ListingForm({
     listing?.rentPublic ?? false,
   );
   const [rentError, setRentError] = React.useState<string | null>(null);
+  const [rentExcludes, setRentExcludes] = React.useState(listing?.rentExcludes ?? "");
+  const [seats, setSeats] = React.useState(listing?.seats ?? 1);
   const [adminNote, setAdminNote] = React.useState(listing?.adminNote ?? "");
   const [step, setStep] = React.useState(initialStep);
   const [busy, setBusy] = React.useState(false);
@@ -194,8 +200,11 @@ export function ListingForm({
   const galleryRef = React.useRef<HTMLInputElement>(null);
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
+  const chosenGroups = category
+    ? category.services.filter((s) => serviceIds.includes(s.id)).map((s) => s.groupTitle)
+    : [];
   const title = category
-    ? listingTitle(category.slug)
+    ? listingTitle(category.slug, chosenGroups)
     : (listing?.title ?? "Място под наем");
   const isDraft = status === null || status === "draft";
   const heading = isDraft ? "Нова обява" : "Редакция на обявата";
@@ -209,7 +218,9 @@ export function ListingForm({
     benefits: catalog.filter((b) => benefitKeys.includes(b.key)),
     customBenefits: custom,
     rent: rentPublic && rentText.trim() ? rentText.trim() : null,
-    specialty: specialtyForCategory(category?.slug),
+    rentExcludes: rentExcludes.trim() || null,
+    seats,
+    specialty: specialtyForCategory(category?.slug, chosenGroups),
   };
 
   function goTo(n: number) {
@@ -313,6 +324,8 @@ export function ListingForm({
     return {
       rentText: rent || null,
       rentPublic,
+      rentExcludes: rentExcludes.trim() || null,
+      seats,
       adminNote: adminNote.trim() || null,
     };
   }
@@ -813,8 +826,33 @@ export function ListingForm({
               {STEP_HELP[4]}
             </p>
             <label
-              htmlFor="rent"
+              htmlFor="seats"
               className="mt-2 block text-[1.0625rem] lg:mt-3 lg:text-base"
+            >
+              Свободни места
+            </label>
+            <select
+              id="seats"
+              value={seats}
+              onChange={(e) => setSeats(Number(e.target.value))}
+              aria-describedby="seats-hint"
+              className="h-12 w-full rounded-lg border border-border bg-background/60 px-4 text-base outline-none placeholder:text-muted-foreground/60 focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring/30 mt-2 lg:w-1/2"
+            >
+              {Array.from({ length: MAX_SEATS }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <p id="seats-hint" className="mt-1 text-sm text-muted-foreground lg:mt-2">
+              {seats > 1
+                ? `В обявата пише „Свободни са ${seats} места“. „Отбележи като заето“ затваря по едно.`
+                : "Едно място: в обявата бройката не се пише."}
+            </p>
+
+            <label
+              htmlFor="rent"
+              className="mt-5 block text-[1.0625rem] lg:mt-6 lg:text-base"
             >
               Наем{" "}
               <span className="ml-1 text-muted-foreground">(по желание)</span>
@@ -887,6 +925,26 @@ export function ListingForm({
                 {rentError}
               </p>
             )}
+            <label
+              htmlFor="rent-excludes"
+              className="mt-5 block text-[1.0625rem] lg:mt-6 lg:text-base"
+            >
+              Какво не е включено{" "}
+              <span className="ml-1 text-muted-foreground">(по желание)</span>
+            </label>
+            <input
+              id="rent-excludes"
+              autoComplete="off"
+              value={rentExcludes}
+              maxLength={80}
+              placeholder="без ток, вода и общи консумативи"
+              onChange={(e) => setRentExcludes(e.target.value)}
+              aria-describedby="rent-excludes-hint"
+              className="h-12 w-full rounded-lg border border-border bg-background/60 px-4 text-base outline-none placeholder:text-muted-foreground/60 focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring/30 mt-2"
+            />
+            <p id="rent-excludes-hint" className="mt-1 text-sm text-muted-foreground lg:mt-2">
+              Излиза под сумата, когато наемът се показва. До 80 знака.
+            </p>
 
             <div className="my-6 border-t border-border lg:hidden" />
             <h2 className="font-display text-2xl font-medium lg:mt-6 lg:text-[1.375rem]">

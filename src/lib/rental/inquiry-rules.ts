@@ -4,6 +4,7 @@
  * Саиф (доклад 22.11.2026 «обява-запитване-и-наем», части 5 и 6), без обещан срок за отговор.
  */
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { isMakeupOnly } from "@/lib/rental/listing-rules";
 
 /** Колко време пазим запитването (решение 16: 6 месеца). */
 export const INQUIRY_RETENTION_MONTHS = 6;
@@ -70,8 +71,9 @@ export function formatBgPhone(canonical: string): string {
 
 const SPECIALTY_BY_KIND: Record<string, string> = { nails: "Маникюр", cosmetics: "Козметика", hair: "Коса" };
 
-/** «Специалност», попълнена от обявата по категорията; непозната → празно. */
-export function specialtyForCategory(categorySlug: string | null | undefined): string {
+/** «Специалност», попълнена от обявата по категорията (обява само с грим → «Грим»); непозната → празно. */
+export function specialtyForCategory(categorySlug: string | null | undefined, serviceGroups: readonly string[] = []): string {
+  if (isMakeupOnly(serviceGroups)) return "Грим";
   return (categorySlug && SPECIALTY_BY_KIND[KIND_BY_SLUG[categorySlug] ?? ""]) || "";
 }
 

@@ -2,7 +2,8 @@
  * Публичните четения на обявите за място под наем (/karieri, /karieri/<slug>, /za-nas).
  * Колоните се изброяват една по една и изходът се сглобява ръчно: admin_note, filled_by_resource_id
  * и полетата за Facebook НИКОГА не излизат оттук; сумата на наема излиза само при включен ключ
- * «показвай в обявата» (тест: rental-listings.test.ts).
+ * «показвай в обявата», а уточнението под нея (какво не е включено) само заедно със сумата
+ * (тест: rental-listings.test.ts).
  */
 import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
@@ -31,6 +32,10 @@ export interface PublicListing {
   rent: string | null;
   /** Своите редове на Снежана (до 60 знака): в менюто без дясна част. */
   customBenefits: string[];
+  /** Свободните места (1 до 5). */
+  seats: number;
+  /** Какво не е включено в наема; само заедно със сумата (null при изключен ключ). */
+  rentExcludes: string | null;
 }
 
 // Публикувана: новото състояние или стар ред без състояние, който е активен.
@@ -51,6 +56,8 @@ const publicColumns = {
   rentText: rp.rentText,
   rentPublic: rp.rentPublic,
   customBenefits: rp.customBenefits,
+  seats: rp.seats,
+  rentExcludes: rp.rentExcludes,
   catId: sc.id,
   catSlug: sc.slug,
   catTitle: sc.title,
@@ -72,6 +79,8 @@ type Row = {
   rentText: string | null;
   rentPublic: boolean;
   customBenefits: string[] | null;
+  seats: number;
+  rentExcludes: string | null;
   catId: string | null;
   catSlug: string | null;
   catTitle: string | null;
@@ -111,6 +120,8 @@ function toPublic(r: Row, services: Map<string, { id: string; name: string; grou
     skills: r.skills ?? [],
     rent: r.rentPublic && r.rentText ? r.rentText : null,
     customBenefits: r.customBenefits ?? [],
+    seats: r.seats,
+    rentExcludes: r.rentPublic && r.rentText && r.rentExcludes ? r.rentExcludes : null,
   };
 }
 
