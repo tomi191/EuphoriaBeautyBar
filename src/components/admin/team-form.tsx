@@ -4,7 +4,7 @@ import * as React from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,7 +128,11 @@ export function TeamForm({ trigger, initial }: TeamFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {/* Не DialogTrigger asChild: в голям ред RSC подава бутона като мързелива връзка ($L…), Slot я
+          приема за «не елемент» и не рисува нищо (така изчезваше «Редакция»). Както в resource-form. */}
+      <span className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </span>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{initial ? "Редакция на член" : "Нов член на екипа"}</DialogTitle>

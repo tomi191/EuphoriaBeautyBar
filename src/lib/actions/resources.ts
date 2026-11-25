@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { auth } from "@/lib/auth";
 import { FUTURE_STATUSES } from "@/lib/booking/future-bookings";
+import { isEnded } from "@/lib/booking/ended";
 import { releaseListingsFilledBy } from "@/lib/rental/release";
 import { setConsent } from "@/lib/data/tenant-consent";
 import { processTeamPhoto, removeTeamPhotoIfUnused, TEAM_BUCKET, TEAM_PHOTO_ERRORS, teamStorage } from "@/lib/images/team-photo";
@@ -214,15 +215,33 @@ export async function resetStaffPassword(resourceId: string, newPassword: string
   return { ok: true as const };
 }
 
-export async function deleteResource(id: string) {
+/** FK restrict (23503): изпълнителят има история (часове или промоции), която не се трие. */
+function isForeignKeyViolation(err: unknown): boolean {
+  const e = err as { code?: string; cause?: { code?: string } } | null;
+  return e?.code === "23503" || e?.cause?.code === "23503";
+}
+
+/**
+ * Изпълнител без история се трие. С история (часове, промоции) не се трие: сътрудничеството
+ * приключва (скрит, без вход), ако още не е, и админът получава съобщение защо е така.
+ */
+export async function deleteResource(id: string): Promise<void | { message: string }> {
   await requireAdmin();
+  const resource = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.id, id) });
+  if (!resource) return;
   try {
     await db.delete(schema.resources).where(eq(schema.resources.id, id));
-  } catch {
-    // FK restrict — има записани часове за този изпълнител; вместо изтриване приключва
-    // сътрудничеството (скрит, без вход), историята на часовете остава.
-    await endStaffAccess(id);
-    await releaseListingsFilledBy(id);
+  } catch (err) {
+    if (!isForeignKeyViolation(err)) throw err;
+    if (!isEnded(resource)) {
+      await endStaffAccess(id);
+      await releaseListingsFilledBy(id);
+    }
+    const booking = await db.query.bookings.findFirst({ where: (b, { eq }) => eq(b.resourceId, id), columns: { id: true } });
+    revalidate();
+    return {
+      message: `${resource.name} има записани ${booking ? "часове" : "промоции"} в историята, затова не се трие. Сътрудничеството е приключено: няма вход и не се вижда на сайта.`,
+    };
   }
   revalidate();
 }
