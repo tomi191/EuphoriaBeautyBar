@@ -9,4 +9,6 @@ ALTER TABLE rental_positions
   DROP COLUMN IF EXISTS rent_excludes,
   DROP COLUMN IF EXISTS seats;
 
+ALTER TABLE rental_inquiries DROP COLUMN IF EXISTS came_from;
+
 COMMIT;

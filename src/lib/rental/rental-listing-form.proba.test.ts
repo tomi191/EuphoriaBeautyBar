@@ -191,7 +191,10 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
       expect(res).toMatchObject({ ok: true, status: "published", facebook: { status: "posted", postId: "1234567890_42" } });
       expect(calls).toHaveLength(1);
       const body = new URLSearchParams(calls[0].body);
-      expect(body.get("link")).toBe(`https://www.euphoriabeauty.eu/karieri/${d.slug}`);
+      // Адресът носи метка, за да се различават запитванията от поста (came_from).
+      const tagged = `https://www.euphoriabeauty.eu/karieri/${d.slug}?utm_source=facebook&utm_medium=post&utm_campaign=${d.slug}`;
+      expect(body.get("link")).toBe(tagged);
+      expect(body.get("message")).toContain(`Изпрати запитване от обявата: ${tagged}`);
       expect(body.get("message")).toContain("Свободно е едно място под наем за специалист");
       expect(body.get("message")).toContain(`Наем 555${String.fromCharCode(0xa0)}€ на месец, без консумативите.`);
       expect(JSON.stringify(res)).not.toContain("proba-token");

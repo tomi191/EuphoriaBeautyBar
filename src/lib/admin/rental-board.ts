@@ -12,6 +12,7 @@ import { isEnded } from "@/lib/booking/ended";
 import { effectiveStatus, listingPosition, type ListingStatus } from "@/lib/rental/listing-rules";
 import { formatBgPhone } from "@/lib/rental/inquiry-rules";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
+import { cameFromLabel } from "@/lib/came-from";
 
 export interface BoardListing {
   id: string;
@@ -53,6 +54,8 @@ export interface BoardInquiry {
   handledLabel: string | null;
   /** Известието не стигна до нито един получател (няма свързан Telegram или всички опити паднаха). */
   undelivered: boolean;
+  /** «Откъде: facebook, post»; null = без метка. */
+  cameFromLabel: string | null;
 }
 
 const KIND_LABEL: Record<string, string> = { hair: "Коса", nails: "Маникюр", cosmetics: "Козметика" };
@@ -134,6 +137,7 @@ export async function loadRentalBoard() {
     whenLabel: whenLabel(i.createdAt, now),
     handledLabel: i.handledAt ? `Обработено на ${dayMonth(i.handledAt)}` : null,
     undelivered: i.notifyDelivered === false,
+    cameFromLabel: cameFromLabel(i.cameFrom),
   }));
 
   // В листа: само изпълнителите, които работят (приключилите и скритите не заемат място).

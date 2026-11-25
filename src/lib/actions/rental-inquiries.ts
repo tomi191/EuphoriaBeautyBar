@@ -10,6 +10,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { getListingBySlug } from "@/lib/data/rental-listings";
+import { cleanCameFrom } from "@/lib/came-from";
 import { listingPosition } from "@/lib/rental/listing-rules";
 import { notifyRentalInquiry } from "@/lib/rental/inquiry-notify";
 import {
@@ -44,6 +45,8 @@ const submitSchema = z.object({
   consent: z.boolean(),
   /** Капанът: скрито поле, което човек не вижда и не попълва. */
   website: z.string().max(500).optional(),
+  /** Адресът след «?» (метките utm_*, from): чисти се с cleanCameFrom. */
+  cameFrom: z.string().max(2000).nullable().optional(),
 });
 
 async function clientIpHash(): Promise<string | null> {
@@ -112,6 +115,7 @@ export async function submitRentalInquiry(input: z.input<typeof submitSchema>): 
       status: "new",
       clientToken: data.token,
       ipHash,
+      cameFrom: cleanCameFrom(data.cameFrom),
     })
     .onConflictDoNothing({ target: ri.clientToken })
     .returning({ id: ri.id });
@@ -156,6 +160,8 @@ export interface AdminInquiry {
   notifyTargets: number | null;
   /** false = известието не стигна до нито един получател; null = дневникът липсва. */
   notifyDelivered: boolean | null;
+  /** Метката от адреса (utm_*, from); null = без метка. */
+  cameFrom: string | null;
 }
 
 /** Запитванията, най-новите първи; по желание само за едно място и/или едно състояние. */
@@ -181,6 +187,7 @@ export async function listRentalInquiries(filter?: {
       status: ri.status,
       handledAt: ri.handledAt,
       notifyLog: ri.notifyLog,
+      cameFrom: ri.cameFrom,
     })
     .from(ri)
     .innerJoin(schema.rentalPositions, eq(ri.positionId, schema.rentalPositions.id))

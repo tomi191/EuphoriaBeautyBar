@@ -18,4 +18,4 @@
 | 0003_price_log | дневник на цените (`price_log`, само добавяне; тригери на `resource_services` и `service_items`) | 24.11.2026 | 24.11.2026 (решение 25) |
 | 0004_campaigns | промоциите на специалистите (`campaigns`, `campaign_services`) и три празни колони в `bookings` (`campaign_id`, `regular_price_eur`, `came_from`) | 24.11.2026 | чака думата на собственика (след част 3) |
 | 0005_goal_counters | мерилата за целите (решение 7): натискания на «Обади се» и Viber (`call_clicks`) и схема `goal_stats` с два изгледа само с бройки; ролята `goal_reader` я прави `scripts/goal-reader-role.mjs` | 25.11.2026 | 25.11.2026 (решение 7; ролята също) |
-| 0006_listing_seats | брой свободни места в обявата (`seats`, 1 до 5) и какво не е включено в наема (`rent_excludes`, до 80 знака), само добавяне в `rental_positions` | 25.11.2026 | чака думата на собственика |
+| 0006_listing_seats | брой свободни места в обявата (`seats`, 1 до 5) и какво не е включено в наема (`rent_excludes`, до 80 знака), само добавяне в `rental_positions`; откъде е дошло запитването (`came_from`) в `rental_inquiries` | 25.11.2026 | чака думата на собственика |

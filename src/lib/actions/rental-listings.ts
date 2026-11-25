@@ -290,7 +290,8 @@ async function postToFacebook(id: string): Promise<FacebookPostResult> {
     const category = row.categoryId
       ? await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, row.categoryId!), columns: { slug: true } })
       : null;
-    const link = `${siteConfig.url}/karieri/${row.slug}`;
+    // Метката различава кликовете от поста (came_from на запитването); без бисквитки.
+    const link = `${siteConfig.url}/karieri/${row.slug}?utm_source=facebook&utm_medium=post&utm_campaign=${row.slug}`;
     const result = await postListingToFacebookPage({
       message: listingFacebookPost(listingPosition(category?.slug ?? "", await serviceGroups(row.serviceIds ?? [])), link, {
         seats: row.seats,

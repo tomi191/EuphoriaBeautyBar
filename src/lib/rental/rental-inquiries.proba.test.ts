@@ -210,7 +210,9 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
       return realFetch(url as RequestInfo, init);
     });
     try {
-      expect(await A.submitRentalInquiry(form({ slug: GRIM, phone: "0888 000 009", specialty: "Грим" }))).toEqual({ ok: true });
+      // Дошло от поста във Facebook: метката се пази изчистена (fbclid отпада).
+      const cameFrom = `?utm_source=facebook&utm_medium=post&utm_campaign=${GRIM}&fbclid=IwAR0x`;
+      expect(await A.submitRentalInquiry(form({ slug: GRIM, phone: "0888 000 009", specialty: "Грим", cameFrom }))).toEqual({ ok: true });
       await flushAfter();
     } finally {
       fetchSpy.mockRestore();
@@ -227,7 +229,15 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
     const { loadRentalBoard } = await import("@/lib/admin/rental-board");
     const board = await loadRentalBoard();
     expect(board.listings.find((l) => l.id === `${T}-p3`)?.place).toBe("Гримьор");
-    expect(board.inquiries.find((i) => i.phone === "+359888000009")?.place).toBe("Гримьор");
+    expect(board.inquiries.find((i) => i.phone === "+359888000009")).toMatchObject({
+      place: "Гримьор",
+      cameFromLabel: "Откъде: facebook, post",
+    });
+    expect((await rowsFor("+359888000009"))[0].cameFrom).toBe(
+      `utm_source=facebook&utm_medium=post&utm_campaign=${GRIM}`,
+    );
+    // Без метка в адреса: празно, без ред в администрацията.
+    expect((await rowsFor("+359888000001"))[0]?.cameFrom ?? null).toBeNull();
     // Публичната обява носи групата, от която страницата попълва «Специалност» с «Грим».
     const { specialtyForCategory } = await import("@/lib/rental/inquiry-rules");
     const pub = await R.getListingBySlug(GRIM);

@@ -271,6 +271,7 @@ export const rentalInquiries = pgTable(
     clientToken: text("client_token").notNull(), // двойно натискане → един ред
     ipHash: text("ip_hash"),
     notifyLog: jsonb("notify_log").$type<Record<string, unknown>>(),
+    cameFrom: text("came_from"), // метката от адреса на обявата (utm_*, from): откъде е дошло запитването
   },
   (t) => [
     uniqueIndex("rental_inquiries_client_token_uq").on(t.clientToken),
