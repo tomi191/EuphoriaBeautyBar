@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface DeleteButtonProps {
-  action: () => Promise<void>;
+  /** Връща `{ message }`, когато не е изтрито и админът трябва да разбере защо (напр. изпълнител с часове). */
+  action: () => Promise<void | { message: string }>;
   label?: string;
   size?: "sm" | "icon";
 }
@@ -18,8 +19,9 @@ export function DeleteButton({ action, label = "Изтрий", size = "icon" }: 
     if (!confirm("Сигурен ли си? Тази операция е необратима.")) return;
     startTransition(async () => {
       try {
-        await action();
-        toast.success("Изтрито.");
+        const res = await action();
+        if (res?.message) toast.info(res.message, { duration: 10000 });
+        else toast.success("Изтрито.");
       } catch (err) {
         toast.error("Грешка при изтриване.");
         console.error(err);

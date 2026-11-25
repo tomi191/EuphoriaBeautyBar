@@ -8,6 +8,7 @@ const m = vi.hoisted(() => ({
   userFindFirst: vi.fn(),
   clientsFindMany: vi.fn(),
   bookingsFindMany: vi.fn(),
+  bookingsFindFirst: vi.fn(),
   offersFindMany: vi.fn(),
   itemsFindMany: vi.fn(),
   hoursFindMany: vi.fn(),
@@ -31,7 +32,7 @@ vi.mock("@/lib/db", async () => {
         resources: { findFirst: m.resourcesFindFirst },
         user: { findFirst: m.userFindFirst },
         clients: { findMany: m.clientsFindMany },
-        bookings: { findMany: m.bookingsFindMany },
+        bookings: { findMany: m.bookingsFindMany, findFirst: m.bookingsFindFirst },
         resourceServices: { findMany: m.offersFindMany },
         serviceItems: { findMany: m.itemsFindMany },
         resourceWorkingHours: { findMany: m.hoursFindMany },
@@ -189,14 +190,50 @@ describe("приключване на сътрудничеството", () => {
     expect(m.userFindFirst).not.toHaveBeenCalled();
   });
 
-  it("deleteResource с часове приключва сътрудничеството вместо да трие", async () => {
+  // Така идва FK грешката от drizzle: DrizzleQueryError с причина от Postgres (code 23503).
+  const fkError = () => Object.assign(new Error("Failed query"), { cause: { code: "23503" } });
+  const hasHistoryMsg =
+    "Виолета има записани часове в историята, затова не се трие. Сътрудничеството е приключено: няма вход и не се вижда на сайта.";
+
+  it("deleteResource с часове приключва сътрудничеството вместо да трие и казва защо", async () => {
     m.getSession.mockResolvedValue(admin);
-    m.deleteWhere.mockRejectedValueOnce(new Error("FK restrict"));
-    m.resourcesFindFirst.mockResolvedValue({ id: "r1", userId: "u1", active: true });
+    m.deleteWhere.mockRejectedValueOnce(fkError());
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", name: "Виолета", userId: "u1", active: true });
     m.userFindFirst.mockResolvedValue({ role: "staff" });
-    await deleteResource("r1");
+    m.bookingsFindFirst.mockResolvedValue({ id: "b1" });
+    const res = await deleteResource("r1");
     expect(m.updateSet).toHaveBeenCalledWith(schema.resources, expect.objectContaining({ active: false, userId: null }));
     expect(m.del).toHaveBeenCalledWith(schema.user);
+    expect(res).toEqual({ message: hasHistoryMsg });
+  });
+
+  it("deleteResource на вече приключил не повтаря приключването, само казва защо", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.deleteWhere.mockRejectedValueOnce(fkError());
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", name: "Виолета", userId: null, active: false });
+    m.bookingsFindFirst.mockResolvedValue({ id: "b1" });
+    const res = await deleteResource("r1");
+    expect(m.updateSet).not.toHaveBeenCalled();
+    expect(m.release).not.toHaveBeenCalled();
+    expect(m.del).toHaveBeenCalledTimes(1); // само опитът да изтрие реда
+    expect(res).toEqual({ message: hasHistoryMsg });
+  });
+
+  it("deleteResource без история трие реда и не връща съобщение", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", name: "Ива", userId: null, active: true });
+    const res = await deleteResource("r1");
+    expect(m.del).toHaveBeenCalledWith(schema.resources);
+    expect(m.updateSet).not.toHaveBeenCalled();
+    expect(res).toBeUndefined();
+  });
+
+  it("deleteResource при друга грешка от базата не приключва мълчаливо, а я връща", async () => {
+    m.getSession.mockResolvedValue(admin);
+    m.deleteWhere.mockRejectedValueOnce(new Error("connection lost"));
+    m.resourcesFindFirst.mockResolvedValue({ id: "r1", name: "Ива", userId: "u1", active: true });
+    await expect(deleteResource("r1")).rejects.toThrow("connection lost");
+    expect(m.updateSet).not.toHaveBeenCalled();
   });
 
   it("само админ може да приключва", async () => {
