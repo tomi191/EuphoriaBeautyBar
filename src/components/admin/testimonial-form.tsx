@@ -4,7 +4,7 @@ import * as React from "react";
 import { Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,7 +46,11 @@ export function TestimonialForm({ trigger, initial }: { trigger: React.ReactNode
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {/* Не DialogTrigger asChild: в голям ред RSC подава бутона като мързелива връзка ($L…), Slot я
+          приема за «не елемент» и не рисува нищо. Както в team-form и resource-form. */}
+      <span className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </span>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{initial ? "Редакция на отзив" : "Нов отзив"}</DialogTitle>
