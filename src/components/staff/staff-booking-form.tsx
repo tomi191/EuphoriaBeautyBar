@@ -45,6 +45,8 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [notes, setNotes] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [emailError, setEmailError] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   // Contact Picker API е достъпен само на Android Chrome (HTTPS) — бутонът се крие иначе.
   const [canPick, setCanPick] = React.useState(false);
@@ -95,6 +97,12 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
       toast.error("Избери услуга и час.");
       return;
     }
+    const mail = email.trim();
+    if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setEmailError(true);
+      return;
+    }
+    setEmailError(false);
     setSubmitting(true);
     try {
       const res = await createMyBooking({
@@ -103,11 +111,15 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
         startAt: slot,
         clientName: name,
         clientPhone: phone,
+        clientEmail: mail || null,
         notes: notes.trim() || null,
         allowParallel: slotIsParallel,
       });
       if (res.ok) {
-        toast.success("Часът е записан.");
+        if (res.emailSent === true) toast.success(`Часът е записан. Изпратихме потвърждение на ${mail}.`);
+        else if (res.emailSent === false)
+          toast.warning("Часът е записан, но писмото не тръгна. Кажи на клиента да ти се обади, ако се налага да откаже.");
+        else toast.success("Часът е записан.");
         router.push("/staff");
       } else {
         toast.error(res.error);
@@ -319,6 +331,35 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
             <Label htmlFor="sbf-phone">Телефон</Label>
             <Input id="sbf-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required minLength={5} className="h-12 text-base" />
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="sbf-email" className="flex items-center gap-1.5">
+            Имейл <span className="font-normal text-muted-foreground">(по избор)</span>
+          </Label>
+          <Input
+            id="sbf-email"
+            type="text"
+            inputMode="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError(false);
+            }}
+            placeholder="ime@gmail.com"
+            aria-invalid={emailError || undefined}
+            aria-describedby="sbf-email-hint"
+            className="h-12 text-base"
+          />
+          {emailError ? (
+            <p id="sbf-email-hint" role="alert" className="text-[11px] text-destructive">
+              Имейлът изглежда непълен. Провери дали има @ и домейн.
+            </p>
+          ) : (
+            <p id="sbf-email-hint" className="text-[11px] text-muted-foreground">
+              Клиентът получава потвърждение и напомняне и сам може да откаже часа. Без имейл това става само по телефон.
+            </p>
+          )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="sbf-notes" className="flex items-center gap-1.5">

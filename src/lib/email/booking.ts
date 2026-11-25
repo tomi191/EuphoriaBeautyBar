@@ -31,7 +31,8 @@ export function formatWhen(start: Date): string {
     minute: "2-digit",
     hour12: false,
   }).format(start);
-  return `${d}, ${t} ч.`;
+  // Неразделими интервали (Канопус, №17): «2026 г.» и «09:00 ч.» не се късат на два реда.
+  return `${d.replace(/ г\.$/, "\u00a0г.")}, ${t}\u00a0ч.`;
 }
 
 /**
@@ -68,7 +69,7 @@ const wrap = (inner: string) => `
       </div>
       <div style="padding:28px">${inner}</div>
       <div style="padding:18px 28px;border-top:1px solid #f0eae1;font-size:12px;color:#8a8279;text-align:center">
-        <a href="${siteConfig.address.mapsUrl}" style="color:#6f9e85;text-decoration:none">${esc(siteConfig.address.full)}</a> · <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85;text-decoration:none">${siteConfig.contact.phoneFormatted}</a>
+        <a href="${siteConfig.address.mapsUrl}" style="color:#6f9e85;text-decoration:none">${esc(siteConfig.address.full)}</a> · <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85;text-decoration:none;white-space:nowrap">${siteConfig.contact.phoneFormatted}</a>
       </div>
     </div>
   </div>`;
@@ -108,14 +109,26 @@ export interface BookingEmailData {
   cancelUrl?: string;
 }
 
+const phoneLink = () =>
+  `<a href="tel:${siteConfig.contact.phone}" style="color:#2b2b2b;text-decoration:underline;white-space:nowrap">${siteConfig.contact.phoneFormatted}</a>`;
+
+/**
+ * №17: бутонът «Откажи часа», контурен (Канопус: основното в писмото е самият час; #2b2b2b върху бяло, 14:1, висок 45 px),
+ * над него редът за срока, под него телефонът и таксата за късен отказ (#6b6359 върху бяло, 5,9:1).
+ */
+const cancelBlock = (cancelUrl: string, above: string) => `
+  <div style="margin-top:20px;text-align:center">
+    <p style="margin:0 0 12px;font-size:14px;color:#2b2b2b">${above}</p>
+    <a href="${cancelUrl}" style="display:inline-block;background:#ffffff;color:#2b2b2b;border:1.5px solid #2b2b2b;text-decoration:none;padding:13px 27px;border-radius:999px;font-size:15px">Откажи часа</a>
+    <p style="margin:12px 0 0;font-size:13px;color:#6b6359">Можеш и да се обадиш на ${phoneLink()}. ${cancellationPolicy.lateFee}</p>
+  </div>`;
+
 /** Потвърждение към клиента, че часът е запазен. */
 export async function sendBookingConfirmation(to: string, data: BookingEmailData): Promise<boolean> {
   const when = formatWhen(data.start);
+  // Едно писмо, един основен бутон: «Откажи часа»; потвърждението на имейла е текстова връзка.
   const verifyBlock = data.verifyUrl
-    ? `<div style="margin-top:20px;padding:16px;background:#f4efe9;border-radius:12px;text-align:center">
-        <p style="margin:0 0 12px;font-size:13px;color:#6b6359">Потвърди имейла си, за да получаваш напомняния и по-бързо записване следващия път.</p>
-        <a href="${data.verifyUrl}" style="display:inline-block;background:#2b2b2b;color:#fff;text-decoration:none;padding:10px 22px;border-radius:999px;font-size:14px">Потвърди имейла</a>
-      </div>`
+    ? `<p style="margin:20px 0 0;font-size:13px;color:#6b6359;text-align:center">Потвърди имейла си, за да получаваш напомняния и по-бързо записване следващия път: <a href="${data.verifyUrl}" style="color:#2b2b2b;text-decoration:underline">Потвърди имейла</a></p>`
     : "";
 
   return await send({
@@ -137,11 +150,13 @@ export async function sendBookingConfirmation(to: string, data: BookingEmailData
           ? `<p style="margin:0 0 8px;font-size:12px;color:#8a8279">Цената е ориентировъчна и може да варира според дължината и състоянието на косата и използваните продукти.</p>`
           : ""
       }
-      <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
-        ${data.cancelUrl
-          ? `Ако се налага да отмениш — <a href="${data.cancelUrl}" style="color:#6f9e85;text-decoration:underline">откажи онлайн</a> или се обади на`
-          : "Ако се налага да отмениш, обади се на"} <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа. ${cancellationPolicy.lateFee}
-      </p>
+      ${
+        data.cancelUrl
+          ? cancelBlock(data.cancelUrl, "Не можеш да дойдеш? Откажи часа от бутона. Кажи ни най-късно 5 часа преди часа.")
+          : `<p style="margin:8px 0 0;font-size:13px;color:#8a8279">
+        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа. ${cancellationPolicy.lateFee}
+      </p>`
+      }
       ${verifyBlock}
     `),
   });
@@ -161,9 +176,16 @@ export async function sendReminder(to: string, data: BookingEmailData): Promise<
         ["Кога", formatWhen(data.start)],
         addressCell(),
       ])}
-      <p style="margin:8px 0 0;font-size:13px;color:#8a8279">
-        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа.
-      </p>
+      ${
+        data.cancelUrl
+          ? cancelBlock(
+              data.cancelUrl,
+              "Не можеш да дойдеш? Откажи часа от бутона най-късно 5 часа преди началото. Така мястото остава за друг клиент.",
+            )
+          : `<p style="margin:8px 0 0;font-size:13px;color:#8a8279">
+        Ако се налага да отмениш, обади се на <a href="tel:${siteConfig.contact.phone}" style="color:#6f9e85">${siteConfig.contact.phoneFormatted}</a> най-късно 5 часа преди часа. ${cancellationPolicy.lateFee}
+      </p>`
+      }
     `),
   });
 }

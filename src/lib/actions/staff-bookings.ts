@@ -10,10 +10,13 @@ import { getDaySlots, hasTimeOffConflict, hasActiveConflict, type DaySlot } from
 import { isClosed } from "@/lib/booking/closures";
 import { fitsParallelSlot } from "@/lib/booking/parallel";
 import { sofiaDateStr, sofiaWallToUtc } from "@/lib/booking/time";
-import { upsertClientByPhone } from "@/lib/booking/clients";
+import { setClientEmail, upsertClientByPhone } from "@/lib/booking/clients";
 import { lockPromoSlots, resolveBookingPrice, resolveOffering } from "@/lib/booking/offering";
 import { allowedFrom, TRANSITION_ERROR } from "@/lib/booking/status";
 import { isValidDateStr, isValidTimeStr } from "@/lib/booking/input-guards";
+import { formatEuro } from "@/lib/booking/price";
+import { sendBookingConfirmation } from "@/lib/email/booking";
+import { siteConfig } from "@/lib/site";
 
 export interface DayScheduleResult {
   open: string | null;
@@ -49,6 +52,8 @@ const bookingSchema = z.object({
   startAt: z.string(),
   clientName: z.string().min(2),
   clientPhone: z.string().min(5),
+  // №17: по избор; с него клиентът получава потвърждение с бутона «Откажи часа».
+  clientEmail: z.string().trim().email().nullable().optional(),
   notes: z.string().nullable().optional(),
   allowParallel: z.boolean().optional(),
 });
@@ -89,11 +94,13 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
 
   // upsert клиент по телефон (схемата изисква phone min(5) → не може да е null)
   const clientId = (await upsertClientByPhone(d.clientName, d.clientPhone)) ?? "";
+  // Имейлът влиза в клиентския запис; празно поле не трие вече записан имейл.
+  if (d.clientEmail && clientId) await setClientEmail(clientId, d.clientEmail);
 
   try {
     const id = nanoid();
     // Цената по промоцията (№11, част 3): същата сметка като на сайта, с заключени места.
-    await db.transaction(async (tx) => {
+    const priced = await db.transaction(async (tx) => {
       await lockPromoSlots(tx, resource.id, [d.serviceItemId]);
       const priced = await resolveBookingPrice(
         { resourceId: resource.id, serviceItemIds: [d.serviceItemId], startAt: start, client: { phone: d.clientPhone } },
@@ -120,11 +127,24 @@ export async function createMyBooking(input: z.infer<typeof bookingSchema>) {
       createdAt: new Date(),
       updatedAt: new Date(),
       });
+      return priced;
     });
     revalidatePath("/staff");
     revalidatePath("/staff/board");
     revalidatePath("/admin/bookings");
-    return { ok: true as const, id };
+    // №17: същото писмо като при онлайн записа, с бутона за отказ. Без имейл не тръгва нищо.
+    // Резултатът стига до формата: тя казва на специалиста дали писмото е тръгнало.
+    const emailSent = d.clientEmail
+      ? await sendBookingConfirmation(d.clientEmail, {
+          clientName: d.clientName,
+          serviceName: d.serviceName,
+          performerName: resource.name,
+          start,
+          priceLabel: priced.totalEur != null ? formatEuro(priced.totalEur) : undefined,
+          cancelUrl: `${siteConfig.url}/otkazhi-chas/${id}`,
+        })
+      : null;
+    return { ok: true as const, id, emailSent };
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {

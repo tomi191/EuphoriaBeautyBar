@@ -392,7 +392,9 @@ export async function createPublicBooking(input: PublicBookingInput) {
       // логът е диагностика, не бива да проваля записа
     }
 
-    return { ok: true as const, id, quote: toQuote(priced) };
+    // Екранът след записа казва «изпратихме» само ако писмото наистина е тръгнало (№17).
+    const emailSent = clientEmailRes.status === "fulfilled" && clientEmailRes.value === true;
+    return { ok: true as const, id, emailSent, quote: toQuote(priced) };
   } catch (err: unknown) {
     const e = err as { code?: string; message?: string };
     if (e?.code === "23P01" || (e?.message ?? "").includes("bookings_no_overlap")) {
