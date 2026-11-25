@@ -11,9 +11,12 @@ describe("откъде е дошло", () => {
     expect(cleanCameFrom("")).toBeNull();
     expect(cleanCameFrom(null)).toBeNull();
   });
-  it("редът в администрацията: източникът и видът; без метка няма ред", () => {
-    expect(cameFromLabel("utm_source=facebook&utm_medium=post&utm_campaign=x")).toBe("Откъде: facebook, post");
-    expect(cameFromLabel("from=karieri")).toBe("Откъде: karieri");
+  it("редът в администрацията: източникът с човешка дума, без вида; без метка няма ред", () => {
+    expect(cameFromLabel("utm_source=facebook&utm_medium=post&utm_campaign=x")).toBe("Facebook");
+    expect(cameFromLabel("utm_source=instagram&utm_medium=cpc")).toBe("Instagram");
+    expect(cameFromLabel("utm_source=Google")).toBe("Google");
+    expect(cameFromLabel("utm_source=viber")).toBe("Viber");
+    expect(cameFromLabel("from=karieri")).toBe("Karieri");
     expect(cameFromLabel(null)).toBeNull();
     expect(cameFromLabel("utm_campaign=x")).toBeNull();
   });

@@ -231,7 +231,7 @@ describe.skipIf(!RUN)("запитването срещу пробната баз
     expect(board.listings.find((l) => l.id === `${T}-p3`)?.place).toBe("Гримьор");
     expect(board.inquiries.find((i) => i.phone === "+359888000009")).toMatchObject({
       place: "Гримьор",
-      cameFromLabel: "Откъде: facebook, post",
+      cameFromLabel: "Facebook",
     });
     expect((await rowsFor("+359888000009"))[0].cameFrom).toBe(
       `utm_source=facebook&utm_medium=post&utm_campaign=${GRIM}`,

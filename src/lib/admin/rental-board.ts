@@ -54,7 +54,7 @@ export interface BoardInquiry {
   handledLabel: string | null;
   /** Известието не стигна до нито един получател (няма свързан Telegram или всички опити паднаха). */
   undelivered: boolean;
-  /** «Откъде: facebook, post»; null = без метка. */
+  /** Откъде е дошло: «Facebook»; null = без метка. */
   cameFromLabel: string | null;
 }
 

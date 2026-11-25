@@ -107,10 +107,7 @@ export function ListingView({ data, priority }: { data: ListingViewData; priorit
             {data.customBenefits.map((text, i) => (
               <MenuRow key={`custom-${i}`} left={text} />
             ))}
-            <MenuRow left="Наем" right={rent} />
-            {data.rent && data.rentExcludes && (
-              <li className="!mt-1 text-right text-[0.85em] leading-snug text-muted-foreground lg:!mt-2">{data.rentExcludes}</li>
-            )}
+            <MenuRow left="Наем" right={rent} note={data.rent ? data.rentExcludes : null} />
           </ul>
         </div>
         <div>

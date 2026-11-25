@@ -17,10 +17,16 @@ export function cleanCameFrom(raw: string | null | undefined): string | null {
   return s ? s.slice(0, 200) : null;
 }
 
-/** Редът в администрацията: «Откъде: facebook, post»; без метка → null (редът не се показва). */
+const SOURCE_WORD: Record<string, string> = { facebook: "Facebook", instagram: "Instagram", google: "Google" };
+
+/**
+ * Редът в администрацията (колоната «Дошло»): само източникът с човешка дума, «Facebook»; друг източник е името му
+ * с главна буква. Видът (utm_medium, «post») не се показва. Без метка → null (редът не се показва).
+ */
 export function cameFromLabel(cameFrom: string | null | undefined): string | null {
   if (!cameFrom) return null;
   const q = new URLSearchParams(cameFrom);
-  const parts = [q.get("from") ?? q.get("utm_source"), q.get("utm_medium")].filter(Boolean);
-  return parts.length ? `Откъде: ${parts.join(", ")}` : null;
+  const source = q.get("utm_source") ?? q.get("from");
+  if (!source) return null;
+  return SOURCE_WORD[source.toLowerCase()] ?? source.charAt(0).toUpperCase() + source.slice(1);
 }

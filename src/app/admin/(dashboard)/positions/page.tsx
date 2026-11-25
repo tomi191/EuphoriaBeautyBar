@@ -516,7 +516,7 @@ function InquiriesTab({ sp, inquiries, listings }: { sp: SP; inquiries: BoardInq
                     <td className="border-l border-border px-4 py-5 text-[1.0625rem]">{i.place}</td>
                     <td className="whitespace-nowrap border-l border-border px-4 py-5 text-[1.0625rem] text-muted-foreground">
                       {i.whenLabel}
-                      {i.cameFromLabel && <div className="mt-1 whitespace-normal">{i.cameFromLabel}</div>}
+                      {i.cameFromLabel && <div className="mt-1 max-w-[93px] truncate" title={i.cameFromLabel}>{i.cameFromLabel}</div>}
                     </td>
                     <td className="border-l border-border px-4 py-5">
                       <InquiryActions layout="table" inquiry={i} />
