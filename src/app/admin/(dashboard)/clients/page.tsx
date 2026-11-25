@@ -193,8 +193,14 @@ export default async function AdminClientsPage({
                   <TableCell className="text-right text-sm tabular-nums">{c.visits}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{c.lastVisitMs ? day(c.lastVisitMs) : <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{c.nextMs ? dayTime(c.nextMs) : <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-sm">
-                    {c.resourceIds.map((id) => resName.get(id) ?? "Специалист").join(", ")}
+                  {/* Пренася се между имената: при трима специалисти таблицата не излиза от полето. */}
+                  <TableCell className="min-w-40 whitespace-normal text-sm">
+                    {c.resourceIds.map((id, i) => (
+                      <span key={id}>
+                        {i > 0 && ", "}
+                        <span className="whitespace-nowrap">{resName.get(id) ?? "Специалист"}</span>
+                      </span>
+                    ))}
                   </TableCell>
                   <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
                     {formatEuro(c.spent)}
@@ -279,7 +285,11 @@ function PageLink({
     );
   }
   return (
-    <Button asChild variant={current ? "default" : "outline"} className={cls}>
+    <Button
+      asChild
+      variant="outline"
+      className={cls + (current ? " border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background dark:border-foreground dark:bg-foreground dark:hover:bg-foreground/90" : "")}
+    >
       <Link href={href} aria-current={current ? "page" : undefined}>
         {children}
       </Link>
