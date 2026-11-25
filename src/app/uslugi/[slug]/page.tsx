@@ -14,6 +14,7 @@ import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
 import { SERVICE_ANSWER, SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { fillPrices } from "@/lib/seo/price-tokens";
+import { fillBooking, phoneOnlyCopy } from "@/lib/seo/booking-copy";
 import { renderInline } from "@/components/blog/post-renderer";
 import { JournalPosts } from "@/components/seo/journal-posts";
 import { hubAnswer, haircutPriceFaq, keratinPriceFaq } from "@/lib/seo/hub-answer";
@@ -43,7 +44,10 @@ export async function generateMetadata({ params }: ServiceDetailParams): Promise
   const category = await getCatalogCategory(slug);
   if (!category) return { robots: { index: false } };
   // Описанието може да носи {price:Име} от ценоразписа; липсва ли цена, пада към описанието на категорията.
-  const description = (category.metaDescription && fillPrices(category.metaDescription, [category])) || category.description;
+  // {book:онлайн|телефон}: онлайн, ако поне една услуга в категорията се записва онлайн (решение 43).
+  const online = category.groups.some((g) => g.items.some((i) => i.online));
+  const description =
+    (category.metaDescription && fillPrices(fillBooking(category.metaDescription, online), [category])) || category.description;
   return {
     // metaTitle носи „Варна, кв. Левски" (template добавя " · Euphoria"); fallback към seoTitle.
     title: category.metaTitle ?? category.seoTitle,
@@ -88,12 +92,15 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
     : category.slug === "frizorski-terapii"
       ? keratinPriceFaq(category)
       : null;
+  // Има ли онлайн запис поне за една услуга в категорията; без него текстовете за ноктите казват «по телефона» (решение 43).
+  const online = category.groups.some((g) => g.items.some((i) => i.online));
+  const phoneOnly = phoneOnlyCopy(category.slug, online);
   // {price:Име}/{min:Име} от ценоразписа; въпрос с липсваща цена отпада и от schema.
   const faq = [...(priceFaq ? [priceFaq] : []), ...(SERVICE_FAQ[category.slug] ?? [])].flatMap((f) => {
-    const answer = fillPrices(f.answer, [category]);
+    const answer = fillPrices(fillBooking(f.answer, online), [category]);
     return answer ? [{ question: f.question, answer }] : [];
   });
-  const intro = SERVICE_INTRO[category.slug] ?? [];
+  const intro = (SERVICE_INTRO[category.slug] ?? []).map((p) => fillBooking(p, online));
   // Отговорът под H1 заменя подзаглавието, когато го има и цените му са в ценоразписа.
   const answer = SERVICE_ANSWER[category.slug] ? fillPrices(SERVICE_ANSWER[category.slug], [category]) : null;
 
@@ -300,7 +307,9 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             Готова да опиташ <em className="font-serif italic text-mint">{category.shortTitle.toLowerCase()}</em>?
           </h2>
           <p className="mt-4 text-background/70">
-            Запиши се за час по телефон, Viber или през онлайн формата ни. Отговаряме лично.
+            {phoneOnly
+              ? `Запази час по телефона или във Viber: ${siteConfig.contact.phoneFormatted}. Отговаряме лично.`
+              : "Запиши се за час по телефон, Viber или през онлайн формата ни. Отговаряме лично."}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-md bg-mint px-8 text-foreground hover:bg-mint/80">

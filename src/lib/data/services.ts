@@ -10,6 +10,8 @@ export interface ServiceItem {
   /** Минутите на часа в записването (service_items.duration_min). */
   durationMin?: number;
   description?: string;
+  /** Записва ли се онлайн днес (има готов специалист с онлайн график); само от базата. */
+  online?: boolean;
 }
 
 export interface ServiceGroup {
