@@ -22,6 +22,7 @@ export function MobileCallBar() {
 
   return (
     <div
+      data-call-spot="call-bar"
       className={
         "fixed inset-x-0 bottom-0 z-40 grid border-t border-border/60 bg-background/95 backdrop-blur lg:hidden " +
         (onBookingPage ? "grid-cols-2" : "grid-cols-[1fr_1fr_1.3fr]")

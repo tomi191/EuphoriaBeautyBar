@@ -1,4 +1,4 @@
-import { pgTable, text, integer, bigint, real, boolean, timestamp, jsonb, date, unique, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, bigint, real, boolean, timestamp, jsonb, date, unique, index, uniqueIndex, primaryKey } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { mode: "date", withTimezone: true });
 
@@ -525,6 +525,20 @@ export const botQueries = pgTable("bot_queries", {
   matched: boolean("matched").notNull(),
   createdAt: ts("created_at").notNull().$defaultFn(() => new Date()),
 });
+
+// Цел П3 (решение 7): натискания на «Обади се» и Viber. Само ден, страница, копче и брой: без IP и без
+// идентификатор на човека (drizzle/manual/0005_goal_counters.sql; пише ги /api/call-click).
+export const callClicks = pgTable(
+  "call_clicks",
+  {
+    day: date("day", { mode: "string" }).notNull(),
+    page: text("page").notNull(),
+    kind: text("kind").notNull().$type<"tel" | "viber" | "tel-other" | "viber-other">(),
+    spot: text("spot").notNull(),
+    count: integer("count").notNull().default(1),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.page, t.kind, t.spot] })],
+);
 
 export type User = typeof user.$inferSelect;
 export type TeamMember = typeof teamMembers.$inferSelect;
