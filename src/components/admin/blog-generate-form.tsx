@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -207,7 +206,11 @@ export function BlogGenerateForm({ trigger }: { trigger: React.ReactNode }) {
         if (!o) reset();
       }}
     >
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {/* Не DialogTrigger asChild: в голям ред RSC подава бутона като мързелива връзка ($L…), Slot я
+          приема за «не елемент» и не рисува нищо. Както в team-form и resource-form. */}
+      <span className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </span>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Генерирай статия с AI</DialogTitle>
