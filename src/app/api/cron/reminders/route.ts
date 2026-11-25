@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { sendReminder } from "@/lib/email/booking";
 import { authorizeCron } from "@/lib/cron-auth";
+import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export async function GET(req: Request) {
       serviceName: b.serviceName,
       performerName: resource?.name ?? "екипа на Euphoria",
       start: b.startAt,
+      cancelUrl: `${siteConfig.url}/otkazhi-chas/${b.id}`,
     });
     // Маркирай „изпратено" само при реален успех — иначе тиха загуба; следващият cron
     // ще опита пак (по-добре повторен опит, отколкото никакво напомняне).

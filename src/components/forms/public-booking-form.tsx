@@ -188,7 +188,14 @@ export function PublicBookingForm({
   const [consent, setConsent] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
-  const [done, setDone] = React.useState<{ when: string; service: string; who: string; promoLine: string | null } | null>(null);
+  const [done, setDone] = React.useState<{
+    when: string;
+    service: string;
+    who: string;
+    promoLine: string | null;
+    id: string;
+    emailSent: boolean;
+  } | null>(null);
   // Цената с промоцията от сървъра (същата сметка като при записа) и за кой избор е.
   const [quote, setQuote] = React.useState<{ key: string; q: PublicQuote } | null>(null);
   const seenPromoId = React.useRef<string | null>(startPromo?.id ?? null);
@@ -469,6 +476,8 @@ export function PublicBookingForm({
           service: serviceNamesLabel,
           who: performer?.name ?? "",
           promoLine: res.quote ? promoDoneLine(res.quote.outcome, res.quote, "screen") : null,
+          id: res.id,
+          emailSent: res.emailSent,
         });
       } else if ("quote" in res && res.quote) {
         // Цената се смени между избора и бутона: новата цена и защо стоят преди бутона.
@@ -494,8 +503,13 @@ export function PublicBookingForm({
         </p>
         {done.promoLine && <p className="mt-2 text-foreground/80">{done.promoLine}</p>}
         <p className="mt-4 text-sm text-muted-foreground">
-          Изпратихме потвърждение на имейла ти. В него има линк, с който можеш да откажеш часа сам.
+          {done.emailSent
+            ? `Изпратихме потвърждение на ${email}. Ако нещо се промени, откажи часа оттук най-късно 5 часа преди часа.`
+            : `Не успяхме да изпратим писмо. Ако се наложи да откажеш, ползвай бутона по-долу или се обади на ${SALON_PHONE_DISPLAY}.`}
         </p>
+        <Button asChild variant="outline" className="mt-4 h-11 rounded-full px-6">
+          <a href={`/otkazhi-chas/${done.id}`}>Откажи часа</a>
+        </Button>
       </div>
     );
   }

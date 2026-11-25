@@ -37,3 +37,10 @@ export async function upsertClientByPhone(name: string | undefined, phone: strin
   await db.insert(schema.clients).values({ id, name: nm, phone: canonical, createdAt: new Date() });
   return id;
 }
+
+/** №17: имейл, даден при записа от /staff, влиза в клиентския запис. Нов имейл не е потвърден. */
+export async function setClientEmail(clientId: string, email: string): Promise<void> {
+  const current = await db.query.clients.findFirst({ where: (c) => eq(c.id, clientId), columns: { email: true } });
+  if (!current || current.email === email) return;
+  await db.update(schema.clients).set({ email, emailVerified: false, verifyToken: null }).where(eq(schema.clients.id, clientId));
+}

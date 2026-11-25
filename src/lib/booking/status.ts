@@ -1,3 +1,5 @@
+import { cancellationPolicy } from "@/lib/site";
+
 export type BookingStatus = "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
 
 type Target = "arrived" | "completed" | "cancelled" | "no_show";
@@ -25,3 +27,8 @@ export function canTransition(from: string, to: Target): boolean {
 }
 
 export const TRANSITION_ERROR = "Часът не е намерен или статусът му не позволява тази промяна.";
+
+/** Под 5 часа до началото отказът от клиента е «късен» (политиката в site.ts): приема се, но се отбелязва. */
+export function isLateCancel(startAt: Date, now: number = Date.now()): boolean {
+  return startAt.getTime() - now < cancellationPolicy.hours * 3600000;
+}
