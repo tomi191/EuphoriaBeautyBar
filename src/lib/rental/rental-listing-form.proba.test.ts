@@ -189,7 +189,7 @@ describe.skipIf(!RUN)("формата «Нова обява» срещу про�
       expect(calls).toHaveLength(1);
       const body = new URLSearchParams(calls[0].body);
       expect(body.get("link")).toBe(`https://www.euphoriabeauty.eu/karieri/${d.slug}`);
-      expect(body.get("message")).toContain("Има свободно място под наем за специалист");
+      expect(body.get("message")).toContain("Свободно е едно място под наем за специалист");
       expect(body.get("message")).not.toContain("555");
       expect(JSON.stringify(res)).not.toContain("proba-token");
       const row = await db.query.rentalPositions.findFirst({ where: (p, { eq }) => eq(p.id, d.id) });
