@@ -7,6 +7,8 @@ export interface ServiceItem {
   priceMax?: number;
   currency: Currency;
   duration?: string;
+  /** Минутите на часа в записването (service_items.duration_min). */
+  durationMin?: number;
   description?: string;
 }
 

@@ -12,7 +12,9 @@ import { getServiceCatalog, getCatalogCategory } from "@/lib/data/service-catalo
 import { siteConfig } from "@/lib/site";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { slugify } from "@/lib/utils";
-import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
+import { SERVICE_ANSWER, SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
+import { fillPrices } from "@/lib/seo/price-tokens";
+import { renderInline } from "@/components/blog/post-renderer";
 import { JournalPosts } from "@/components/seo/journal-posts";
 import { hubAnswer, haircutPriceFaq, keratinPriceFaq } from "@/lib/seo/hub-answer";
 import { CategoryPromoStrip } from "@/components/campaigns/promo-blocks";
@@ -40,16 +42,18 @@ export async function generateMetadata({ params }: ServiceDetailParams): Promise
   const { slug } = await params;
   const category = await getCatalogCategory(slug);
   if (!category) return { robots: { index: false } };
+  // Описанието може да носи {price:Име} от ценоразписа; липсва ли цена, пада към описанието на категорията.
+  const description = (category.metaDescription && fillPrices(category.metaDescription, [category])) || category.description;
   return {
     // metaTitle носи „Варна, кв. Левски" (template добавя " · Euphoria"); fallback към seoTitle.
     title: category.metaTitle ?? category.seoTitle,
-    description: category.metaDescription ?? category.description,
+    description,
     alternates: { canonical: `/uslugi/${category.slug}` },
     openGraph: {
       type: "website",
       url: `/uslugi/${category.slug}`,
       title: category.seoTitle,
-      description: category.metaDescription ?? category.description,
+      description,
       images: [category.heroImage],
     },
   };
@@ -84,8 +88,14 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
     : category.slug === "frizorski-terapii"
       ? keratinPriceFaq(category)
       : null;
-  const faq = [...(priceFaq ? [priceFaq] : []), ...(SERVICE_FAQ[category.slug] ?? [])];
+  // {price:Име}/{min:Име} от ценоразписа; въпрос с липсваща цена отпада и от schema.
+  const faq = [...(priceFaq ? [priceFaq] : []), ...(SERVICE_FAQ[category.slug] ?? [])].flatMap((f) => {
+    const answer = fillPrices(f.answer, [category]);
+    return answer ? [{ question: f.question, answer }] : [];
+  });
   const intro = SERVICE_INTRO[category.slug] ?? [];
+  // Отговорът под H1 заменя подзаглавието, когато го има и цените му са в ценоразписа.
+  const answer = SERVICE_ANSWER[category.slug] ? fillPrices(SERVICE_ANSWER[category.slug], [category]) : null;
 
   return (
     <>
@@ -134,7 +144,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-foreground/85">{hubAnswer(category)}</p>
               )}
               <p className={`${isHairHub ? "mt-4" : "mt-6"} max-w-xl font-serif text-xl italic text-foreground/80`}>
-                {category.tagline}
+                {answer ?? category.tagline}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-primary">
@@ -165,7 +175,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             <Reveal delay={0.1}>
               <div className="mt-10 space-y-4 border-t border-border/50 pt-10 text-foreground/80 md:text-lg">
                 {intro.map((p, idx) => (
-                  <p key={idx} className="leading-relaxed">{p}</p>
+                  <p key={idx} className="leading-relaxed">{renderInline(p)}</p>
                 ))}
               </div>
             </Reveal>
@@ -212,7 +222,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             <Reveal>
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Често задавани въпроси</p>
               <h2 className="font-display text-3xl font-medium md:text-4xl">
-                {category.shortTitle} във Варна — <span className="gradient-text">въпроси</span>.
+                {category.shortTitle} във Варна: <span className="gradient-text">въпроси</span>.
               </h2>
             </Reveal>
             <div className="mt-10 divide-y divide-border/60">
@@ -220,7 +230,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 <Reveal key={item.question} delay={idx * 0.04}>
                   <div className="py-6">
                     <h3 className="font-display text-lg font-medium md:text-xl">{item.question}</h3>
-                    <p className="mt-2 leading-relaxed text-foreground/75">{item.answer}</p>
+                    <p className="mt-2 leading-relaxed text-foreground/75">{renderInline(item.answer)}</p>
                   </div>
                 </Reveal>
               ))}
@@ -243,7 +253,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
                 </h2>
               </div>
               <p className="font-serif text-lg italic text-muted-foreground">
-                Често комбинираме услуги — кератин + балаяж, маникюр + педикюр, лицева терапия + ламиниране.
+                Често комбинираме услуги: кератин + балаяж, маникюр + педикюр, лицева терапия + ламиниране.
               </p>
             </div>
           </Reveal>
@@ -290,7 +300,7 @@ export default async function ServiceDetailPage({ params }: ServiceDetailParams)
             Готова да опиташ <em className="font-serif italic text-mint">{category.shortTitle.toLowerCase()}</em>?
           </h2>
           <p className="mt-4 text-background/70">
-            Запиши се за час по телефон, Viber или през онлайн формата ни — отговаряме лично.
+            Запиши се за час по телефон, Viber или през онлайн формата ни. Отговаряме лично.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-md bg-mint px-8 text-foreground hover:bg-mint/80">

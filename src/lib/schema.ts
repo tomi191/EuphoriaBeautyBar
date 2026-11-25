@@ -179,7 +179,11 @@ export const faqSchema = (items: Array<{ question: string; answer: string }>) =>
   mainEntity: items.map((item) => ({
     "@type": "Question",
     name: item.question,
-    acceptedAnswer: { "@type": "Answer", text: item.answer },
+    // Видимият отговор може да носи [връзка](/път) и **удебелено**; в schema отива само текстът.
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer.replace(/\[([^\]]+)\]\([^)\s]+\)/g, "$1").replace(/\*\*([^*]+)\*\*/g, "$1"),
+    },
   })),
 });
 

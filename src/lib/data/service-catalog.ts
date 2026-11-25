@@ -26,12 +26,13 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
     popular: ["Кератинова терапия (Kerasilk)", "Ботокс за коса", "Nashi Argan", "Ламеларна вода"],
   },
   "manikyur-i-pedikyur": {
-    seoTitle: "Маникюр и педикюр във Варна — грижа за ръцете и краката ти",
+    seoTitle: "Маникюр и педикюр във Варна: грижа за ръцете и краката ти",
     // „педикюр варна" (350/мес) + „...цени"; „медицински педикюр" има собствена
     // programmatic страница — не се дублира в title-а на хъба.
-    metaTitle: "Маникюр и педикюр във Варна — цени, кв. Левски",
+    metaTitle: "Маникюр и педикюр във Варна: цени, кв. Левски",
+    // {price:Име} се попълва от ценоразписа в generateMetadata (fillPrices).
     metaDescription:
-      "Маникюр с гел лак, медицински педикюр и терапии за нокти в стерилна среда. Салон Euphoria в кв. Левски, Варна — прозрачни цени и онлайн записване на час.",
+      "Маникюр с гел лак {price:Маникюр с гел лак}, с обикновен лак {price:Маникюр с обикновен лак}, педикюр от {price:Педикюр без лак}. Цени и време на всяка услуга, салон Euphoria в кв. Левски, Варна. Запис онлайн.",
     popular: ["Гел маникюр", "Френски / омбре", "Класически педикюр", "Кератинова терапия", "Медицински педикюр"],
   },
   kozmetika: {
@@ -46,7 +47,7 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
 const VALID_ICONS = ["scissors", "sparkles", "hand-heart", "flower"] as const;
 type Icon = (typeof VALID_ICONS)[number];
 
-function toItem(i: { name: string; price: number; priceMax: number | null; priceFrom: boolean; currency: string; duration: string | null; description: string | null }): ServiceItem {
+function toItem(i: { name: string; price: number; priceMax: number | null; priceFrom: boolean; currency: string; duration: string | null; durationMin: number; description: string | null }): ServiceItem {
   return {
     name: i.name,
     price: i.price,
@@ -54,6 +55,7 @@ function toItem(i: { name: string; price: number; priceMax: number | null; price
     priceMax: i.priceMax ?? undefined,
     currency: (i.currency === "€" ? "€" : "лв") as Currency,
     duration: i.duration ?? undefined,
+    durationMin: i.durationMin,
     description: i.description ?? undefined,
   };
 }
@@ -167,6 +169,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
         priceFrom: pp.priceFrom,
         currency: i.currency,
         duration: i.duration,
+        durationMin: i.durationMin,
         description: i.description,
       });
     };

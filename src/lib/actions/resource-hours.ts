@@ -94,6 +94,7 @@ export async function setMyWorkingHours(input: z.infer<typeof hoursSchema>) {
   revalidatePath("/uslugi/[slug]", "page");
   revalidatePath("/uslugi/boyadisvane-na-kosa-varna");
   revalidatePath("/uslugi/kichuri-varna");
+  revalidatePath("/uslugi/balayazh-varna");
   revalidatePath("/uslugi/pochistvane-na-litse-varna");
   revalidatePath("/uslugi/kola-maska-varna");
   revalidatePath("/uslugi/vezhdi-i-migli-varna");
