@@ -5,6 +5,7 @@ import { ContactForm } from "@/components/forms/contact-form";
 import { Reveal } from "@/components/reactbits/reveal";
 import { BlurText } from "@/components/reactbits/blur-text";
 import { siteConfig , cancellationPolicy } from "@/lib/site";
+import { ConsentMap } from "@/components/sections/consent-map";
 
 export const metadata: Metadata = {
   title: "Контакти и резервации",
@@ -128,15 +129,12 @@ export default function ContactsPage() {
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <Reveal>
             <h2 className="mb-8 font-display text-3xl font-medium md:text-4xl">Намери ни на картата</h2>
-            <div className="aspect-[16/9] w-full overflow-hidden rounded-md border border-border/60 bg-secondary shadow-soft">
-              <iframe
-                title="Euphoria Hair & Beauty Bar — карта"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(siteConfig.address.full)}&output=embed`}
-                className="h-full w-full"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
+            <ConsentMap
+              plan="contacts"
+              title="Euphoria Hair & Beauty Bar — карта"
+              frameClassName="aspect-[16/9] w-full overflow-hidden rounded-md border border-border/60 bg-secondary shadow-soft"
+              className="rounded-md lg:aspect-[16/9]"
+            />
           </Reveal>
         </div>
       </section>
