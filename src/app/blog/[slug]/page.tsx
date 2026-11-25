@@ -21,6 +21,9 @@ interface Params {
   params: Promise<{ slug: string }>;
 }
 
+// Без revalidate 404 от сглобката (25.11: публикувана статия) стоеше в кеша до следващото качване.
+export const revalidate = 600;
+
 export async function generateStaticParams() {
   // DB може да липсва на build-time (Vercel preview без DATABASE_URL) → on-demand.
   try {
