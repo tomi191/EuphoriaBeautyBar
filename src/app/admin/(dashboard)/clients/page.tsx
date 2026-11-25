@@ -235,7 +235,7 @@ export default async function AdminClientsPage({
               <PageLink href={page > 1 ? href({ q, resource: resourceFilter, page: page - 1 }) : null}>Назад</PageLink>
               {pageItems(page, pages).map((it, i) =>
                 it.kind === "gap" ? (
-                  <span key={`g${i}`} aria-hidden className={"px-1 text-muted-foreground " + it.cls}>
+                  <span key={`g${i}`} aria-hidden className={"px-0.5 text-muted-foreground " + it.cls}>
                     …
                   </span>
                 ) : (
@@ -298,15 +298,21 @@ function pageItems(page: number, pages: number): PageItem[] {
   const out: PageItem[] = [];
   let prevDesk = 0;
   let prevMobile = 0;
+  let mobileGap = false; // след последния номер на телефон вече има «…»
   for (let p = 1; p <= pages; p++) {
     const edge = p === 1 || p === pages;
     const mobile = edge || p === page || pages <= 4;
     if (!edge && Math.abs(p - page) > 1) continue;
-    if (p - prevDesk > 1) out.push({ kind: "gap", cls: "" });
-    else if (mobile && p - prevMobile > 1) out.push({ kind: "gap", cls: "sm:hidden" });
+    if (p - prevDesk > 1) {
+      out.push({ kind: "gap", cls: "" });
+      mobileGap = true;
+    } else if (mobile && p - prevMobile > 1 && !mobileGap) out.push({ kind: "gap", cls: "sm:hidden" });
     out.push({ kind: "page", page: p, cls: mobile ? "" : "hidden sm:inline-flex" });
     prevDesk = p;
-    if (mobile) prevMobile = p;
+    if (mobile) {
+      prevMobile = p;
+      mobileGap = false;
+    }
   }
   return out;
 }
