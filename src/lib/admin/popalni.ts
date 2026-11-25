@@ -255,12 +255,18 @@ export async function loadPopalniData(): Promise<PopalniData> {
 
 /** Текстът и бутоните за Telegram (адресите са цели, бутонът ги отваря в браузъра). */
 export function popalniTelegram(rows: PopalniRow[], siteUrl: string): { text: string; keyboard: { inline_keyboard: { text: string; url: string }[][] } } {
+  // Бутонът към «Изпълнители» (без ?edit=) само показва специалиста: услугите и часовете си ги попълва той.
+  const inApp = (r: PopalniRow) => r.href.startsWith("/admin/resources#");
+  const note = rows.some(inApp)
+    ? "Услугите и работното време на специалист ги попълва той в приложението си, бутонът само показва кой е." +
+      (rows.every(inApp) ? "" : " Останалото се попълва там, където води бутонът.")
+    : "Бутоните отварят мястото, където се попълва.";
   const text = [
     "<b>Какво да попълниш на сайта</b>",
     "",
     ...rows.map((r) => `• ${r.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}`),
     "",
-    "Бутоните отварят мястото, където се попълва. Пиша ти всеки ден в 10:00, докато нещо липсва.",
+    `${note} Пиша ти всеки ден в 10:00, докато нещо липсва.`,
   ].join("\n");
   const base = siteUrl.replace(/\/$/, "");
   return { text, keyboard: { inline_keyboard: rows.map((r) => [{ text: r.tgLabel, url: `${base}${r.href}` }]) } };

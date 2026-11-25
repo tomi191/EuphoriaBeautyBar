@@ -15,7 +15,7 @@ export function PopalniCard({ rows, variant }: { rows: PopalniRow[]; variant: "a
   return (
     <section
       aria-labelledby="popalni-title"
-      className={cn("border border-border bg-background", admin ? "mb-8 rounded-xl p-6" : "mb-5 rounded-2xl p-5")}
+      className={cn("border border-border bg-background", admin ? "mb-8 rounded-xl p-6" : "mb-2 rounded-2xl px-5 pt-3.5")}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
         <h2 id="popalni-title" className={cn("flex items-center gap-3 font-sans font-medium", admin ? "text-xl" : "text-lg")}>
@@ -30,14 +30,14 @@ export function PopalniCard({ rows, variant }: { rows: PopalniRow[]; variant: "a
         {rows.map((r) => {
           const Icon = ICON[r.icon];
           return (
-            <li key={r.key} className={cn("flex gap-4", admin ? "py-5 md:items-center" : "py-4")}>
+            <li key={r.key} className={cn("flex gap-4", admin ? "py-5 md:items-center" : "pt-2 pb-1.5")}>
               <span className={cn("grid shrink-0 place-items-center rounded-full bg-secondary", admin ? "size-11" : "size-10")}>
                 <Icon className="size-5" strokeWidth={1.6} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className={cn("font-medium", admin ? "text-lg" : "text-base")}>{r.title}</p>
                 <p className={cn("mt-0.5 text-muted-foreground", admin ? "text-[15px]" : "text-sm")}>{r.detail}</p>
-                <FillButton row={r} className={cn("mt-3", admin && "md:hidden")} />
+                <FillButton row={r} className={admin ? "mt-3 md:hidden" : "mt-1.5"} />
               </div>
               {admin && <FillButton row={r} className="hidden md:inline-flex" />}
             </li>

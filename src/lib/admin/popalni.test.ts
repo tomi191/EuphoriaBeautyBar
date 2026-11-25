@@ -204,4 +204,15 @@ describe("Telegram", () => {
     const { text } = popalniTelegram([{ key: "k", icon: "price", title: "1 услуга <b>", detail: "", place: "", href: "/a", action: "", tgLabel: "Х" }], "https://x.eu");
     expect(text).toContain("1 услуга &lt;b&gt;");
   });
+
+  it("изречението под списъка е вярно за всеки бутон (визия №45, П2)", () => {
+    const row = (href: string) => ({ key: href, icon: "price" as const, title: "т", detail: "", place: "", href, action: "", tgLabel: "Х" });
+    const form = popalniTelegram([row("/admin/resources?edit=r1")], "https://x.eu").text;
+    expect(form).toContain("Бутоните отварят мястото, където се попълва.");
+    const staff = popalniTelegram([row("/admin/resources#r-r1")], "https://x.eu").text;
+    expect(staff).toContain("ги попълва той в приложението си, бутонът само показва кой е. Пиша ти");
+    expect(staff).not.toContain("където се попълва");
+    const both = popalniTelegram([row("/admin/services/s1?edit=i1"), row("/admin/resources#r-r1")], "https://x.eu").text;
+    expect(both).toContain("кой е. Останалото се попълва там, където води бутонът.");
+  });
 });
