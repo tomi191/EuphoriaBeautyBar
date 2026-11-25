@@ -37,9 +37,15 @@ describe("една пауза при няколко услуги", () => {
 });
 
 describe("престоят остава при няколко услуги", () => {
-  it("услугата с престой дава фазите; услугите преди нея влизат в активното време", () => {
-    expect(combineServices([color, cut])).toEqual({ durationMin: 150, bufferMin: 10, activeMin: 30, processingMin: 45 });
-    expect(combineServices([cut, color])).toEqual({ durationMin: 150, bufferMin: 10, activeMin: 60, processingMin: 45 });
+  it("боята е винаги първа: подстригване + боядисване и обратно дават еднакви фази и краен час", () => {
+    const a = combineServices([color, cut]);
+    const b = combineServices([cut, color]);
+    expect(a).toEqual({ durationMin: 150, bufferMin: 10, activeMin: 30, processingMin: 45 });
+    expect(b).toEqual(a);
+    const endOf = (c: typeof a) => new Date(H("13:00") + (c.durationMin + c.bufferMin) * MIN).toISOString();
+    expect(endOf(b)).toBe(iso("15:40"));
+    expect(endOf(b)).toBe(endOf(a));
+    expect(combineServices([cut, botox, color])).toEqual(combineServices([color, botox, cut]));
     expect(combineServices([cut, botox])).toEqual({ durationMin: 90, bufferMin: 15, activeMin: 0, processingMin: 0 });
   });
 

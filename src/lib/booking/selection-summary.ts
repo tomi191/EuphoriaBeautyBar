@@ -27,16 +27,15 @@ interface TimedOffering {
 
 /**
  * Няколко услуги в един час (решение 4): времето е сборът, паузата е една (най-дългата), не по една след
- * всяка услуга. Престоят остава: първата услуга с престой (по реда на избора) дава фазите на часа; всичко
- * преди нея е работа с клиента и влиза в активното време, всичко след нея е след престоя.
+ * всяка услуга. Престоят остава: боята (услугата с престой, при няколко най-дългият) е винаги първа, независимо
+ * от реда на избора (думата на собственика за Снежана, 25.11.2026), и дава фазите на часа; другите са след престоя.
  */
 export function combineServices(list: TimedOffering[]): { durationMin: number; bufferMin: number; activeMin: number; processingMin: number } {
   const durationMin = list.reduce((s, o) => s + o.durationMin, 0);
   const bufferMin = list.length ? Math.max(...list.map((o) => o.bufferMin)) : 0;
-  const i = list.findIndex((o) => (o.processingMin ?? 0) > 0);
-  if (i < 0) return { durationMin, bufferMin, activeMin: 0, processingMin: 0 };
-  const before = list.slice(0, i).reduce((s, o) => s + o.durationMin, 0);
-  return { durationMin, bufferMin, activeMin: before + (list[i].activeMin ?? 0), processingMin: list[i].processingMin ?? 0 };
+  const dye = list.reduce<TimedOffering | null>((b, o) => ((o.processingMin ?? 0) > (b?.processingMin ?? 0) ? o : b), null);
+  if (!dye) return { durationMin, bufferMin, activeMin: 0, processingMin: 0 };
+  return { durationMin, bufferMin, activeMin: dye.activeMin ?? 0, processingMin: dye.processingMin ?? 0 };
 }
 
 /**
