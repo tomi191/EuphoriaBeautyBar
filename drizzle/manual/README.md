@@ -17,4 +17,4 @@
 | 0002_staff_gallery | снимките от приложението за екипа: кой е качил, състояние, одобрение (`gallery_images`) | 22.11.2026 | чака думата на собственика |
 | 0003_price_log | дневник на цените (`price_log`, само добавяне; тригери на `resource_services` и `service_items`) | 24.11.2026 | 24.11.2026 (решение 25) |
 | 0004_campaigns | промоциите на специалистите (`campaigns`, `campaign_services`) и три празни колони в `bookings` (`campaign_id`, `regular_price_eur`, `came_from`) | 24.11.2026 | чака думата на собственика (след част 3) |
-| 0005_goal_counters | мерилата за целите (решение 7): натискания на «Обади се» и Viber (`call_clicks`) и схема `goal_stats` с два изгледа само с бройки; ролята `goal_reader` я прави `scripts/goal-reader-role.mjs` | 25.11.2026 | чака качването |
+| 0005_goal_counters | мерилата за целите (решение 7): натискания на «Обади се» и Viber (`call_clicks`) и схема `goal_stats` с два изгледа само с бройки; ролята `goal_reader` я прави `scripts/goal-reader-role.mjs` | 25.11.2026 | 25.11.2026 (решение 7; ролята също) |
