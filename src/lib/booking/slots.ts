@@ -1,13 +1,16 @@
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaWeekday, sofiaDateStr } from "./time";
 import { isClosed } from "./closures";
-import { computeDaySlots, type SlotStatus, type DaySlot } from "./compute-slots";
+import { computeDaySlots, roundStartsOnly, startsAfterBookings, type SlotStatus, type DaySlot } from "./compute-slots";
 import type { SlotNeighbor } from "./parallel-window";
 
 // Типовете живеят в ./compute-slots (pure, без DB); реекспорт за съвместимост.
 export type { SlotStatus, DaySlot };
 
 const GRANULARITY_MIN = 15;
+
+/** Настройка на изпълнител (site_settings, без промяна в базата): онлайн само начала в :00 и :30 (решение 4). */
+export const roundStartsKey = (resourceId: string) => `round_starts:${resourceId}`;
 const DEFAULT_MIN_NOTICE_MIN = 60; // минимум предизвестие за онлайн запис
 
 /**
@@ -107,6 +110,8 @@ export async function isStartBookable(opts: {
   processingMin?: number;
   minNoticeMin?: number;
   now?: Date;
+  /** Онлайн запис: зачита настройката на изпълнителя «само :00 и :30». */
+  onlineRound?: boolean;
 }): Promise<{ ok: true } | { ok: false; reason: string }> {
   const start = new Date(opts.startISO);
   if (Number.isNaN(start.getTime())) return { ok: false, reason: "Невалиден час." };
@@ -120,6 +125,7 @@ export async function isStartBookable(opts: {
     allowParallel: opts.allowParallel,
     activeMin: opts.activeMin,
     processingMin: opts.processingMin,
+    onlineRound: opts.onlineRound,
   });
   if (!day) return { ok: false, reason: "Изпълнителят не работи на тази дата. Избери друга." };
   const slot = day.slots.find((s) => Date.parse(s.start) === start.getTime());
@@ -157,7 +163,11 @@ export async function getDaySlots(opts: {
   allowParallel?: boolean;
   activeMin?: number;
   processingMin?: number;
-}): Promise<{ open: string; close: string; slots: DaySlot[] } | null> {
+  /** Онлайн график: ако изпълнителят е включил «само :00 и :30», другите начала не се предлагат. */
+  onlineRound?: boolean;
+  /** Приложението: и началата «веднага след предишния» (краят на всеки час, където услугата се събира). */
+  withAfterPrev?: boolean;
+}): Promise<{ open: string; close: string; slots: DaySlot[]; afterPrev?: string[] } | null> {
   const now = opts.now ?? new Date();
   const minNotice = opts.minNoticeMin ?? DEFAULT_MIN_NOTICE_MIN;
   const blockMs = (opts.durationMin + opts.bufferMin) * 60000;
@@ -168,7 +178,7 @@ export async function getDaySlots(opts: {
   // Петте независими заявки текат ПАРАЛЕЛНО (преди бяха серийни → 5 RTT на всеки
   // slot fetch, т.е. 1-3s на слаба мрежа). salonWh се чете винаги (евтино), а в JS
   // решаваме own ?? салон. Лек overhead в рядкия случай, голям печат на честия.
-  const [closed, ownWh, salonWh, busyBookings, busyOff] = await Promise.all([
+  const [closed, ownWh, salonWh, busyBookings, busyOff, round] = await Promise.all([
     isClosed(opts.dateStr),
     db.query.resourceWorkingHours.findFirst({
       where: (w, { and, eq }) => and(eq(w.resourceId, opts.resourceId), eq(w.weekday, wd)),
@@ -182,6 +192,9 @@ export async function getDaySlots(opts: {
       where: (t, { and, or, eq, isNull, lt, gt }) =>
         and(or(eq(t.resourceId, opts.resourceId), isNull(t.resourceId)), lt(t.startAt, dayEnd), gt(t.endAt, dayStart)),
     }),
+    opts.onlineRound
+      ? db.query.siteSettings.findFirst({ where: (s, { eq }) => eq(s.key, roundStartsKey(opts.resourceId)) })
+      : Promise.resolve(undefined),
   ]);
   if (closed) return null; // салонът е затворен (празник/отпуск)
   const wh = ownWh ?? salonWh; // собственото работно време има предимство
@@ -224,6 +237,11 @@ export async function getDaySlots(opts: {
     stepMs,
     allowParallel: opts.allowParallel === true,
   });
+  const roundOn = (round?.value as { on?: boolean } | undefined)?.on === true;
 
-  return { open: new Date(open).toISOString(), close: new Date(close).toISOString(), slots };
+  const afterPrev = opts.withAfterPrev
+    ? startsAfterBookings({ ends: busyBookings.map((b) => b.endAt.getTime()), open, close, neighbors, blockMs, minStart })
+    : undefined;
+
+  return { open: new Date(open).toISOString(), close: new Date(close).toISOString(), slots: roundOn ? roundStartsOnly(slots) : slots, afterPrev };
 }

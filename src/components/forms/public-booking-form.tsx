@@ -16,7 +16,7 @@ import { serviceImageFor } from "@/lib/booking/length-icon";
 import { siteConfig, cancellationPolicy } from "@/lib/site";
 import { searchServices } from "@/lib/booking/service-search";
 import { capitalize, humanDay, onHumanDay } from "@/lib/booking/day-label";
-import { formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
+import { combineServices, formatDurationShort, sumPriceLabel } from "@/lib/booking/selection-summary";
 import { TENANT_LINE, TENANT_ROLE, TENANT_ROLE_SHORT, firstName } from "@/lib/data/tenant-identity";
 import { missingReason } from "@/lib/booking/missing-reason";
 
@@ -322,7 +322,8 @@ export function PublicBookingForm({
 
   // Общо време = сума на собствените продължителности на избрания изпълнител (или каталожни преди избор).
   const totalDuration = selectedServices.reduce((sum, s) => sum + resolveOffering(s, performer).durationMin, 0);
-  const totalBuffer = selectedServices.reduce((sum, s) => sum + resolveOffering(s, performer).bufferMin, 0);
+  // Една пауза при няколко услуги (най-дългата), не по една след всяка (решение 4).
+  const totalBuffer = combineServices(selectedServices.map((s) => resolveOffering(s, performer))).bufferMin;
 
   // При смяна на типа услуги: ако има само един изпълнител за този тип — избери го автоматично.
   React.useEffect(() => {

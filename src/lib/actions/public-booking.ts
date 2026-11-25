@@ -11,6 +11,7 @@ import { formatEuro, formatServicePrice } from "@/lib/booking/price";
 import { lockPromoSlots, resolveBookingPrice, resolveOffering, type BookingPrice } from "@/lib/booking/offering";
 import { promoDoneLine, promoStaffLine, type PromoOutcome } from "@/lib/campaigns/booking-promo";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
+import { combineServices } from "@/lib/booking/selection-summary";
 import { siteConfig } from "@/lib/site";
 import { sendBookingConfirmation, sendSalonNotification, formatWhen } from "@/lib/email/booking";
 import { notifyResource, notifyAdmin } from "@/lib/notify";
@@ -34,7 +35,7 @@ export async function fetchPublicSlots(
   allowParallel = false,
 ): Promise<DayScheduleResult> {
   if (!resourceId || !durationMin || durationMin <= 0) return { open: null, close: null, slots: [] };
-  const res = await getDaySlots({ resourceId, durationMin, bufferMin, dateStr, minNoticeMin: 60, allowParallel });
+  const res = await getDaySlots({ resourceId, durationMin, bufferMin, dateStr, minNoticeMin: 60, allowParallel, onlineRound: true });
   if (!res) return { open: null, close: null, slots: [] };
   return res;
 }
@@ -206,11 +207,13 @@ export async function createPublicBooking(input: PublicBookingInput) {
     ? await Promise.all(data.serviceItemIds.map((sid) => resolveOffering(data.resourceId, sid)))
     : null;
 
+  // Няколко услуги: една пауза (най-дългата) и престоят на услугата с престой остава (решение 4).
+  const combo = combined ? combineServices(combined) : null;
   const durationMin = single?.durationMin
-    ?? combined?.reduce((s, o) => s + o.durationMin, 0)
+    ?? combo?.durationMin
     ?? data.durationMin;
   const bufferMin = single?.bufferMin
-    ?? combined?.reduce((s, o) => s + o.bufferMin, 0)
+    ?? combo?.bufferMin
     ?? data.bufferMin;
   const end = new Date(start.getTime() + (durationMin + bufferMin) * 60000);
 
@@ -243,6 +246,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
     allowParallel: data.allowParallel === true,
     activeMin: single?.activeMin ?? 0,
     processingMin: single?.processingMin ?? 0,
+    onlineRound: true,
   });
   if (!check.ok) return { ok: false as const, error: check.reason };
 
@@ -305,8 +309,8 @@ export async function createPublicBooking(input: PublicBookingInput) {
       startAt: start,
       endAt: end,
       status: "confirmed",
-      activeMin: single?.activeMin ?? 0,
-      processingMin: single?.processingMin ?? 0,
+      activeMin: single?.activeMin ?? combo?.activeMin ?? 0,
+      processingMin: single?.processingMin ?? combo?.processingMin ?? 0,
       allowParallel: data.allowParallel === true,
       source: "online",
       priceEur: priced.totalEur, // server authority (собствена цена > каталожна, промоцията) — не от клиента

@@ -58,6 +58,11 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
   }
 
   const svc = services.find((s) => s.id === serviceId);
+  // «Веднага след предишния» (решение 4): краят на часа преди избрания час, иначе първият такъв край в деня.
+  const afterPrev = data.afterPrev ?? [];
+  const afterPrevStart = slot
+    ? ([...afterPrev].reverse().find((t) => Date.parse(t) <= Date.parse(slot)) ?? afterPrev[0])
+    : afterPrev[0];
   // Дали избраният слот е паралелен (в престоя на чужд час) — определя allowParallel при запис.
   const slotIsParallel = data.slots.some((s) => s.start === slot && s.status === "parallel");
   const categories = React.useMemo(() => uniq(services.map((s) => s.category)), [services]);
@@ -278,6 +283,16 @@ export function StaffBookingForm({ services, closedDates, initialDate }: { servi
               );
             })}
           </div>
+        )}
+        {serviceId && !loading && afterPrevStart && (
+          <Button
+            type="button"
+            variant={slot === afterPrevStart ? "default" : "outline"}
+            onClick={() => setSlot(afterPrevStart)}
+            className="mt-2 h-11 w-full rounded-full text-sm tabular-nums"
+          >
+            Веднага след предишния час · {slotLabel(afterPrevStart)}
+          </Button>
         )}
         {slotIsParallel || data.slots.some((s) => s.status === "parallel") ? (
           <p className="mt-2.5 flex items-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
