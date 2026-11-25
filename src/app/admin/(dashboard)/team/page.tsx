@@ -45,7 +45,20 @@ export default async function AdminTeamPage() {
               const deleteAction = deleteTeamMember.bind(null, m.id);
               return (
                 <TableRow key={m.id} className="group">
-                  <TableCell className="font-medium">{m.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      {/* Малката снимка в реда: рамката 4:5 от формата, смалена */}
+                      <div className="h-[50px] w-10 shrink-0 overflow-hidden rounded-[8px] border border-border bg-secondary">
+                        {m.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.image} alt={`Снимката на ${m.name}`} className="size-full object-cover object-top" />
+                        ) : (
+                          <span className="sr-only">Без снимка</span>
+                        )}
+                      </div>
+                      {m.name}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{m.role}</TableCell>
                   <TableCell className="text-sm">{m.experience}</TableCell>
                   <TableCell className="max-w-xs">
