@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   effectiveStatus,
   fillSeat,
+  listingPosition,
   listingTitle,
   nextStatus,
   sniffImageType,
@@ -56,6 +57,21 @@ describe("заглавие и адрес", () => {
     expect(listingTitle("frizorski-uslugi")).toBe("Място под наем за фризьор");
     expect(listingTitle("frizorski-terapii")).toBe("Място под наем за фризьор");
     expect(listingTitle("nova-kategoriya")).toBe("Място под наем за специалист");
+  });
+  it("само услуги от група «Грим» → гримьор (думата на собственика от 25.11), без нова категория", () => {
+    expect(listingTitle("frizorski-uslugi", ["Грим"])).toBe("Място под наем за гримьор");
+    expect(uniqueSlug(listingTitle("frizorski-uslugi", ["Грим"]), [])).toBe("myasto-pod-naem-za-grimyor");
+    expect(listingPosition("frizorski-uslugi", ["Грим", "Дамско подстригване"])).toBe("фризьор");
+    expect(listingPosition("frizorski-uslugi", [])).toBe("фризьор");
+    expect(listingPosition("manikyur-i-pedikyur", ["Маникюр"])).toBe("маникюрист");
+  });
+  it("постът за грима: позицията и наемът с уточнението", () => {
+    const post = listingFacebookPost("гримьор", "https://x/karieri/myasto-pod-naem-za-grimyor", {
+      rent: "150",
+      rentExcludes: "разходите се уговарят на място според това колко често идваш",
+    });
+    expect(post).toContain("Свободно е едно място под наем за гримьор в Euphoria Hair & Beauty Bar");
+    expect(post).toContain(`Наем 150${String.fromCharCode(0xa0)}€ на месец, разходите се уговарят на място според това колко често идваш.`);
   });
   it("адресът е латиница от кирилицата и е уникален", () => {
     const title = listingTitle("manikyur-i-pedikyur");

@@ -201,7 +201,10 @@ export function ListingForm({
 
   const category = categories.find((c) => c.id === categoryId) ?? null;
   const title = category
-    ? listingTitle(category.slug)
+    ? listingTitle(
+        category.slug,
+        category.services.filter((s) => serviceIds.includes(s.id)).map((s) => s.groupTitle),
+      )
     : (listing?.title ?? "Място под наем");
   const isDraft = status === null || status === "draft";
   const heading = isDraft ? "Нова обява" : "Редакция на обявата";

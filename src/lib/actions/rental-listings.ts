@@ -13,10 +13,10 @@ import { RENTAL_BENEFIT_KEYS } from "@/lib/rental/benefits";
 import {
   effectiveStatus,
   fillSeat,
+  listingPosition,
   listingTitle,
   MAX_SEATS,
   nextStatus,
-  positionForCategory,
   sniffImageType,
   uniqueSlug,
   type ListingAction,
@@ -61,6 +61,16 @@ async function categoryServiceIds(categoryId: string) {
     columns: { id: true },
   });
   return items.map((i) => i.id);
+}
+
+/** Групите на избраните услуги (за заглавието «за гримьор»). */
+async function serviceGroups(ids: string[]) {
+  if (ids.length === 0) return [];
+  const items = await db.query.serviceItems.findMany({
+    where: (s, { inArray }) => inArray(s.id, ids),
+    columns: { groupTitle: true },
+  });
+  return items.map((i) => i.groupTitle);
 }
 
 /** Първият свободен адрес за заглавието (без адреса на самата обява). */
@@ -178,6 +188,15 @@ export async function updateListing(id: string, input: z.input<typeof updateSche
       if (wanted.some((sid) => !ownIds.has(sid))) return fail("Услугата не е от категорията на обявата.");
     }
     set.serviceIds = wanted;
+    // Заглавието следва и услугите: обява само с грим е «за гримьор». Адресът се сменя само в черновата.
+    if (categoryId) {
+      const cat = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, categoryId), columns: { slug: true } });
+      const title = cat ? listingTitle(cat.slug, await serviceGroups(wanted)) : null;
+      if (title && title !== (set.title ?? row.title)) {
+        set.title = title;
+        if (!row.slug || row.status === "draft") set.slug = await freeSlug(title, row.id);
+      }
+    }
   }
   if (d.benefits) set.benefits = [...new Set(d.benefits)];
   if (d.customBenefits) set.customBenefits = d.customBenefits;
@@ -264,7 +283,7 @@ async function postToFacebook(id: string): Promise<FacebookPostResult> {
   try {
     const row = await db.query.rentalPositions.findFirst({
       where: (p, { eq }) => eq(p.id, id),
-      columns: { slug: true, categoryId: true, fbPostId: true, seats: true, rentText: true, rentPublic: true, rentExcludes: true },
+      columns: { slug: true, categoryId: true, serviceIds: true, fbPostId: true, seats: true, rentText: true, rentPublic: true, rentExcludes: true },
     });
     if (!row?.slug) return { status: "error", reason: "no_slug" };
     if (row.fbPostId) return { status: "posted", postId: row.fbPostId, postUrl: `https://www.facebook.com/${row.fbPostId}` };
@@ -273,7 +292,7 @@ async function postToFacebook(id: string): Promise<FacebookPostResult> {
       : null;
     const link = `${siteConfig.url}/karieri/${row.slug}`;
     const result = await postListingToFacebookPage({
-      message: listingFacebookPost(positionForCategory(category?.slug ?? ""), link, {
+      message: listingFacebookPost(listingPosition(category?.slug ?? "", await serviceGroups(row.serviceIds ?? [])), link, {
         seats: row.seats,
         rent: row.rentPublic ? row.rentText : null,
         rentExcludes: row.rentExcludes,

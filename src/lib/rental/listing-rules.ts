@@ -60,9 +60,21 @@ export function positionForCategory(categorySlug: string): string {
   return POSITION_BY_KIND[KIND_BY_SLUG[categorySlug] ?? ""] ?? "специалист";
 }
 
+/** Групата на услугата «Грим» в ценоразписа (тя е във «Фризьорски услуги»; своя категория няма). */
+export const MAKEUP_GROUP = "Грим";
+
+/**
+ * Позицията на обявата: обява само с услуги от група «Грим» е за гримьор (думата на собственика от
+ * 25.11.2026: «1 място за грим»), без нова категория; иначе по категорията.
+ */
+export function listingPosition(categorySlug: string, serviceGroups: readonly string[] = []): string {
+  if (serviceGroups.length > 0 && serviceGroups.every((g) => g === MAKEUP_GROUP)) return "гримьор";
+  return positionForCategory(categorySlug);
+}
+
 /** Заглавието се смята, не се пише на ръка: «Място под наем за маникюрист». */
-export function listingTitle(categorySlug: string): string {
-  return `Място под наем за ${positionForCategory(categorySlug)}`;
+export function listingTitle(categorySlug: string, serviceGroups: readonly string[] = []): string {
+  return `Място под наем за ${listingPosition(categorySlug, serviceGroups)}`;
 }
 
 /** Адрес от латиница; при зает добавя -2, -3 … до първия свободен. */
