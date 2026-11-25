@@ -101,6 +101,7 @@ export function SiteBot() {
           open ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0",
         )}
         role="dialog"
+        data-call-spot="bot"
         aria-label="Онлайн асистент на Euphoria"
       >
         <div className="flex items-center justify-between bg-foreground px-4 py-3 text-background">
