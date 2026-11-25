@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { MyServices, type MyServiceOpt, type MyCategoryOpt } from "@/components/staff/my-services";
 import { lockedServiceIds } from "@/lib/campaigns/core";
 import { shortDay } from "@/lib/campaigns/rules";
@@ -68,7 +69,7 @@ export default async function StaffServicesPage() {
     .map((c) => ({ slug: c.slug, title: c.shortTitle }));
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <div className="mb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Управление</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Моите услуги</h1>

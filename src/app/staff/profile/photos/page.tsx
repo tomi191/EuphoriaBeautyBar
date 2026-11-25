@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { listMyGalleryImages } from "@/lib/actions/staff-gallery";
 import { db, schema } from "@/lib/db";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { WorkPhotoSheet } from "@/components/staff/work-photo-sheet";
 import { MyPhotosGrid, StatusPill, type GridPhoto } from "@/components/staff/my-photos-grid";
 
@@ -37,7 +38,7 @@ export default async function StaffPhotosPage({ searchParams }: { searchParams: 
   const justSent = sent ? images.find((i) => i.id === sent) : undefined;
   if (justSent) {
     return (
-      <StaffShell kind={resource.kind}>
+      <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
         <div className="flex flex-col items-center pt-7 text-center">
           <span className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground" aria-hidden>
             <Check className="size-7" strokeWidth={2.6} />
@@ -89,7 +90,7 @@ export default async function StaffPhotosPage({ searchParams }: { searchParams: 
   }));
 
   return (
-    <StaffShell kind={resource.kind} wide>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind} wide>
       <Link
         href="/staff/profile"
         className="-ml-1 -mt-3 inline-flex h-12 items-center gap-6 px-1 text-[17px] text-foreground transition-colors hover:text-foreground/70"

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { AdminNotificationsState } from "@/lib/admin/notifications";
 import { getAdminNotifications, markAdminNotificationsSeen } from "@/lib/actions/admin-notifications";
+import { PopalniBellSection } from "@/components/popalni-card";
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -96,6 +97,7 @@ export function AdminNotifications({ initial, size = "md" }: { initial: AdminNot
               Прочетени
             </button>
           </div>
+          <PopalniBellSection rows={state.popalni ?? []} onNavigate={() => setOpen(false)} />
           {loading && <p className="px-3 pt-2 text-xs text-muted-foreground">Зареждане…</p>}
           {error && <p className="px-3 pt-2 text-xs text-destructive">Не успях да заредя известията.</p>}
           {state.items.length === 0 ? (

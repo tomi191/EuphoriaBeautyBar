@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getMyClients } from "@/lib/actions/staff-clients";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { ClientsList } from "@/components/staff/clients-list";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export default async function StaffClientsPage() {
   const clients = await getMyClients();
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <div className="mb-4 flex items-center gap-1">
         <Link
           href="/staff"

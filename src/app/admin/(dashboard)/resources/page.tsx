@@ -119,6 +119,7 @@ export default async function AdminResourcesPage({
                       <ResourceForm
                         initial={r}
                         consentAt={consent[r.id]?.at ?? null}
+                        defaultOpen={sp.edit === r.id}
                         futureBookings={futureCount.get(r.id) ?? 0}
                         trigger={
                           <Button variant="outline" size="sm">

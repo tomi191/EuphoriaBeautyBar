@@ -5,6 +5,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { loadCampaignViews, todaySofia } from "@/lib/campaigns/core";
 import { CAMPAIGN_TEXT, type CampaignPhase } from "@/lib/campaigns/rules";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { PromotionPanel, PromotionRow } from "@/components/campaigns/staff-promotions";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +43,7 @@ export default async function StaffPromotionsPage({ searchParams }: { searchPara
   );
 
   return (
-    <StaffShell kind={resource.kind} split>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind} split>
       <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:items-start lg:gap-8">
         <div className={cn(chosen && "hidden lg:block")}>
           <Link

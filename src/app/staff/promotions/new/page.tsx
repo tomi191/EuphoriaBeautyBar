@@ -4,6 +4,7 @@ import { checkDraftCore, whoFor } from "@/lib/campaigns/core";
 import type { CampaignInput } from "@/lib/campaigns/rules";
 import { db } from "@/lib/db";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { CampaignForm } from "@/components/campaigns/campaign-form";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function NewPromotionPage({ searchParams }: { searchParams:
   const services = draft.services.filter((s) => s.offered);
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <CampaignForm
         services={services}
         today={draft.today}

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { CalendarDays, LayoutGrid, Scissors, HandHeart, Flower2, Clock, User, LogOut, Plus, type LucideIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import type { StaffTab } from "@/lib/admin/popalni";
 
 // Икона на таба „Услуги" според специалността на изпълнителя (resource.kind):
 // фризьорът вижда ножици, маникюристът — ръка, козметикът — цвете. Иконите
@@ -21,12 +22,15 @@ export function StaffShell({
   kind,
   wide,
   split,
+  dots = [],
 }: {
   children: React.ReactNode;
   kind?: string;
   wide?: boolean;
   /** «Промоции» на компютър: списъкът и панелът един до друг (кадър приложение-1440). */
   split?: boolean;
+  /** «Какво да попълниш» (визия №45): раздели с червена точка, докато нещо в тях липсва. */
+  dots?: StaffTab[];
 }) {
   const pathname = usePathname();
 
@@ -34,9 +38,9 @@ export function StaffShell({
   const tabs = [
     { href: "/staff", label: "График", icon: CalendarDays, exact: true },
     { href: "/staff/board", label: "Дъска", icon: LayoutGrid, exact: false },
-    { href: "/staff/services", label: "Услуги", icon: SERVICE_ICON[kind ?? ""] ?? Scissors, exact: false },
-    { href: "/staff/hours", label: "Часове", icon: Clock, exact: false },
-    { href: "/staff/profile", label: "Профил", icon: User, exact: false },
+    { href: "/staff/services", label: "Услуги", icon: SERVICE_ICON[kind ?? ""] ?? Scissors, exact: false, dot: dots.includes("services") },
+    { href: "/staff/hours", label: "Часове", icon: Clock, exact: false, dot: dots.includes("hours") },
+    { href: "/staff/profile", label: "Профил", icon: User, exact: false, dot: dots.includes("profile") },
   ];
   const [online, setOnline] = React.useState(true);
 
@@ -149,8 +153,14 @@ export function StaffShell({
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <t.icon className="size-5" strokeWidth={1.6} />
+              <span className="relative">
+                <t.icon className="size-5" strokeWidth={1.6} />
+                {"dot" in t && t.dot && (
+                  <span className="absolute -right-1 -top-0.5 size-2 rounded-full bg-destructive ring-2 ring-background" />
+                )}
+              </span>
               {t.label}
+              {"dot" in t && t.dot && <span className="sr-only"> (има какво да попълниш)</span>}
             </Link>
           );
         })}
