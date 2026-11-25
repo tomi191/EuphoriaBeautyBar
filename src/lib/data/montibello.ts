@@ -62,6 +62,8 @@ export interface MontibelloProduct {
   keyIngredients?: string[];
   /** Официална брандова снимка (по slug в /images/montibello/). */
   officialImage?: string;
+  /** Размер на файла в px, когато е малък: на екрана не се увеличава над 1,0 при 2× (Decode, визия №45, М2). */
+  imageSize?: [number, number];
   accent: MontibelloAccent;
   /** Салонен/професионален продукт — не се продава за домашна употреба. */
   professional?: boolean;
@@ -715,7 +717,9 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Гамата за оформяне и финиш на Montibello.",
     description:
       "Decode е цялата стайлинг гама: дефиниция, фиксация, текстура и блясък за всяка прическа. Продуктите оформят, но и пазят косата, докато го правят.\n\nРазделена е на под-линии - Curl, Smooth, Finish, Volume, Texture и Texture Men.",
-    officialImage: "/images/montibello/decode.webp",
+    // Опаковки, не снимката с хора (визия №45, М2): Decode показва гамата Volume.
+    officialImage: "/images/montibello/decode-volume.webp",
+    imageSize: [542, 426],
     accent: "ink",
   },
   {
@@ -729,6 +733,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Под-линията на Decode за къдрава коса. Оформя дефинирани, меки или естествени къдрици според това какъв резултат търсиш.",
     forHairType: "Къдрава коса",
     officialImage: "/images/montibello/decode-curl.webp",
+    imageSize: [257, 302],
     accent: "mint",
   },
   {
@@ -742,6 +747,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Професионалната под-линия на Decode за изправяне. Дава термозащита и контрол върху пухкавостта, за да остане косата гладка и с блясък след преса или сешоар.",
     forHairType: "Коса за изправяне / срещу пухкавост",
     officialImage: "/images/montibello/decode-smooth.webp",
+    imageSize: [442, 325],
     accent: "mint",
   },
   {
@@ -754,6 +760,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Финишната под-линия на Decode. Смолата, устойчива на влага, удължава задържането на прическата дори при влажен въздух.",
     officialImage: "/images/montibello/decode-finish.webp",
+    imageSize: [458, 396],
     accent: "ink",
   },
   {
@@ -766,6 +773,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Стайлинг за обем от гамата Decode. Повдига косата при оформяне и придава плътност на прическата.",
     officialImage: "/images/montibello/decode-volume.webp",
+    imageSize: [542, 426],
     accent: "mint",
   },
   {
@@ -778,6 +786,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Текстурата в гамата Decode. Добавя структура и грапавина на прическата за по-небрежен, оформен вид.",
     officialImage: "/images/montibello/decode-texture.webp",
+    imageSize: [456, 381],
     accent: "sage",
   },
   {
@@ -791,6 +800,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Мъжката текстурираща под-линия на Decode. Включва моделиращ крем, гел и матов восък за бързо ежедневно оформяне.",
     forHairType: "Мъжка коса",
     officialImage: "/images/montibello/decode-texture-men.webp",
+    imageSize: [439, 473],
     accent: "ink",
   },
 ];
@@ -802,3 +812,917 @@ export function getMontibelloProduct(slug: string): MontibelloProduct | undefine
 export function productsByCategory(categorySlug: string): MontibelloProduct[] {
   return montibelloProducts.filter((p) => p.categorySlug === categorySlug);
 }
+
+// ── Посока А «Рафт по нужда» (визия №45, 25.11.2026) ─────────────────────────
+// Цени няма (думата на собственика, 25.11.2026): навсякъде «Обади се за цена и поръчка».
+
+export interface MontibelloNeed {
+  /** Котва на раздела в /montibello. */
+  slug: string;
+  /** Текстът на хапчето. */
+  label: string;
+  /** H2 на раздела. */
+  title: string;
+  /** Текстът на раздела (Саиф). */
+  intro: string;
+  /** Опаковката в кръгчето на хапчето. */
+  thumb: string;
+  products: string[];
+}
+
+export const montibelloNeeds: MontibelloNeed[] = [
+  {
+    slug: "boyadisana-kosa",
+    label: "Боядисана коса",
+    title: "Боядисана коса",
+    intro:
+      "Colour Last е рутината на Montibello за боядисана коса: по данни на марката хидратира и удължава трайността на цвета и блясъка. До нея са шампоаните Reflects, които освежават тона на средно кафява, червена, медна и лилава коса.",
+    thumb: "colour-last-shampoo",
+    products: [
+      "colour-last-shampoo",
+      "colour-last-rinse",
+      "colour-last-mask",
+      "brown-reflects-shampoo",
+      "red-reflects-shampoo",
+      "copper-reflects-shampoo",
+      "purple-reflects-shampoo",
+    ],
+  },
+  {
+    slug: "rusa-i-siva",
+    label: "Руса и сива",
+    title: "Руса и сива коса",
+    intro:
+      "Blonde Glow е за руса или изрусена коса: лилави пигменти срещу жълтите оттенъци и витамин C. Silver White е за бяла или сива коса и освежава цвета ѝ с директни пигменти.",
+    thumb: "blonde-glow-shampoo",
+    products: ["blonde-glow-shampoo", "blonde-glow-mask", "silver-white-shampoo", "silver-white-rinse"],
+  },
+  {
+    slug: "uvredena",
+    label: "Увредена",
+    title: "Увредена коса",
+    intro:
+      "Ultra Repair е рутината за коса, увредена от топлина и химия, с Vegan Collagen (растителен протеинов комплекс) и LifeAlgae. Има шампоан, балсам, маска, крем за краищата и нощен серум.",
+    thumb: "ultra-repair-mask",
+    products: [
+      "ultra-repair-shampoo",
+      "ultra-repair-rinse",
+      "ultra-repair-mask",
+      "ultra-repair-sealed-ends",
+      "ultra-repair-overnight-serum",
+    ],
+  },
+  {
+    slug: "suha-i-nepokorna",
+    label: "Суха и непокорна",
+    title: "Суха и непокорна коса",
+    intro:
+      "Smooth Hydration е хидратираща рутина с хиалуронова киселина за суха, непокорна коса, която се накъдря. Включва шампоан, балсам и маска.",
+    thumb: "smooth-hydration-shampoo",
+    products: ["smooth-hydration-shampoo", "smooth-hydration-rinse", "smooth-hydration-mask"],
+  },
+  {
+    slug: "fina-za-obem",
+    label: "Фина, за обем",
+    title: "Фина коса, за обем",
+    intro:
+      "Full Volume е за фина коса, на която ѝ трябва обем: шампоан, пяна-балсам и сух шампоан с овесени пептиди и оризов протеин, по данни на Montibello.",
+    thumb: "full-volume-dry-shampoo",
+    products: ["full-volume-shampoo", "full-volume-foam-rinse", "full-volume-dry-shampoo"],
+  },
+  {
+    slug: "skalp",
+    label: "Скалп",
+    title: "Скалп",
+    intro:
+      "Detox е за скалп с излишна мазнина, Sensitive Protection за чувствителен скалп, Purifying Balance за скалп, склонен към пърхот (така ги описва Montibello). Това е козметика, не лечение; при оплакване от скалпа питай лекар.",
+    thumb: "sensitive-protection-scalp-serum",
+    products: [
+      "detox-cleansing-shampoo",
+      "scalp-detox-cleansing-treatment",
+      "sensitive-protection-shampoo",
+      "sensitive-protection-scalp-serum",
+      "purifying-balance-shampoo",
+      "purifying-balance-scalp-treatment",
+    ],
+  },
+  {
+    slug: "sled-slantse",
+    label: "След слънце",
+    title: "След слънце",
+    intro:
+      "Sun Care е за коса, изложена на слънце: шампоан и маска след слънце и защитна мъгла с UV филтър, 125 мл. Съдържат LifeAlgae и ресвератрол, по данни на Montibello.",
+    thumb: "sun-care-defence-mist",
+    products: ["sun-care-restorative-shampoo", "sun-care-restorative-mask", "sun-care-defence-mist"],
+  },
+  {
+    slug: "kadritsi-i-stayling",
+    label: "Къдрици и стайлинг",
+    title: "Къдрици и стайлинг",
+    intro:
+      "Decode е гамата на Montibello за оформяне и финиш: дефиниция, фиксация, текстура и блясък. Има линии за къдрици, изправяне, финиш, обем и текстура.",
+    thumb: "decode-curl",
+    products: [
+      "decode",
+      "decode-curl",
+      "decode-smooth",
+      "decode-finish",
+      "decode-volume",
+      "decode-texture",
+      "decode-texture-men",
+    ],
+  },
+  {
+    slug: "za-mazhe",
+    label: "За мъже",
+    title: "За мъже",
+    intro:
+      "Decode Texture Men е линията на Montibello за текстуриране на мъжка коса. Всичко останало в каталога е без деление по пол, затова не го делим на мъжко и дамско.",
+    thumb: "decode-texture-men",
+    products: ["decode-texture-men"],
+  },
+];
+
+/** Серията (рутината) на всеки продукт за вкъщи: «От същата рутина» показва само нея. */
+const SERIES: Record<string, string[]> = {
+  "Colour Last": ["colour-last-shampoo", "colour-last-rinse", "colour-last-mask"],
+  Reflects: ["brown-reflects-shampoo", "red-reflects-shampoo", "copper-reflects-shampoo", "purple-reflects-shampoo"],
+  "Blonde Glow": ["blonde-glow-shampoo", "blonde-glow-mask"],
+  "Silver White": ["silver-white-shampoo", "silver-white-rinse"],
+  "Ultra Repair": [
+    "ultra-repair-shampoo",
+    "ultra-repair-rinse",
+    "ultra-repair-mask",
+    "ultra-repair-sealed-ends",
+    "ultra-repair-overnight-serum",
+  ],
+  "Smooth Hydration": ["smooth-hydration-shampoo", "smooth-hydration-rinse", "smooth-hydration-mask"],
+  "Full Volume": ["full-volume-shampoo", "full-volume-foam-rinse", "full-volume-dry-shampoo"],
+  Detox: ["detox-cleansing-shampoo", "scalp-detox-cleansing-treatment"],
+  "Sensitive Protection": ["sensitive-protection-shampoo", "sensitive-protection-scalp-serum"],
+  "Purifying Balance": ["purifying-balance-shampoo", "purifying-balance-scalp-treatment"],
+  "Sun Care": ["sun-care-restorative-shampoo", "sun-care-restorative-mask", "sun-care-defence-mist"],
+  Decode: ["decode", "decode-curl", "decode-smooth", "decode-finish", "decode-volume", "decode-texture", "decode-texture-men"],
+};
+
+export function seriesOf(slug: string): string | undefined {
+  return Object.keys(SERIES).find((s) => SERIES[s].includes(slug));
+}
+
+/** Другите продукти от същата серия, в реда на рутината. */
+export function sameSeries(slug: string): MontibelloProduct[] {
+  const s = seriesOf(slug);
+  if (!s) return [];
+  return SERIES[s].filter((x) => x !== slug).map((x) => getMontibelloProduct(x)!);
+}
+
+/** Първата нужда, в която стои продуктът (за хлебните трохи). */
+export function needOf(slug: string): MontibelloNeed | undefined {
+  return montibelloNeeds.find((n) => n.products.includes(slug));
+}
+
+/** Продуктите за вкъщи (38); салонните (professional) са само в блока «Само в салона». */
+export const montibelloForSale = montibelloProducts.filter((p) => !p.professional);
+export const montibelloSalonOnly = montibelloProducts.filter((p) => p.professional);
+
+/** Обемът от краткото описание («…, 300 мл.» → «300 мл»). */
+export function volumeOf(p: MontibelloProduct): string | undefined {
+  const m = p.shortDescription.match(/(\d+)\s*мл/);
+  return m ? `${m[1]} мл` : undefined;
+}
+
+const TYPE_LABEL: Record<MontibelloProduct["productType"], string> = {
+  шампоан: "Шампоан",
+  балсам: "Балсам",
+  маска: "Маска",
+  серум: "Серум",
+  спрей: "Спрей",
+  терапия: "Грижа",
+  стайлинг: "Стайлинг",
+  боя: "Боя",
+  оксидант: "Оксидант",
+};
+
+/** «Шампоан · 300 мл» над името в картата. */
+export function metaOf(p: MontibelloProduct): string {
+  const v = volumeOf(p);
+  return TYPE_LABEL[p.productType] + (v ? ` · ${v}` : "");
+}
+
+/** «За боядисана коса» под името; без данни за косата — краткото описание. */
+export function forWhomOf(p: MontibelloProduct): string {
+  const h = p.forHairType?.replace(" (от топлина и химия)", "");
+  return h ? `За ${h[0].toLowerCase()}${h.slice(1)}` : p.shortDescription.replace(/\.$/, "");
+}
+
+export interface MontibelloCopy {
+  metaTitle: string;
+  metaDescription: string;
+  subtitle: string;
+  answer: string;
+  alt: string;
+  facts: [string, string][];
+  faq: { q: string; a: string }[];
+  routineNote: string;
+  service: { label: string; href: string; text: string };
+}
+
+/** Текстовете на Саиф за първата партида (доклад 2026-11-25-content-montibello-текстове.md). Другите продукти показват сегашните описания. */
+export const montibelloCopy: Record<string, MontibelloCopy> = {
+  "blonde-glow-shampoo": {
+    "metaTitle": "Blonde Glow Shampoo за руса коса | Montibello Варна",
+    "metaDescription": "Blonde Glow Shampoo на Montibello, 300 мл: шампоан за руса и изрусена коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за руса и изрусена коса",
+    "answer": "Blonde Glow Shampoo е шампоан от рутината HOP Blonde Glow на Montibello за руса или изрусена коса, 300 мл. По данни на марката неутрализира жълтите оттенъци с лилави пигменти и дава блясък. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Blonde Glow Shampoo, 300 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Blonde Glow"
+      ],
+      [
+        "Вид",
+        "Шампоан, 300 мл"
+      ],
+      [
+        "За коса",
+        "Руса или изрусена"
+      ],
+      [
+        "Активи (по данни на Montibello)",
+        "Витамин C (антиоксидант), LifeAlgae (комбинация от водорасли), UV филтър, лилави пигменти"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Blonde Glow Shampoo?",
+        "a": "За руса или изрусена коса. Montibello го описва като шампоан, който подсилва и реконструира изсветлената коса, неутрализира жълтите оттенъци, дава блясък и пази от окисляване."
+      },
+      {
+        "q": "Лилав шампоан ли е Blonde Glow?",
+        "a": "Да, съдържа лилави пигменти, които неутрализират жълтите оттенъци. Montibello го води като озаряващ шампоан за руса коса."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello: витамин C (антиоксидант), LifeAlgae (комбинация от водорасли), UV филтър и лилави пигменти. Пълният състав е на етикета на опаковката."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "С Blonde Glow Mask (200 мл) от същата рутина. Montibello ги описва като една рутина с лилави пигменти и витамин C."
+      }
+    ],
+    "routineNote": "От същата рутина е и маската Blonde Glow Mask.",
+    "service": {
+      "label": "Балаяж във Варна",
+      "href": "/uslugi/balayazh-varna",
+      "text": "Изсветлената коса е точно за кого е серията. Балаяжът се прави при Снежана с професионални продукти Montibello и Goldwell; шампоанът е домашната грижа между посещенията."
+    }
+  },
+  "blonde-glow-mask": {
+    "metaTitle": "Blonde Glow Mask за руса коса | Montibello Варна",
+    "metaDescription": "Blonde Glow Mask на Montibello, 200 мл: маска за руса и изрусена коса. Вземаш я от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за руса и изрусена коса",
+    "answer": "Blonde Glow Mask е маска за руса или изрусена коса от рутината HOP Blonde Glow на Montibello, 200 мл. По данни на марката рутината има лилави пигменти срещу жълтите оттенъци и витамин C, който пази от окисляване. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Blonde Glow Mask, 200 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Blonde Glow"
+      ],
+      [
+        "Вид",
+        "Маска, 200 мл"
+      ],
+      [
+        "За коса",
+        "Руса или изрусена"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "Витамин C (антиоксидант), LifeAlgae (комбинация от водорасли), UV филтър, лилави пигменти"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Blonde Glow Mask?",
+        "a": "За руса или изрусена коса. Montibello я описва като озаряваща маска от рутината Blonde Glow."
+      },
+      {
+        "q": "Маска или шампоан да избера?",
+        "a": "Не се заменят: шампоанът мие, маската е втори продукт от същата рутина. Не си сигурна от кой имаш нужда? Питай по телефона или при посещение в салона."
+      },
+      {
+        "q": "Какво съдържа рутината?",
+        "a": "По данни на Montibello: витамин C (антиоксидант), LifeAlgae (комбинация от водорасли), UV филтър и лилави пигменти. Пълният състав на маската е на етикета."
+      },
+      {
+        "q": "Как поръчвам Blonde Glow Mask и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От същата рутина е и шампоанът Blonde Glow Shampoo.",
+    "service": {
+      "label": "Балаяж във Варна",
+      "href": "/uslugi/balayazh-varna",
+      "text": "Ако косата е изсветлена при Снежана, маската е домашната грижа между две посещения. Балаяжът се прави с професионални продукти Montibello и Goldwell."
+    }
+  },
+  "silver-white-shampoo": {
+    "metaTitle": "Silver White Shampoo за сива коса | Montibello Варна",
+    "metaDescription": "Silver White Shampoo на Montibello, 300 мл: шампоан за бяла и сива коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за бяла и сива коса",
+    "answer": "Silver White Shampoo е шампоан от рутината HOP Silver White на Montibello за бяла и сива коса, 300 мл. По данни на марката освежава цвета на бялата и сивата коса с директни пигменти и дава блясък. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Silver White Shampoo, 300 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Silver White"
+      ],
+      [
+        "Вид",
+        "Шампоан, 300 мл"
+      ],
+      [
+        "За коса",
+        "Бяла или сива"
+      ],
+      [
+        "Активи (по данни на Montibello)",
+        "LifeAlgae с B-комплекс, директни пигменти, антиоксиданти, UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Silver White Shampoo?",
+        "a": "За бяла или сива коса. Montibello го описва като озаряващ шампоан, който подчертава и подсилва цвета ѝ."
+      },
+      {
+        "q": "Става ли за сива коса, която не е боядисана?",
+        "a": "Montibello го описва за бяла или сива коса и не уточнява дали е боядисана. Ако се колебаеш, питай по телефона."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello: LifeAlgae с B-комплекс, директни пигменти, антиоксиданти и UV филтър. Пълният състав е на етикета на опаковката."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "С Silver White Rinse (балсам, 200 мл) от същата рутина."
+      },
+      {
+        "q": "Как поръчвам Silver White Shampoo и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От същата рутина е и балсамът Silver White Rinse.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Боядисването и корекцията на цвят са при Снежана с професионални бои Montibello. Шампоанът е домашната грижа между две посещения."
+    }
+  },
+  "silver-white-rinse": {
+    "metaTitle": "Silver White Rinse балсам за сива коса | Montibello Варна",
+    "metaDescription": "Silver White Rinse на Montibello, 200 мл: балсам за бяла и сива коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за бяла и сива коса",
+    "answer": "Silver White Rinse е балсам от рутината HOP Silver White на Montibello за бяла и сива коса, 200 мл. По данни на марката рутината освежава цвета с директни пигменти и пази косата с антиоксиданти и UV филтър. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Silver White Rinse, 200 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Silver White"
+      ],
+      [
+        "Вид",
+        "Балсам, 200 мл"
+      ],
+      [
+        "За коса",
+        "Бяла или сива"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "LifeAlgae с B-комплекс, директни пигменти, антиоксиданти, UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Silver White Rinse?",
+        "a": "За бяла или сива коса. Montibello го описва като озаряващ балсам от рутината Silver White."
+      },
+      {
+        "q": "Какво съдържа рутината?",
+        "a": "По данни на Montibello: LifeAlgae с B-комплекс, директни пигменти, антиоксиданти и UV филтър. Пълният състав на балсама е на етикета."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "Със Silver White Shampoo (300 мл), който е от същата рутина."
+      },
+      {
+        "q": "Как поръчвам Silver White Rinse и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От същата рутина е и шампоанът Silver White Shampoo.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Снежана боядисва и коригира цвят с професионални бои Montibello. Балсамът е домашната грижа за бяла и сива коса между посещенията."
+    }
+  },
+  "purple-reflects-shampoo": {
+    "metaTitle": "Purple Reflects Shampoo за лилава коса | Montibello Варна",
+    "metaDescription": "Purple Reflects Shampoo на Montibello, 300 мл: шампоан за лилава коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за лилава коса",
+    "answer": "Purple Reflects Shampoo е шампоан от серията HOP Reflects на Montibello за лилава коса, 300 мл. По данни на марката серията освежава и подсилва тоновете на естествена и боядисана коса с цветни пигменти. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Purple Reflects Shampoo, 300 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Reflects"
+      ],
+      [
+        "Вид",
+        "Шампоан, 300 мл"
+      ],
+      [
+        "За коса",
+        "Лилава"
+      ],
+      [
+        "Активи (по данни на Montibello)",
+        "B-комплекс, LifeAlgae (комбинация от водорасли), директни пигменти, антиоксиданти, UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Purple Reflects Shampoo?",
+        "a": "За лилава коса. Montibello го описва като шампоан, който освежава цвета."
+      },
+      {
+        "q": "Има ли шампоан Reflects за други цветове?",
+        "a": "В серията Reflects има още шампоани за средно кафява, червена и медна коса. Кои са налични, потвърждаваме по телефона."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello: B-комплекс, LifeAlgae (комбинация от водорасли), директни пигменти, антиоксиданти и UV филтър. Пълният състав е на етикета."
+      },
+      {
+        "q": "Как поръчвам Purple Reflects Shampoo и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От серията Reflects са и шампоаните за средно кафява, червена и медна коса.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Цветът се нанася в салона, при Снежана, с професионални бои Montibello. Шампоанът е домашната грижа между две посещения."
+    }
+  },
+  "colour-last-shampoo": {
+    "metaTitle": "Colour Last Shampoo за боядисана коса | Montibello Варна",
+    "metaDescription": "Colour Last Shampoo на Montibello, 300 мл: шампоан за боядисана коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за боядисана коса",
+    "answer": "Colour Last Shampoo е шампоан от рутината HOP Colour Last на Montibello за боядисана коса, 300 мл. По данни на марката рутината хидратира и удължава трайността на цвета и блясъка с ферулова киселина, растителен антиоксидант. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Colour Last Shampoo, 300 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Colour Last"
+      ],
+      [
+        "Вид",
+        "Шампоан, 300 мл"
+      ],
+      [
+        "За коса",
+        "Боядисана"
+      ],
+      [
+        "Активи (по данни на Montibello)",
+        "LifeAlgae (комбинация от водорасли), ферулова киселина (растителен антиоксидант), UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Colour Last Shampoo?",
+        "a": "За боядисана коса. Montibello го описва като шампоан от хидратираща и защитна рутина за цвят."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello: LifeAlgae (комбинация от водорасли), ферулова киселина (растителен антиоксидант) и UV филтър. Пълният състав е на етикета на опаковката."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "С балсама Colour Last Rinse (200 мл) и маската Colour Last Mask (200 мл) от същата рутина."
+      },
+      {
+        "q": "Как поръчвам Colour Last Shampoo и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "След шампоана идват балсамът и маската от серията Colour Last.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Боядисваме с професионални бои Montibello. Шампоанът е за вкъщи, между двата часа."
+    }
+  },
+  "colour-last-rinse": {
+    "metaTitle": "Colour Last Rinse балсам за боядисана коса | Montibello",
+    "metaDescription": "Colour Last Rinse на Montibello, 200 мл: балсам за боядисана коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за боядисана коса",
+    "answer": "Colour Last Rinse е балсам от рутината HOP Colour Last на Montibello за боядисана коса, 200 мл. По данни на марката рутината пази цвета и блясъка с ферулова киселина (растителен антиоксидант) и UV филтър. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Colour Last Rinse, 200 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Colour Last"
+      ],
+      [
+        "Вид",
+        "Балсам, 200 мл"
+      ],
+      [
+        "За коса",
+        "Боядисана"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "LifeAlgae (комбинация от водорасли), ферулова киселина (растителен антиоксидант), UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Colour Last Rinse?",
+        "a": "За боядисана коса. Montibello го води като балсам от рутината Colour Last."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "Montibello посочва за рутината ферулова киселина, UV филтър и LifeAlgae. Какво точно има в балсама, пише на етикета."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "С шампоана Colour Last Shampoo (300 мл) и маската Colour Last Mask (200 мл), и двата от същата серия."
+      },
+      {
+        "q": "Как поръчвам Colour Last Rinse и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От серията Colour Last са още шампоанът и маската.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Цветът се прави при Снежана с професионални бои Montibello, а балсамът е грижата за вкъщи след това."
+    }
+  },
+  "colour-last-mask": {
+    "metaTitle": "Colour Last Mask маска за боядисана коса | Montibello",
+    "metaDescription": "Colour Last Mask на Montibello, 200 мл: маска за боядисана коса. Вземаш я от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за боядисана коса",
+    "answer": "Colour Last Mask е маска от рутината HOP Colour Last на Montibello за боядисана коса, 200 мл. По данни на марката рутината е хидратираща и защитна, с ферулова киселина (растителен антиоксидант) и UV филтър. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Colour Last Mask, 200 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Colour Last"
+      ],
+      [
+        "Вид",
+        "Маска, 200 мл"
+      ],
+      [
+        "За коса",
+        "Боядисана"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "LifeAlgae (комбинация от водорасли), ферулова киселина (растителен антиоксидант), UV филтър"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Colour Last Mask?",
+        "a": "За боядисана коса. Montibello я описва като маска от рутината Colour Last."
+      },
+      {
+        "q": "Маска, балсам или и двете?",
+        "a": "Балсамът и маската са отделни продукти от една рутина, всеки по 200 мл. Кое ти трябва, преценяваме заедно по телефона или в салона."
+      },
+      {
+        "q": "Какво има в маската?",
+        "a": "За рутината Colour Last производителят посочва LifeAlgae, комбинация от водорасли, растителния антиоксидант ферулова киселина и UV филтър. Пълният състав е на опаковката."
+      },
+      {
+        "q": "Как поръчвам Colour Last Mask и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От серията Colour Last са още шампоанът и балсамът.",
+    "service": {
+      "label": "Боядисване на коса",
+      "href": "/uslugi/boyadisvane-na-kosa-varna",
+      "text": "Боядисването е услуга в салона, с професионални бои Montibello. Маската е допълнителна грижа за вкъщи."
+    }
+  },
+  "full-volume-dry-shampoo": {
+    "metaTitle": "Full Volume Dry Shampoo за фина коса | Montibello Варна",
+    "metaDescription": "Full Volume Dry Shampoo на Montibello, 150 мл: сух шампоан за фина коса. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за фина коса, за обем",
+    "answer": "Full Volume Dry Shampoo е сух шампоан от рутината HOP Full Volume на Montibello за фина коса, 150 мл. По данни на марката рутината дава на фината коса естествен обем с овесени пептиди и оризов протеин. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Full Volume Dry Shampoo, 150 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Full Volume"
+      ],
+      [
+        "Вид",
+        "Сух шампоан, 150 мл"
+      ],
+      [
+        "За коса",
+        "Фина"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "Овесени пептиди (аминокиселини за обем и текстура), хидролизиран оризов протеин, LifeAlgae"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "Какво е сух шампоан?",
+        "a": "Сухият шампоан се нанася на сухо, без вода. Montibello го води като шампоан за обем от рутината Full Volume. Указанията са на опаковката."
+      },
+      {
+        "q": "За коя коса е Full Volume Dry Shampoo?",
+        "a": "За фина коса. Рутината Full Volume е описана като грижа, която дава на фината коса естествен обем."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello рутината е с овесени пептиди (аминокиселини за обем и текстура), хидролизиран оризов протеин и LifeAlgae. Пълният състав е на етикета."
+      },
+      {
+        "q": "Как поръчвам Full Volume Dry Shampoo и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От рутината Full Volume са още шампоанът и пяната-балсам.",
+    "service": {
+      "label": "Подстригване и оформяне",
+      "href": "/uslugi/frizorski-uslugi",
+      "text": "Сешоарът и оформянето са в ценоразписа на фризьорските услуги. При фина коса обемът е част от прическата, а сухият шампоан е домашна добавка."
+    }
+  },
+  "ultra-repair-overnight-serum": {
+    "metaTitle": "Ultra Repair Overnight Serum за увредена коса | Montibello",
+    "metaDescription": "Ultra Repair Overnight Serum на Montibello, 100 мл: нощен серум за увредена коса. Вземаш го от салон Euphoria във Варна; цена по телефона.",
+    "subtitle": "за увредена коса",
+    "answer": "Ultra Repair Overnight Serum е нощен серум от рутината HOP Ultra Repair на Montibello за коса, увредена от топлина и химия, 100 мл. По данни на марката връща силата, хидратацията и мекотата на косата за една нощ. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Ultra Repair Overnight Serum, 100 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Ultra Repair"
+      ],
+      [
+        "Вид",
+        "Нощен серум, 100 мл"
+      ],
+      [
+        "За коса",
+        "Увредена от топлина и химия"
+      ],
+      [
+        "Активи на рутината (по данни на Montibello)",
+        "Vegan Collagen (растителен протеинов комплекс), LifeAlgae (комбинация от водорасли)"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Ultra Repair Overnight Serum?",
+        "a": "За коса, увредена от топлина и химия. Така Montibello описва рутината Ultra Repair, от която е серумът."
+      },
+      {
+        "q": "Какво твърди Montibello, че прави?",
+        "a": "Че връща силата, хидратацията и мекотата на косата за една нощ. Това е твърдение на производителя, по негов инструментален тест; условията на теста не са публикувани. Резултатът при теб зависи от косата."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "Montibello посочва за рутината Vegan Collagen (растителен протеинов комплекс) и LifeAlgae (комбинация от водорасли). Пълният състав е на етикета на серума."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "Серумът е част от рутината Ultra Repair заедно с шампоан, балсам, маска и крем за краищата."
+      },
+      {
+        "q": "Как поръчвам Ultra Repair Overnight Serum и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От рутината Ultra Repair са още шампоанът, балсамът, маската и кремът за краищата.",
+    "service": {
+      "label": "Терапии за коса",
+      "href": "/uslugi/frizorski-terapii",
+      "text": "Терапиите в салона са с Kerasilk (Goldwell) и Nashi Argan; серумът е за вкъщи и не е част от тях. Увредена коса? Питай Снежана при посещение."
+    }
+  },
+  "detox-cleansing-shampoo": {
+    "metaTitle": "Detox Cleansing Shampoo за мазен скалп | Montibello Варна",
+    "metaDescription": "Detox Cleansing Shampoo на Montibello, 300 мл: шампоан за мазен скалп. Вземаш го от салон Euphoria във Варна; цена и наличност по телефона.",
+    "subtitle": "за мазен скалп",
+    "answer": "Detox Cleansing Shampoo е шампоан от рутината HOP Detox на Montibello за скалп и коса с излишна мазнина и замърсявания, 300 мл. По данни на марката почиства скалпа и косата, а глината поема излишната мазнина. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello HOP Detox Cleansing Shampoo, 300 мл",
+    "facts": [
+      [
+        "Серия",
+        "HOP Detox"
+      ],
+      [
+        "Вид",
+        "Шампоан за дълбоко почистване, 300 мл"
+      ],
+      [
+        "За коса",
+        "Скалп и коса с излишна мазнина и замърсявания"
+      ],
+      [
+        "Активи (по данни на Montibello)",
+        "LifeAlgae с пребиотици и постбиотици, глина, сарказин (аминокиселина)"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За какъв скалп е Detox Cleansing Shampoo?",
+        "a": "За скалп и коса с излишна мазнина и замърсявания. Montibello го описва като шампоан, който почиства и освежава."
+      },
+      {
+        "q": "Подходящ ли е при пърхот?",
+        "a": "Montibello не го описва като средство против пърхот. Detox е за мазен скалп. За скалп, склонен към пърхот, марката има друга рутина, Purifying Balance."
+      },
+      {
+        "q": "Какво съдържа?",
+        "a": "По данни на Montibello: LifeAlgae с пребиотици и постбиотици, глина, която поема излишната мазнина, и сарказин, аминокиселина, която регулира отделянето на себум. Пълният състав е на етикета."
+      },
+      {
+        "q": "С какво се комбинира?",
+        "a": "С Scalp Detox Cleansing Treatment (балансираща терапия за скалп, 200 мл) от същата рутина."
+      },
+      {
+        "q": "Как поръчвам Detox Cleansing Shampoo и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От рутината Detox е и терапията Scalp Detox Cleansing Treatment.",
+    "service": {
+      "label": "Подстригване и оформяне",
+      "href": "/uslugi/frizorski-uslugi",
+      "text": "Подстригването включва измиване. При посещение попитай дали Detox е за твоя скалп; това е козметика, не лечение."
+    }
+  },
+  "decode-curl": {
+    "metaTitle": "Decode Curl за къдрава коса | Montibello Варна",
+    "metaDescription": "Decode Curl на Montibello: Curl Creator и Curl Definer, 150 мл, за къдрава коса. Вземаш ги от салон Euphoria във Варна; цена по телефона.",
+    "subtitle": "за къдрава коса",
+    "answer": "Decode Curl е линия за къдрава коса от гамата за оформяне Decode на Montibello. В нея има два продукта по 150 мл: Curl Creator, активиращ балсам за къдрици, и Curl Definer, дефиниращ балсам. Взема се от салона, ул. Петър Райчев 18, Варна; цена и наличност по телефона +359 898 66 33 15.",
+    "alt": "Montibello Decode Curl: Curl Creator и Curl Definer",
+    "facts": [
+      [
+        "Линия",
+        "Decode Curl"
+      ],
+      [
+        "Вид",
+        "Стайлинг за къдрици: Curl Creator и Curl Definer, по 150 мл"
+      ],
+      [
+        "За коса",
+        "Къдрава"
+      ],
+      [
+        "Активи",
+        "Montibello не ги публикува на страницата на линията; пълният състав е на етикета"
+      ],
+      [
+        "Вземане",
+        "От салона, ул. Петър Райчев 18, кв. Левски, Варна. вт–пт 10:00–19:00, сб 10:00–17:00."
+      ],
+      [
+        "Наличност",
+        "Потвърждаваме по телефона, преди да дойдеш."
+      ]
+    ],
+    "faq": [
+      {
+        "q": "За коя коса е Decode Curl?",
+        "a": "За къдрава коса. Montibello описва линията с думите „максимална мекота, подхранване и гъвкавост“."
+      },
+      {
+        "q": "Каква е разликата между Curl Creator и Curl Definer?",
+        "a": "Montibello води Curl Creator като активиращ балсам за къдрици, а Curl Definer като дефиниращ балсам. Кой е за твоите къдрици, питай по телефона."
+      },
+      {
+        "q": "Какво е Decode?",
+        "a": "Decode е гамата на Montibello за оформяне и финиш: дефиниция, фиксация, текстура и блясък. Curl е една от нейните линии."
+      },
+      {
+        "q": "Как поръчвам Decode Curl и откъде го вземам?",
+        "a": "Обади се на +359 898 66 33 15 и кажи името. Потвърждаваме наличността и цената. Вземаш го от салона, ул. Петър Райчев 18, кв. Левски, Варна, вт–пт 10:00–19:00, сб 10:00–17:00. Няма доставка и няма онлайн поръчка."
+      }
+    ],
+    "routineNote": "От гамата Decode са още линиите за изправяне, финиш, обем и текстура.",
+    "service": {
+      "label": "Подстригване и оформяне",
+      "href": "/uslugi/frizorski-uslugi",
+      "text": "В ценоразписа има навиване с преса или букли за обем и къдри. Decode Curl е за оформяне вкъщи."
+    }
+  },
+};

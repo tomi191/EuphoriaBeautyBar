@@ -117,7 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="bg" suppressHydrationWarning className={cn(inter.variable, manrope.variable, cormorant.variable, cormorantSemi.variable)}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <div className="relative flex min-h-screen flex-col pb-14 has-[[data-rental-bar]]:pb-[calc(var(--rental-bar-h)+env(safe-area-inset-bottom))] lg:pb-0 lg:has-[[data-rental-bar]]:pb-0">
+          <div className="relative flex min-h-screen flex-col pb-14 has-[[data-rental-bar]]:pb-[calc(var(--rental-bar-h)+env(safe-area-inset-bottom))] has-[[data-montibello-bar]]:pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:has-[[data-rental-bar]]:pb-0 lg:has-[[data-montibello-bar]]:pb-0">
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />

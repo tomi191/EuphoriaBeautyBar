@@ -17,6 +17,8 @@ export function MobileCallBar() {
   if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
   // Обявите за място под наем имат своя лента («Обади се» и «Пиши във Viber»), RentalCallBar.
   if (pathname.startsWith("/karieri")) return null;
+  // Продуктовите страници на Montibello имат своя лента само с «Обади се за цена и поръчка».
+  if (/^\/montibello\/[^/]+/.test(pathname)) return null;
   // На самата страница за записване бутонът „Запиши час“ би водил към нея: остават „Обади се“ и Viber.
   const onBookingPage = pathname === "/zapazi-chas";
 
