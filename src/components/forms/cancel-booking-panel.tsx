@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cancelOwnBooking } from "@/lib/actions/cancel-booking";
 import { siteConfig } from "@/lib/site";
 
-const PHONE = siteConfig.contact.phoneFormatted;
+// Неразделими интервали: номерът не се разделя на два реда на телефон.
+const PHONE = siteConfig.contact.phoneFormatted.replaceAll(" ", "\u00a0");
 
 /** Редът за 50% при късен отказ (Саиф, №17): казва се преди потвърждението и след него. */
 const LATE_BEFORE = `До часа остават по-малко от 5 часа, затова това е късен отказ. Може да начислим 50% от стойността на услугата при следващото ти посещение. Можеш и да се обадиш на ${PHONE}.`;

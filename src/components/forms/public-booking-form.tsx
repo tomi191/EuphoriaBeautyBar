@@ -505,7 +505,7 @@ export function PublicBookingForm({
         <p className="mt-4 text-sm text-muted-foreground">
           {done.emailSent
             ? `Изпратихме потвърждение на ${email}. Ако нещо се промени, откажи часа оттук най-късно 5 часа преди часа.`
-            : `Не успяхме да изпратим писмо. Ако се наложи да откажеш, ползвай бутона по-долу или се обади на ${SALON_PHONE_DISPLAY}.`}
+            : `Не успяхме да изпратим писмо. Ако се наложи да откажеш, ползвай бутона по-долу или се обади на ${SALON_PHONE_DISPLAY.replaceAll(" ", "\u00a0")}.`}
         </p>
         <Button asChild variant="outline" className="mt-4 h-11 rounded-full px-6">
           <a href={`/otkazhi-chas/${done.id}`}>Откажи часа</a>

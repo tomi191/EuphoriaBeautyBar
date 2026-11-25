@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const PHONE = siteConfig.contact.phoneFormatted;
+// Неразделими интервали: номерът не се разделя на два реда на телефон.
+const PHONE = siteConfig.contact.phoneFormatted.replaceAll(" ", "\u00a0");
 
 export default async function CancelBookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
