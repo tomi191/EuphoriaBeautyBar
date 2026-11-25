@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteBot } from "@/components/bot/site-bot";
 import { MobileCallBar } from "@/components/layout/mobile-call-bar";
+import { CallClickCounter } from "@/components/analytics/call-click-counter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { websiteSchema, organizationSchema, personSchema } from "@/lib/schema";
 import { siteConfig } from "@/lib/site";
@@ -123,6 +124,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <MobileCallBar />
           <SiteBot />
+          <CallClickCounter />
           <Toaster richColors closeButton position="top-right" />
         </ThemeProvider>
         {/* LocalBusiness (с AggregateRating) живее на homepage — там rating-ът се чете
