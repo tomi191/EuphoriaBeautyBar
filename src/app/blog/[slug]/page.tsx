@@ -15,7 +15,8 @@ import { ShareButtons } from "@/components/blog/share-buttons";
 import { getPublishedPosts, getPublishedPost } from "@/lib/data/blog-store";
 import { siteConfig } from "@/lib/site";
 import { RelatedServices } from "@/components/seo/related-services";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, faqSchema } from "@/lib/schema";
+import { faqFromBlocks } from "@/lib/data/blog";
 
 interface Params {
   params: Promise<{ slug: string }>;
@@ -75,6 +76,8 @@ export default async function BlogPostPage({ params }: Params) {
   const related = allPosts
     .filter((p) => p.slug !== post.slug && p.category === post.category)
     .slice(0, 3);
+  // FAQPage само за въпросите, които статията показва (заглавия с faq: true).
+  const faq = faqFromBlocks(post.content);
 
   return (
     <>
@@ -226,6 +229,7 @@ export default async function BlogPostPage({ params }: Params) {
               logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/brand/logo-black.webp` },
             },
           },
+          ...(faq.length > 0 ? [faqSchema(faq)] : []),
         ]}
       />
     </>

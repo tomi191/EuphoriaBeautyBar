@@ -13,6 +13,7 @@ import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { formatAmount } from "@/lib/booking/price";
 import { cn, slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
+import { fillPrices } from "@/lib/seo/price-tokens";
 import { ServicePromo } from "@/components/campaigns/promo-blocks";
 import { loadRunningCampaigns } from "@/lib/campaigns/public";
 import { todaySofia } from "@/lib/campaigns/core";
@@ -53,13 +54,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const content = SERVICE_CONTENT[service];
   const detail = await getServiceDetail(slug, service);
   if (!content || !detail) return { robots: { index: false } };
+  // {price:Име}/{min:Име} от ценоразписа; липсва ли цена, описанието не се подава (Next ползва общото).
+  const description = fillPrices(content.metaDescription, [detail.category]) ?? undefined;
   return {
     title: content.metaTitle,
-    description: content.metaDescription,
+    description,
     alternates: { canonical: `/uslugi/${slug}/${service}` },
     openGraph: {
       title: content.metaTitle,
-      description: content.metaDescription,
+      description,
       images: [`/images/services/unique/${service}.webp`],
     },
   };
@@ -80,6 +83,14 @@ export default async function ServiceDetailPage({ params }: Params) {
   const url = `${siteConfig.url}/uslugi/${slug}/${service}`;
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
   const priceLabel = `${item.priceFrom ? "от " : ""}${formatAmount(item.price)} ${item.currency}`;
+  // Текстовете със {price:Име}/{min:Име} се попълват от ценоразписа; абзац или въпрос без цена отпада.
+  const fill = (t: string) => fillPrices(t, [category]);
+  const answer = content.answer ? fill(content.answer) : null;
+  const intro = content.intro.flatMap((p) => fill(p) ?? []);
+  const faq = content.faq.flatMap((f) => {
+    const a = fill(f.a);
+    return a ? [{ q: f.q, a }] : [];
+  });
 
   // Service schema — Offer (единична цена), provider чрез @id референция (E-E-A-T консолидация).
   const serviceLd = {
@@ -88,7 +99,7 @@ export default async function ServiceDetailPage({ params }: Params) {
     "@id": `${url}#service`,
     serviceType: item.name,
     name: content.metaTitle.split(" —")[0],
-    description: content.metaDescription,
+    description: fill(content.metaDescription) ?? undefined,
     url,
     provider: { "@type": "BeautySalon", "@id": siteConfig.url, name: siteConfig.name },
     areaServed: [
@@ -109,7 +120,7 @@ export default async function ServiceDetailPage({ params }: Params) {
     { name: category.title, url: `${siteConfig.url}/uslugi/${slug}` },
     { name: item.name, url },
   ]);
-  const faqLd = faqSchema(content.faq.map((f) => ({ question: f.q, answer: f.a })));
+  const faqLd = faqSchema(faq.map((f) => ({ question: f.q, answer: f.a })));
 
   return (
     <>
@@ -133,6 +144,7 @@ export default async function ServiceDetailPage({ params }: Params) {
           <div className={cn("max-w-2xl", promos.length > 0 && "max-lg:flex max-lg:flex-col")}>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">{category.shortTitle} · кв. Левски, Варна</p>
             <BlurText as="h1" text={`${item.name} във Варна`} className="font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl" stagger={0.025} />
+            {answer && <p className="mt-6 max-w-xl text-lg leading-relaxed text-foreground/85">{answer}</p>}
             <p className={cn("mt-6 font-serif text-xl italic text-muted-foreground", promos.length > 0 && "max-lg:order-last")}>{content.tagline}</p>
             {promos.length > 0 ? (
               <ServicePromo campaigns={promos} serviceName={item.name} today={todaySofia()} />
@@ -153,7 +165,7 @@ export default async function ServiceDetailPage({ params }: Params) {
       {/* ВЪВЕДЕНИЕ */}
       <section className="border-y border-border/40 bg-secondary/40 py-16 lg:py-20">
         <div className="mx-auto max-w-3xl space-y-5 px-4 lg:px-8">
-          {content.intro.map((p, i) => (
+          {intro.map((p, i) => (
             <Reveal key={i} delay={i * 0.05}>
               <p className="text-lg leading-relaxed text-foreground/85">{p}</p>
             </Reveal>
@@ -228,7 +240,7 @@ export default async function ServiceDetailPage({ params }: Params) {
             <h2 className="mb-8 font-display text-3xl font-medium md:text-4xl">Често задавани въпроси</h2>
           </Reveal>
           <div className="space-y-6">
-            {content.faq.map((f, i) => (
+            {faq.map((f, i) => (
               <Reveal key={f.q} delay={i * 0.04}>
                 <div className="border-b border-border/50 pb-5">
                   <h3 className="font-medium">{f.q}</h3>

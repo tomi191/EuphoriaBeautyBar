@@ -15,8 +15,9 @@ export interface BlogPost {
 
 export type BlogBlock =
   | { type: "p"; text: string }
-  | { type: "h2"; text: string }
-  | { type: "h3"; text: string }
+  // faq: заглавието е въпрос; абзаците под него до следващото заглавие са отговорът (FAQPage).
+  | { type: "h2"; text: string; faq?: boolean }
+  | { type: "h3"; text: string; faq?: boolean }
   | { type: "quote"; text: string; author?: string }
   | { type: "list"; items: string[] }
   | { type: "callout"; variant: "tip" | "info"; title: string; text: string }
@@ -27,3 +28,26 @@ export type BlogBlock =
 // (`getPublishedPosts` / `getPublishedPost`). Новите статии се генерират през AI.
 // Тук остават само презентационните типове (`BlogPost`, `BlogBlock`), които се
 // ползват от blog-store, post-renderer, markdown-to-blocks и generator.
+
+/**
+ * Въпросите и отговорите, които статията показва (заглавие с `faq: true` + абзаците под него до
+ * следващото заглавие). От тях е FAQPage на статията, затова видимото и schema са едно и също.
+ */
+export function faqFromBlocks(blocks: BlogBlock[]): { question: string; answer: string }[] {
+  const out: { question: string; answer: string }[] = [];
+  let current: { question: string; parts: string[] } | null = null;
+  const flush = () => {
+    if (current && current.parts.length > 0) out.push({ question: current.question, answer: current.parts.join(" ") });
+    current = null;
+  };
+  for (const b of blocks) {
+    if (b.type === "h2" || b.type === "h3") {
+      flush();
+      if (b.faq) current = { question: b.text, parts: [] };
+    } else if (b.type === "p" && current) {
+      current.parts.push(b.text);
+    }
+  }
+  flush();
+  return out;
+}

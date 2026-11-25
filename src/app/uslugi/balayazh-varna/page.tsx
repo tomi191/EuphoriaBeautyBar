@@ -11,57 +11,95 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { JournalPosts } from "@/components/seo/journal-posts";
 import { breadcrumbSchema, serviceSchema, faqSchema } from "@/lib/schema";
 import { getTeam } from "@/lib/data/team-db";
+import { getCatalogCategory } from "@/lib/data/service-catalog";
+import { fillPrices } from "@/lib/seo/price-tokens";
+import { renderInline } from "@/components/blog/post-renderer";
 import { siteConfig } from "@/lib/site";
 
-export const metadata: Metadata = {
-  // Signature локална страница — „балаяж варна" + национален чадър „балаяж"/„балеаж" (5–6K).
-  title: "Балаяж във Варна, кв. Левски",
-  description:
-    "Балаяж (балеаж) във Варна при Снежана с 25+ г. опит, кв. Левски. Мек преход, грижа Goldwell Kerasilk, реални цени и онлайн записване.",
-  alternates: { canonical: "/uslugi/balayazh-varna" },
-  openGraph: {
-    title: "Балаяж във Варна — салон Euphoria, кв. Левски",
-    description:
-      "Балаяж при Снежана, 25+ г. опит, в кв. Левски, Варна. Мек преход и грижа Goldwell Kerasilk. Запази час онлайн.",
-  },
-};
+// Цените в текстовете идват от ценоразписа ({price:Име}, виж price-tokens.ts); admin презарежда страницата.
+const DESCRIPTION =
+  "Балаяж и балеаж във Варна при Снежана: {price:Балаяж (средна коса)} за средна и {price:Балаяж (дълга коса)} за дълга коса. Консултация преди процедурата, кв. Левски. Запис онлайн.";
 
-const faq = [
+export async function generateMetadata(): Promise<Metadata> {
+  const category = await getCatalogCategory("frizorski-uslugi").catch(() => undefined);
+  const description =
+    (category && fillPrices(DESCRIPTION, [category])) ??
+    "Балаяж и балеаж във Варна при Снежана. Консултация преди процедурата, кв. Левски. Запис онлайн.";
+  return {
+    // Signature локална страница: „балаяж варна" + национален чадър „балаяж"/„балеаж".
+    title: "Балаяж и балеаж във Варна: цени, кв. Левски",
+    description,
+    alternates: { canonical: "/uslugi/balayazh-varna" },
+    openGraph: {
+      title: "Балаяж и балеаж във Варна: салон Euphoria, кв. Левски",
+      description,
+    },
+  };
+}
+
+const HERO_LEAD =
+  "Балаяж, който много хора търсят като балеаж, е ръчно изсветляване на косата с мек преход, без рязка линия при корена.";
+const HERO_PRICE =
+  "При Снежана, в кв. Левски във Варна, е {price:Балаяж (средна коса)} за средна и {price:Балаяж (дълга коса)} за дълга коса, след консултация.";
+
+const PRICES =
+  "Балаяж, средна коса: {price:Балаяж (средна коса)}. Балаяж, дълга коса: {price:Балаяж (дълга коса)}. Цената е „от“. Окончателната я казва Снежана на консултацията според дължината и гъстотата на косата. Планирай между 3 и 5 часа. За къса коса балаяж в ценоразписа няма: ако косата ти е къса, питай какво може да се направи, например кичури на фолио {price:Кичури на фолио (къса коса)}. Пълният ценоразпис е на страницата [фризьорски услуги](/uslugi/frizorski-uslugi), а свободните часове са в [онлайн записването](/zapazi-chas).";
+
+const FAQ = [
   {
-    question: "Балаяж или балеаж — кое е правилното?",
+    question: "Балаяж или балеаж: кое е правилното?",
     answer:
-      "Думата идва от френското balayage („метене“, заради движението, с което се нанася боята). На български се пише „балаяж“, но много хора я търсят и като „балеаж“ — процедурата е една и съща: ръчно изсветляване с мек преход, без рязка граница на корена.",
+      "Процедурата е една. Думата идва от френското balayage („метене“, заради движението, с което се нанася боята). На български се пише „балаяж“, но много хора го търсят като „балеаж“, затова ползваме и двете. И в двата случая е ръчно изсветляване с мек преход, без рязка линия при корена.",
+  },
+  {
+    question: "Колко струва балаяж (балеаж) във Варна?",
+    answer:
+      "{Price:Балаяж (средна коса)} за средна коса и {price:Балаяж (дълга коса)} за дълга. Цената е „от“: Снежана я потвърждава на консултацията според дължината и гъстотата.",
   },
   {
     question: "Колко издържа балаяж?",
     answer:
-      "Тъй като балаяжът е с мек преход и без рязка граница на корена, израстването се вижда плавно — обикновено между посещенията минават 8 до 12 седмици. Между тях понякога стига освежаване с тонер вместо цяла процедура.",
+      "Тъй като балаяжът е с мек преход и без рязка граница на корена, израстването се вижда плавно: обикновено между посещенията минават 8 до 12 седмици. Между тях понякога стига освежаване с тонер вместо цяла процедура.",
   },
   {
     question: "Вреди ли балаяж на косата?",
     answer:
-      "Балаяжът включва изсветляване, затова след процедурата препоръчваме възстановяваща грижа — работим с Goldwell Kerasilk и Nashi Argan, за да върнем влагата и блясъка на изсветлената дължина.",
+      "Балаяжът включва изсветляване, затова след процедурата препоръчваме грижа за косата: работим с Goldwell Kerasilk и Nashi Argan.",
   },
   {
     question: "Може ли балаяж на тъмна или вече боядисана коса?",
     answer:
-      "Да, но резултатът зависи от изходния цвят и какво е правено досега. Затова преди процедурата правим консултация и преценяваме на колко стъпки да стигнем до желания тон, без да съсипем косата.",
+      "Да, но резултатът зависи от изходния цвят и от това какво е правено досега. Затова преди процедурата правим консултация и преценяваме на колко стъпки да стигнем до желания тон. Повече: [балеаж на тъмна коса](/blog/baleazh-na-tamna-kosa-kakvo-e-vazmozhno).",
   },
   {
     question: "Колко време отнема процедурата?",
     answer:
-      "Между 3 и 5 часа според дължината и текущото състояние на косата. Запази си време предварително — балаяжът иска пълно внимание.",
+      "Между 3 и 5 часа според дължината и текущото състояние на косата. Запази си време предварително: балаяжът иска пълно внимание.",
+  },
+  {
+    question: "Каква е разликата между балаяж и кичури?",
+    answer:
+      "Балаяжът е ръчно нанесен мек преход с ниска поддръжка. Кичурите на фолио изсветляват по-равномерно и по-светло от корена. Кичурите са {price:Кичури на фолио (къса коса)}, балаяжът {price:Балаяж (средна коса)} за средна коса. Сметка за половин година има в статията [кичури или балеаж](/blog/kichuri-ili-baleazh-kak-da-izberesh).",
   },
   {
     question: "Къде правите балаяж във Варна?",
     answer:
-      "В салон Euphoria, кв. Левски, ул. Петър Райчев 18 — близо до центъра на Варна. Час запазваш онлайн, по телефон или във Viber.",
+      "В салон Euphoria, кв. Левски, ул. Петър Райчев 18, близо до центъра на Варна. Час запазваш онлайн, по телефон или във Viber.",
   },
 ];
 
 export default async function BalayazhVarnaPage() {
   const team = await getTeam();
   const founder = team[0];
+  const category = await getCatalogCategory("frizorski-uslugi");
+  const cats = category ? [category] : [];
+  // Текст с цена, която липсва в ценоразписа, не се показва (и не влиза в schema).
+  const heroPrice = fillPrices(HERO_PRICE, cats);
+  const prices = fillPrices(PRICES, cats);
+  const faq = FAQ.flatMap((f) => {
+    const answer = fillPrices(f.answer, cats);
+    return answer ? [{ question: f.question, answer }] : [];
+  });
 
   return (
     <>
@@ -97,12 +135,12 @@ export default async function BalayazhVarnaPage() {
             </p>
             <BlurText
               as="h1"
-              text="Балаяж във Варна — мек преход, който расте красиво"
+              text="Балаяж и балеаж във Варна: мек преход, който расте красиво"
               className="max-w-3xl font-display text-4xl leading-[1.05] font-medium text-balance md:text-5xl lg:text-6xl"
               stagger={0.02}
             />
             <p className="mt-7 max-w-xl font-serif text-xl italic text-foreground/80">
-              Изсветляване с ръчна техника при Снежана — 25+ години зад стола. С грижа Goldwell Kerasilk и Nashi Argan, за да издържи цветът.
+              {heroPrice ? `${HERO_LEAD} ${heroPrice}` : HERO_LEAD}
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-12 rounded-full bg-foreground px-8 text-background hover:bg-primary">
@@ -128,11 +166,11 @@ export default async function BalayazhVarnaPage() {
           <Reveal>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Какво е балаяж</p>
             <h2 className="font-display text-3xl leading-[1.1] font-medium md:text-4xl">
-              Цвят, нанесен <span className="gradient-text">на ръка</span> — без рязка граница.
+              Цвят, нанесен <span className="gradient-text">на ръка</span>, без рязка граница.
             </h2>
             <div className="mt-6 space-y-4 text-foreground/80 md:text-lg">
               <p>
-                При балаяжа (среща се и изписан „балеаж") боята се нанася ръчно по дължината, а не от корен до връх.
+                При балаяжа (пише се и „балеаж“, процедурата е една) боята се нанася ръчно по дължината, а не от корен до връх.
                 Така изсветляването е меко и наподобява естественото избеляване от слънцето — преходът е плавен, а
                 израстването не оставя видима линия на корена.
               </p>
@@ -169,7 +207,7 @@ export default async function BalayazhVarnaPage() {
             </h2>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-foreground/85">
               Балаяжът и корекцията на цвят са сред специализациите на Снежана. Преди да започнем, сядаме за
-              консултация: гледаме изходния цвят, какво е правено досега и колко поддръжка искаш да отделяш — и решаваме
+              консултация: гледаме изходния цвят, какво е правено досега и колко поддръжка искаш да отделяш, и решаваме
               на колко стъпки да стигнем до тона, който търсиш, без да пресушим косата.
             </p>
             <div className="mt-7">
@@ -198,7 +236,7 @@ export default async function BalayazhVarnaPage() {
             <Reveal>
               <div className="h-full rounded-2xl border border-border/60 bg-card p-6">
                 <h3 className="font-display text-xl">Балаяж</h3>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/75">Мек, ръчно нанесен преход. Ниска поддръжка, естествен резултат — за изсветляване без рязка граница.</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/75">Мек, ръчно нанесен преход. Ниска поддръжка, естествен резултат. За изсветляване без рязка граница.</p>
               </div>
             </Reveal>
             <Reveal delay={0.06}>
@@ -210,21 +248,22 @@ export default async function BalayazhVarnaPage() {
             <Reveal delay={0.12}>
               <div className="h-full rounded-2xl border border-border/60 bg-card p-6">
                 <h3 className="font-display text-xl">Кератинова терапия</h3>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/75">Не е цвят — възстановява и приглажда косата след изсветляване. Често я добавяме след балаяж.</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/75">Не е цвят. Приглажда и подхранва косата след изсветляване.</p>
               </div>
             </Reveal>
           </div>
           <Reveal delay={0.1}>
-            <p className="mt-8 text-foreground/75">
-              За кичурите има отделна страница —{" "}
+            {prices && <p className="mt-8 text-foreground/75">{renderInline(prices)}</p>}
+            <p className={`${prices ? "mt-4" : "mt-8"} text-foreground/75`}>
+              За кичурите има отделна страница:{" "}
               <Link href="/uslugi/kichuri-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
                 кичури на фолио във Варна
               </Link>
-              , а класическото{" "}
+              . Класическото{" "}
               <Link href="/uslugi/boyadisvane-na-kosa-varna" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
                 боядисване на коса
               </Link>{" "}
-              — своя. Пълните цени са в{" "}
+              има своя. Пълните цени са в{" "}
               <Link href="/uslugi/frizorski-uslugi" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
                 ценоразписа на фризьорските услуги
               </Link>{" "}
@@ -232,7 +271,7 @@ export default async function BalayazhVarnaPage() {
               <Link href="/uslugi/frizorski-terapii" className="font-medium text-foreground underline decoration-dotted underline-offset-4 hover:text-primary">
                 фризьорските терапии
               </Link>
-              . Финалната цена зависи от дължината и гъстотата — затова я потвърждаваме на консултацията.
+              .
             </p>
           </Reveal>
         </div>
@@ -246,7 +285,7 @@ export default async function BalayazhVarnaPage() {
           <Reveal>
             <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/60">Често задавани въпроси</p>
             <h2 className="font-display text-3xl font-medium md:text-4xl">
-              Балаяж във Варна — <span className="gradient-text">въпроси</span>.
+              Балаяж във Варна: <span className="gradient-text">въпроси</span>.
             </h2>
           </Reveal>
           <div className="mt-10 divide-y divide-border/60">
@@ -254,7 +293,7 @@ export default async function BalayazhVarnaPage() {
               <Reveal key={item.question} delay={idx * 0.04}>
                 <div className="py-6">
                   <h3 className="font-display text-lg font-medium md:text-xl">{item.question}</h3>
-                  <p className="mt-2 leading-relaxed text-foreground/75">{item.answer}</p>
+                  <p className="mt-2 leading-relaxed text-foreground/75">{renderInline(item.answer)}</p>
                 </div>
               </Reveal>
             ))}
@@ -273,7 +312,7 @@ export default async function BalayazhVarnaPage() {
               Готова за <em className="font-serif italic text-mint">балаяж</em>?
             </h2>
             <p className="mt-4 text-background/70">
-              Запази час онлайн за консултация и балаяж — виждаш свободните часове в реално време, без обаждане.
+              Запази час онлайн за консултация и балаяж. Свободните часове се виждат в реално време, без обаждане.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-full bg-mint px-8 text-foreground hover:bg-mint/80">

@@ -13,7 +13,7 @@ import type { BlogBlock } from "@/lib/data/blog";
  */
 const INLINE_RE = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
 
-function renderInline(text: string): ReactNode {
+export function renderInline(text: string): ReactNode {
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
   let key = 0;
