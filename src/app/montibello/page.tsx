@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 const ANSWER =
-  "Montibello е испанска марка за професионална козметика за коса: шампоани, маски, серуми, бои и стайлинг. Работим с нея в салона, а Снежана има сертификати от Montibello. Продуктите за вкъщи вземаш от нас, на ул. Петър Райчев 18, Варна. Обади се на +359 898 66 33 15, кажи име и ще потвърдим цена и наличност.";
+  "Montibello е испанска марка за професионална козметика за коса: шампоани, маски, серуми, бои и стайлинг. Работим с нея в салона, а Снежана има сертификати от Montibello. Продуктите за вкъщи вземаш от нас, на ул. Петър Райчев 18, Варна.";
 
 const FAQ = [
   {
@@ -147,7 +147,7 @@ export default function MontibelloPage() {
               <br />
               във Варна
             </h1>
-            <p className="mt-1.5 font-serif text-[22px] leading-8 italic lg:text-[26px] lg:leading-9">
+            <p className="mt-1.5 font-serif text-[22px] leading-8 italic text-balance lg:text-[26px] lg:leading-9">
               професионална козметика за коса, с която работим в салона
             </p>
             <p className="mt-4 max-w-[560px] text-base leading-[26px] lg:text-[17px] lg:leading-7">{ANSWER}</p>

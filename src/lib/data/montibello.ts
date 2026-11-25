@@ -62,6 +62,8 @@ export interface MontibelloProduct {
   keyIngredients?: string[];
   /** Официална брандова снимка (по slug в /images/montibello/). */
   officialImage?: string;
+  /** Размер на файла в px, когато е малък: на екрана не се увеличава над 1,0 при 2× (Decode, визия №45, М2). */
+  imageSize?: [number, number];
   accent: MontibelloAccent;
   /** Салонен/професионален продукт — не се продава за домашна употреба. */
   professional?: boolean;
@@ -715,7 +717,9 @@ export const montibelloProducts: MontibelloProduct[] = [
     shortDescription: "Гамата за оформяне и финиш на Montibello.",
     description:
       "Decode е цялата стайлинг гама: дефиниция, фиксация, текстура и блясък за всяка прическа. Продуктите оформят, но и пазят косата, докато го правят.\n\nРазделена е на под-линии - Curl, Smooth, Finish, Volume, Texture и Texture Men.",
-    officialImage: "/images/montibello/decode.webp",
+    // Опаковки, не снимката с хора (визия №45, М2): Decode показва гамата Volume.
+    officialImage: "/images/montibello/decode-volume.webp",
+    imageSize: [542, 426],
     accent: "ink",
   },
   {
@@ -729,6 +733,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Под-линията на Decode за къдрава коса. Оформя дефинирани, меки или естествени къдрици според това какъв резултат търсиш.",
     forHairType: "Къдрава коса",
     officialImage: "/images/montibello/decode-curl.webp",
+    imageSize: [257, 302],
     accent: "mint",
   },
   {
@@ -742,6 +747,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Професионалната под-линия на Decode за изправяне. Дава термозащита и контрол върху пухкавостта, за да остане косата гладка и с блясък след преса или сешоар.",
     forHairType: "Коса за изправяне / срещу пухкавост",
     officialImage: "/images/montibello/decode-smooth.webp",
+    imageSize: [442, 325],
     accent: "mint",
   },
   {
@@ -754,6 +760,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Финишната под-линия на Decode. Смолата, устойчива на влага, удължава задържането на прическата дори при влажен въздух.",
     officialImage: "/images/montibello/decode-finish.webp",
+    imageSize: [458, 396],
     accent: "ink",
   },
   {
@@ -766,6 +773,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Стайлинг за обем от гамата Decode. Повдига косата при оформяне и придава плътност на прическата.",
     officialImage: "/images/montibello/decode-volume.webp",
+    imageSize: [542, 426],
     accent: "mint",
   },
   {
@@ -778,6 +786,7 @@ export const montibelloProducts: MontibelloProduct[] = [
     description:
       "Текстурата в гамата Decode. Добавя структура и грапавина на прическата за по-небрежен, оформен вид.",
     officialImage: "/images/montibello/decode-texture.webp",
+    imageSize: [456, 381],
     accent: "sage",
   },
   {
@@ -791,6 +800,7 @@ export const montibelloProducts: MontibelloProduct[] = [
       "Мъжката текстурираща под-линия на Decode. Включва моделиращ крем, гел и матов восък за бързо ежедневно оформяне.",
     forHairType: "Мъжка коса",
     officialImage: "/images/montibello/decode-texture-men.webp",
+    imageSize: [439, 473],
     accent: "ink",
   },
 ];

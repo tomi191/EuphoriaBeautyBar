@@ -44,11 +44,20 @@ function CardCall({ name }: { name: string }) {
   );
 }
 
+/** Малка снимка (Decode) не расте над размера на файла при 2×: по-малка, но остра. */
+export function capOf(p: MontibelloProduct): React.CSSProperties | undefined {
+  return p.imageSize ? { maxWidth: p.imageSize[0] / 2, maxHeight: p.imageSize[1] / 2 } : undefined;
+}
+
 function Pack({ p, sizes, className }: { p: MontibelloProduct; sizes: string; className?: string }) {
   return (
     <div className={cn("relative overflow-hidden rounded-[10px] bg-white", className)}>
       {p.officialImage && (
-        <Image src={p.officialImage} alt={p.name} fill sizes={sizes} className="object-contain p-[7%]" />
+        <div className="absolute inset-0 flex items-center justify-center p-[9%]">
+          <div className="relative size-full" style={capOf(p)}>
+            <Image src={p.officialImage} alt={p.name} fill sizes={sizes} className="object-contain" />
+          </div>
+        </div>
       )}
     </div>
   );

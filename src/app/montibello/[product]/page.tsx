@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import {
   ArrowLink,
   CallButton,
+  capOf,
   FaqBlock,
   HOURS,
   PHONE,
@@ -169,15 +170,19 @@ export default async function MontibelloProductPage({ params }: Params) {
         <section className="mt-4 grid gap-4 lg:mt-8 lg:grid-cols-[560px_1fr] lg:gap-16">
           <div className="relative h-[290px] overflow-hidden rounded-[10px] border border-border/60 bg-white lg:h-auto lg:min-h-[600px]">
             {p.officialImage && (
-              <Image
-                src={p.officialImage}
-                alt={copy?.alt ?? `Montibello ${p.name}`}
-                fill
-                priority
-                fetchPriority="high"
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-contain p-4 lg:p-[9%]"
-              />
+              <div className="absolute inset-0 flex items-center justify-center p-7.5 lg:p-[15%]">
+                <div className="relative size-full" style={capOf(p)}>
+                  <Image
+                    src={p.officialImage}
+                    alt={copy?.alt ?? `Montibello ${p.name}`}
+                    fill
+                    priority
+                    fetchPriority="high"
+                    sizes="(min-width: 1024px) 560px, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+              </div>
             )}
           </div>
           <div>
