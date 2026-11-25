@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireAdmin } from "@/lib/actions/auth-guard";
 import { slugify } from "@/lib/utils";
+import { processTeamPhoto, removeTeamPhotoIfUnused, TEAM_BUCKET, TEAM_PHOTO_ERRORS, teamStorage } from "@/lib/images/team-photo";
 
 // Всички страници, които четат екипа през getTeam(). Един списък, за да не се разминава.
 const TEAM_PATHS = ["/admin/team", "/", "/za-nas", "/salon-varna-levski", "/uslugi/balayazh-varna"] as const;
@@ -53,11 +54,36 @@ export async function createTeamMember(input: TeamInput) {
 export async function updateTeamMember(id: string, input: TeamInput) {
   await requireAdmin();
   const data = teamSchema.parse(input);
+  const before = await db.query.teamMembers.findFirst({ where: (t, { eq }) => eq(t.id, id), columns: { image: true } });
   await db
     .update(schema.teamMembers)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(schema.teamMembers.id, id));
+  if (before?.image && before.image !== (data.image ?? null)) await removeTeamPhotoIfUnused(before.image);
   revalidateAll();
+}
+
+/** «Качи снимка» в «Екип»: същата обработка и същото хранилище като снимката на изпълнител (PR №57). */
+export async function uploadTeamMemberPhoto(formData: FormData) {
+  await requireAdmin();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false as const, error: TEAM_PHOTO_ERRORS.none };
+  if (file.size > 5 * 1024 * 1024) return { ok: false as const, error: TEAM_PHOTO_ERRORS.tooBig };
+  const res = await processTeamPhoto(Buffer.from(await file.arrayBuffer()));
+  if (!res.ok) return res;
+  const s = teamStorage();
+  if (!s) return { ok: false as const, error: "Качването не е настроено (липсват ключовете за хранилището)." };
+  await s.client.storage.createBucket(TEAM_BUCKET, { public: true }).catch(() => {}); // idempotent
+  const path = `member-${nanoid(10)}-${Date.now()}.webp`;
+  const { error } = await s.client.storage.from(TEAM_BUCKET).upload(path, res.webp, { contentType: "image/webp" });
+  if (error) return { ok: false as const, error: "Грешка при качване. Опитай пак." };
+  return { ok: true as const, url: `${s.prefix}${path}` };
+}
+
+/** Качена, но незапазена снимка (затворена форма, «Махни» или нова снимка): трие се, ако никой не я ползва. */
+export async function discardTeamMemberPhoto(url: string) {
+  await requireAdmin();
+  await removeTeamPhotoIfUnused(url);
 }
 
 export async function deleteTeamMember(id: string) {

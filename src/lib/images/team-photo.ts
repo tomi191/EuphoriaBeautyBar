@@ -37,7 +37,7 @@ export function teamStorage() {
 }
 
 /**
- * Трие файл от «team», ако адресът е от нашето хранилище и никой изпълнител вече не го ползва.
+ * Трие файл от «team», ако адресът е от нашето хранилище и никой изпълнител или член на екипа вече не го ползва.
  * Стари пътища (/images/team/…) и чужди адреси не се пипат.
  */
 export async function removeTeamPhotoIfUnused(image: string | null | undefined): Promise<void> {
@@ -48,6 +48,9 @@ export async function removeTeamPhotoIfUnused(image: string | null | undefined):
   if (!path) return;
   const inUse = await db.query.resources.findFirst({ where: (r, { eq }) => eq(r.image, image), columns: { id: true } });
   if (inUse) return;
+  // Същото хранилище ползва и «Екип» (/admin/team): снимка на член не се трие отвън.
+  const inTeam = await db.query.teamMembers.findFirst({ where: (t, { eq }) => eq(t.image, image), columns: { id: true } });
+  if (inTeam) return;
   const { error } = await s.client.storage.from(TEAM_BUCKET).remove([path]);
   if (error) console.warn("[team-photo] старата снимка не е изтрита:", path, error.message);
 }
