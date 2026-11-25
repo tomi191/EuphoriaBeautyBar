@@ -2,6 +2,7 @@ import { siteConfig } from "@/lib/site";
 import { getFaqItems } from "@/lib/data/faq-db";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
 import { fillBooking } from "@/lib/seo/booking-copy";
+import { fillPrices } from "@/lib/seo/price-tokens";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
@@ -191,8 +192,12 @@ export async function renderLlmsFullTxt(): Promise<string> {
     ].join("\n");
   });
 
+  // {price:Име}/{min:Име} (решение 42) като на страницата: въпрос с липсваща цена отпада.
   const serviceFaq = catalog.flatMap((c) =>
-    (SERVICE_FAQ[c.slug] ?? []).map((f) => ({ ...f, answer: fillBooking(f.answer, catOnline(c)) })),
+    (SERVICE_FAQ[c.slug] ?? []).flatMap((f) => {
+      const answer = fillPrices(fillBooking(f.answer, catOnline(c)), [c]);
+      return answer ? [{ ...f, answer }] : [];
+    }),
   );
   const allFaq = [...(await getFaqItems()), ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
 
