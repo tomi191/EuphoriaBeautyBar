@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/actions/auth-guard";
-import { loadAdminClients } from "@/lib/admin/clients-data";
-import { filterClients, summarizeClients } from "@/lib/admin/clients";
+import { CLIENTS_PAGE_SIZE, loadAdminClientsPage, loadClientHistory } from "@/lib/admin/clients-data";
 import { formatBgPhone } from "@/lib/rental/inquiry-rules";
 import { formatEuro } from "@/lib/booking/price";
 import { sofiaTimeLabel } from "@/lib/booking/time";
@@ -47,32 +46,32 @@ export default async function AdminClientsPage({
   await requireAdmin();
   const sp = await searchParams;
   const q = one(sp.q).slice(0, 80);
-  const resourceParam = one(sp.resource);
+  const resourceParam = one(sp.staff);
   const clientParam = one(sp.client);
+  const pageParam = Number.parseInt(one(sp.page), 10) || 1;
 
-  const { clients, bookings, resources } = await loadAdminClients();
-  const now = Date.now();
-  const all = summarizeClients(clients, bookings, now);
+  // Страница от 50 клиента: сумите се смятат в базата; историята се чете само за отворения клиент.
+  const [data, picked] = await Promise.all([
+    loadAdminClientsPage({ query: q, resourceId: resourceParam || null, page: pageParam, nowMs: Date.now() }),
+    clientParam ? loadClientHistory(clientParam) : null,
+  ]);
+  const { rows, total, page, pages, resources, filterResources } = data;
   const resName = new Map(resources.map((r) => [r.id, r.name]));
-  // Във филтъра: само специалистите, които имат клиенти.
-  const withClients = new Set(all.flatMap((r) => r.resourceIds));
-  const filterResources = resources.filter((r) => withClients.has(r.id));
   const resourceFilter = resName.has(resourceParam) ? resourceParam : null;
-  const rows = filterClients(all, { query: q, resourceId: resourceFilter });
 
-  const href = (p: { q?: string; resource?: string | null; client?: string | null }) => {
+  const href = (p: { q?: string; resource?: string | null; client?: string | null; page?: number }) => {
     const u = new URLSearchParams();
     if (p.q) u.set("q", p.q);
-    if (p.resource) u.set("resource", p.resource);
+    if (p.resource) u.set("staff", p.resource);
+    if (p.page && p.page > 1) u.set("page", String(p.page));
     if (p.client) u.set("client", p.client);
     const s = u.toString();
     return `/admin/clients${s ? `?${s}` : ""}`;
   };
 
-  const picked = clientParam ? all.find((r) => r.id === clientParam) ?? null : null;
-  const history = picked
-    ? bookings.filter((b) => b.clientId === picked.id).sort((a, b) => b.startMs - a.startMs)
-    : [];
+  const history = picked?.bookings ?? [];
+  const from = total === 0 ? 0 : (page - 1) * CLIENTS_PAGE_SIZE + 1;
+  const to = Math.min(page * CLIENTS_PAGE_SIZE, total);
 
   return (
     <>
@@ -80,7 +79,7 @@ export default async function AdminClientsPage({
 
       {/* търсене */}
       <form action="/admin/clients" method="get" className="mb-4 flex max-w-md gap-2">
-        {resourceFilter && <input type="hidden" name="resource" value={resourceFilter} />}
+        {resourceFilter && <input type="hidden" name="staff" value={resourceFilter} />}
         <Input
           name="q"
           defaultValue={q}
@@ -125,11 +124,11 @@ export default async function AdminClientsPage({
         <section id="istoriya" className="mb-6 scroll-mt-24">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="font-display text-xl font-medium">История: {picked.name}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{formatBgPhone(picked.phone)}</p>
+              <h2 className="font-display text-xl font-medium">История: {picked.client.name}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{formatBgPhone(picked.client.phone)}</p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href={href({ q, resource: resourceFilter })}>Затвори</Link>
+              <Link href={href({ q, resource: resourceFilter, page })}>Затвори</Link>
             </Button>
           </div>
           <div className="overflow-hidden rounded-2xl border border-border bg-background">
@@ -182,7 +181,7 @@ export default async function AdminClientsPage({
           </TableHeader>
           <TableBody>
             {rows.map((c) => {
-              const historyHref = `${href({ q, resource: resourceFilter, client: c.id })}#istoriya`;
+              const historyHref = `${href({ q, resource: resourceFilter, page, client: c.id })}#istoriya`;
               return (
                 <TableRow key={c.id} className="group">
                   <TableCell>
@@ -194,8 +193,14 @@ export default async function AdminClientsPage({
                   <TableCell className="text-right text-sm tabular-nums">{c.visits}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{c.lastVisitMs ? day(c.lastVisitMs) : <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell className="whitespace-nowrap text-sm">{c.nextMs ? dayTime(c.nextMs) : <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-sm">
-                    {c.resourceIds.map((id) => resName.get(id) ?? "Специалист").join(", ")}
+                  {/* Пренася се между имената: при трима специалисти таблицата не излиза от полето. */}
+                  <TableCell className="min-w-40 whitespace-normal text-sm">
+                    {c.resourceIds.map((id, i) => (
+                      <span key={id}>
+                        {i > 0 && ", "}
+                        <span className="whitespace-nowrap">{resName.get(id) ?? "Специалист"}</span>
+                      </span>
+                    ))}
                   </TableCell>
                   <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
                     {formatEuro(c.spent)}
@@ -217,13 +222,107 @@ export default async function AdminClientsPage({
             {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="py-12 text-center text-muted-foreground">
-                  {all.length === 0 ? "Още няма клиенти със записан час." : "Няма клиент по това търсене."}
+                  {filterResources.length === 0 ? "Още няма клиенти със записан час." : "Няма клиент по това търсене."}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* страници */}
+      {total > 0 && (
+        <nav aria-label="Страници" className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+          <p className="text-sm text-muted-foreground tabular-nums">
+            Показани {from}–{to} от {total}
+          </p>
+          {pages > 1 && (
+            <div className="flex flex-wrap items-center justify-center gap-1">
+              <PageLink href={page > 1 ? href({ q, resource: resourceFilter, page: page - 1 }) : null}>Назад</PageLink>
+              {pageItems(page, pages).map((it, i) =>
+                it.kind === "gap" ? (
+                  <span key={`g${i}`} aria-hidden className={"px-0.5 text-muted-foreground " + it.cls}>
+                    …
+                  </span>
+                ) : (
+                  <PageLink
+                    key={it.page}
+                    href={href({ q, resource: resourceFilter, page: it.page })}
+                    current={it.page === page}
+                    className={it.cls}
+                  >
+                    {it.page}
+                  </PageLink>
+                ),
+              )}
+              <PageLink href={page < pages ? href({ q, resource: resourceFilter, page: page + 1 }) : null}>Напред</PageLink>
+            </div>
+          )}
+        </nav>
+      )}
     </>
   );
+}
+
+/** Бутон за страница: същият бутон на администрацията, поне 44 px. Без адрес е изключен. */
+function PageLink({
+  href,
+  current,
+  className = "",
+  children,
+}: {
+  href: string | null;
+  current?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const cls = "min-h-11 min-w-11 tabular-nums " + className;
+  if (!href) {
+    return (
+      <Button variant="outline" className={cls} disabled>
+        {children}
+      </Button>
+    );
+  }
+  return (
+    <Button
+      asChild
+      variant="outline"
+      className={cls + (current ? " border-foreground bg-foreground text-background hover:bg-foreground/90 hover:text-background dark:border-foreground dark:bg-foreground dark:hover:bg-foreground/90" : "")}
+    >
+      <Link href={href} aria-current={current ? "page" : undefined}>
+        {children}
+      </Link>
+    </Button>
+  );
+}
+
+type PageItem = { kind: "page"; page: number; cls: string } | { kind: "gap"; cls: string };
+
+/**
+ * Номерата: първата, последната и съседните на текущата; при над 4 страници на телефон съседите се
+ * скриват, за да се събере редът на 390. «…» стои там, където има пропуск (с sm:hidden, ако пропускът
+ * е само на телефон).
+ */
+function pageItems(page: number, pages: number): PageItem[] {
+  const out: PageItem[] = [];
+  let prevDesk = 0;
+  let prevMobile = 0;
+  let mobileGap = false; // след последния номер на телефон вече има «…»
+  for (let p = 1; p <= pages; p++) {
+    const edge = p === 1 || p === pages;
+    const mobile = edge || p === page || pages <= 4;
+    if (!edge && Math.abs(p - page) > 1) continue;
+    if (p - prevDesk > 1) {
+      out.push({ kind: "gap", cls: "" });
+      mobileGap = true;
+    } else if (mobile && p - prevMobile > 1 && !mobileGap) out.push({ kind: "gap", cls: "sm:hidden" });
+    out.push({ kind: "page", page: p, cls: mobile ? "" : "hidden sm:inline-flex" });
+    prevDesk = p;
+    if (mobile) {
+      prevMobile = p;
+      mobileGap = false;
+    }
+  }
+  return out;
 }
