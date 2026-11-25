@@ -3,6 +3,7 @@ import type { ServiceCategory, ServiceItem, Currency } from "@/lib/data/services
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { getReadiness, isReady } from "@/lib/booking/readiness";
 import { slugify } from "@/lib/utils";
+import { onlineItemIds } from "@/lib/seo/booking-copy";
 
 /**
  * Презентационни/SEO полета, които НЕ са цени и не се менят от admin —
@@ -32,7 +33,7 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
     metaTitle: "Маникюр и педикюр във Варна: цени, кв. Левски",
     // {price:Име} се попълва от ценоразписа в generateMetadata (fillPrices).
     metaDescription:
-      "Маникюр с гел лак {price:Маникюр с гел лак}, с обикновен лак {price:Маникюр с обикновен лак}, педикюр от {price:Педикюр без лак}. Цени и време на всяка услуга, салон Euphoria в кв. Левски, Варна. Запис онлайн.",
+      "Маникюр с гел лак {price:Маникюр с гел лак}, с обикновен лак {price:Маникюр с обикновен лак}, педикюр от {price:Педикюр без лак}. Цени и време на всяка услуга, салон Euphoria в кв. Левски, Варна. {book:Запис онлайн.|Запис по телефона.}",
     popular: ["Гел маникюр", "Френски / омбре", "Класически педикюр", "Кератинова терапия", "Медицински педикюр"],
   },
   kozmetika: {
@@ -47,7 +48,7 @@ const PRESENTATION: Record<string, { seoTitle: string; metaTitle: string; metaDe
 const VALID_ICONS = ["scissors", "sparkles", "hand-heart", "flower"] as const;
 type Icon = (typeof VALID_ICONS)[number];
 
-function toItem(i: { name: string; price: number; priceMax: number | null; priceFrom: boolean; currency: string; duration: string | null; durationMin: number; description: string | null }): ServiceItem {
+function toItem(i: { name: string; price: number; priceMax: number | null; priceFrom: boolean; currency: string; duration: string | null; durationMin: number; description: string | null }, online: boolean): ServiceItem {
   return {
     name: i.name,
     price: i.price,
@@ -57,6 +58,7 @@ function toItem(i: { name: string; price: number; priceMax: number | null; price
     duration: i.duration ?? undefined,
     durationMin: i.durationMin,
     description: i.description ?? undefined,
+    online,
   };
 }
 
@@ -157,6 +159,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
   const readiness = await getReadiness(activeResources.map((r) => r.id));
   const resources = activeResources.filter((r) => isReady(readiness.get(r.id)));
   const prices = publicPricesByItem(items, cats, offers, resources);
+  const online = onlineItemIds(items, cats, offers, resources);
 
   return cats.map((c) => {
     const catItems = items.filter((i) => i.categoryId === c.id);
@@ -171,7 +174,7 @@ export async function getServiceCatalog(): Promise<ServiceCategory[]> {
         duration: i.duration,
         durationMin: i.durationMin,
         description: i.description,
-      });
+      }, online.has(i.id));
     };
     const groupTitles = uniq(catItems.map((i) => i.groupTitle));
     const groups = groupTitles.map((title) => ({

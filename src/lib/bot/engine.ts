@@ -5,6 +5,7 @@
  * при непокрит въпрос ескалира честно към телефон/Viber, никога не импровизира.
  */
 import { siteConfig } from "@/lib/site";
+import { phoneOnlyCopy } from "@/lib/seo/booking-copy";
 import { formatAmount } from "@/lib/booking/price";
 
 export interface BotService {
@@ -16,6 +17,8 @@ export interface BotService {
   group: string;
   categorySlug: string;
   categoryTitle: string;
+  /** Записва ли се онлайн днес (каталогът); липсва = не знаем, бутонът остава онлайн. */
+  online?: boolean;
 }
 
 export interface BotContext {
@@ -236,10 +239,17 @@ export function answerQuestion(raw: string, ctx: BotContext): BotReply {
     const lines = list.map((s) => `• ${s.name.replace(/\s+—\s+/g, " · ")}: ${formatPrice(s)}`).join("\n");
     const links: BotLink[] = [];
     if (landing) links.push(landing.link);
-    links.push({ label: "Пълен ценоразпис", href: `/uslugi/${list[0].categorySlug}` }, BOOK_LINK);
+    // Решение 43: ноктите без онлайн график се записват по телефона, не през формата.
+    const phoneOnly = phoneOnlyCopy(list[0].categorySlug, list[0].online !== false);
+    links.push(
+      { label: "Пълен ценоразпис", href: `/uslugi/${list[0].categorySlug}` },
+      phoneOnly ? { label: "Запази час по телефона", href: `tel:${siteConfig.contact.phone}` } : BOOK_LINK,
+    );
     return {
       intent: "service",
-      text: `Ето какво намерих в ценоразписа:\n${lines}\nЦените „от" зависят от дължина/обем и се потвърждават на място.`,
+      text: `Ето какво намерих в ценоразписа:\n${lines}\nЦените „от" зависят от дължина/обем и се потвърждават на място.${
+        phoneOnly ? `\nЧас запазваш по телефона или във Viber: ${siteConfig.contact.phoneFormatted}.` : ""
+      }`,
       links,
       suggestions: MENU,
     };

@@ -1,6 +1,7 @@
 import { siteConfig } from "@/lib/site";
 import { getFaqItems } from "@/lib/data/faq-db";
 import { SERVICE_FAQ, SERVICE_INTRO } from "@/lib/data/service-faq";
+import { fillBooking } from "@/lib/seo/booking-copy";
 import { getServiceCatalog } from "@/lib/data/service-catalog";
 import { getPublishedPosts } from "@/lib/data/blog-store";
 import type { ServiceCategory, ServiceItem } from "@/lib/data/services";
@@ -162,6 +163,8 @@ export async function renderLlmsTxt(): Promise<string> {
   ].join("\n");
 }
 
+const catOnline = (c: ServiceCategory) => c.groups.some((g) => g.items.some((i) => i.online));
+
 /** Пълен /llms-full.txt — целият жив ценоразпис + FAQ + локално инфо. */
 export async function renderLlmsFullTxt(): Promise<string> {
   let catalog: ServiceCategory[] = [];
@@ -174,7 +177,8 @@ export async function renderLlmsFullTxt(): Promise<string> {
   const promos = await runningPromos();
 
   const catalogBlocks = catalog.map((c) => {
-    const intro = (SERVICE_INTRO[c.slug] ?? []).join(" ");
+    // {book:онлайн|телефон} (решение 43): като на страницата на категорията.
+    const intro = fillBooking((SERVICE_INTRO[c.slug] ?? []).join(" "), catOnline(c));
     const groups = c.groups
       .map((g) => [`#### ${g.title}`, "", ...g.items.map(itemLine)].join("\n"))
       .join("\n\n");
@@ -187,7 +191,9 @@ export async function renderLlmsFullTxt(): Promise<string> {
     ].join("\n");
   });
 
-  const serviceFaq = catalog.flatMap((c) => SERVICE_FAQ[c.slug] ?? []);
+  const serviceFaq = catalog.flatMap((c) =>
+    (SERVICE_FAQ[c.slug] ?? []).map((f) => ({ ...f, answer: fillBooking(f.answer, catOnline(c)) })),
+  );
   const allFaq = [...(await getFaqItems()), ...serviceFaq].map((f) => `**${f.question}**\n${f.answer}`);
 
   return [

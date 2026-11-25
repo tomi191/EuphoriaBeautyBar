@@ -14,6 +14,7 @@ import { formatAmount } from "@/lib/booking/price";
 import { cn, slugify } from "@/lib/utils";
 import { SERVICE_CONTENT } from "@/lib/data/service-content";
 import { fillPrices } from "@/lib/seo/price-tokens";
+import { fillBooking, phoneOnlyCopy } from "@/lib/seo/booking-copy";
 import { ServicePromo } from "@/components/campaigns/promo-blocks";
 import { loadRunningCampaigns } from "@/lib/campaigns/public";
 import { todaySofia } from "@/lib/campaigns/core";
@@ -55,7 +56,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const detail = await getServiceDetail(slug, service);
   if (!content || !detail) return { robots: { index: false } };
   // {price:Име}/{min:Име} от ценоразписа; липсва ли цена, описанието не се подава (Next ползва общото).
-  const description = fillPrices(content.metaDescription, [detail.category]) ?? undefined;
+  // {book:онлайн|телефон}: по това дали самата услуга се записва онлайн (решение 43).
+  const description = fillPrices(fillBooking(content.metaDescription, !!detail.item.online), [detail.category]) ?? undefined;
   return {
     title: content.metaTitle,
     description,
@@ -84,7 +86,10 @@ export default async function ServiceDetailPage({ params }: Params) {
   const priceCurrency = item.currency === "€" ? "EUR" : "BGN";
   const priceLabel = `${item.priceFrom ? "от " : ""}${formatAmount(item.price)} ${item.currency}`;
   // Текстовете със {price:Име}/{min:Име} се попълват от ценоразписа; абзац или въпрос без цена отпада.
-  const fill = (t: string) => fillPrices(t, [category]);
+  // {book:онлайн|телефон} по това дали услугата има специалист с онлайн график (решение 43).
+  const online = !!item.online;
+  const phoneOnly = phoneOnlyCopy(slug, online);
+  const fill = (t: string) => fillPrices(fillBooking(t, online), [category]);
   const answer = content.answer ? fill(content.answer) : null;
   const intro = content.intro.flatMap((p) => fill(p) ?? []);
   const faq = content.faq.flatMap((f) => {
@@ -260,7 +265,11 @@ export default async function ServiceDetailPage({ params }: Params) {
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">В кв. Левски, Варна.{item.duration ? <> <Clock className="inline size-4" /> {item.duration} ·</> : ""} {priceLabel}</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="h-12 rounded-md bg-foreground px-8 text-background hover:bg-primary">
-                <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час онлайн</Link>
+                {phoneOnly ? (
+                  <a href={`tel:${siteConfig.contact.phone}`}><Phone className="size-4" /> Запази час по телефона</a>
+                ) : (
+                  <Link href="/zapazi-chas"><Calendar className="size-4" /> Запиши час онлайн</Link>
+                )}
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 rounded-md border-border px-8">
                 <a href={`tel:${siteConfig.contact.phone}`}><Phone className="size-4" /> {siteConfig.contact.phoneFormatted}</a>

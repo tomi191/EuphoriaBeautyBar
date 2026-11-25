@@ -33,6 +33,7 @@ async function buildContext(): Promise<BotContext> {
         group: g.title,
         categorySlug: c.slug,
         categoryTitle: c.title,
+        online: i.online,
       })),
     ),
   );
