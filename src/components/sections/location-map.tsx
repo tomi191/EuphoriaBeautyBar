@@ -1,10 +1,9 @@
 import { Clock, MapPin, Navigation, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/reactbits/reveal";
+import { ConsentMap } from "@/components/sections/consent-map";
 import { siteConfig } from "@/lib/site";
 
-const { lat, lng } = siteConfig.address.coordinates;
-const mapEmbedSrc = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
 const directionsHref = siteConfig.address.mapsUrl;
 
 /**
@@ -78,15 +77,12 @@ export function LocationMap() {
 
         {/* Карта */}
         <Reveal className="lg:col-span-7" delay={0.1}>
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-foreground/15 bg-secondary soft-shadow lg:h-full">
-            <iframe
-              src={mapEmbedSrc}
-              title="Карта с местоположението на Euphoria Hair & Beauty Bar в кв. Левски, Варна"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="absolute inset-0 h-full w-full border-0"
-            />
-          </div>
+          <ConsentMap
+            plan="levski"
+            title="Карта с местоположението на Euphoria Hair & Beauty Bar в кв. Левски, Варна"
+            frameClassName="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-foreground/15 bg-secondary soft-shadow lg:h-full"
+            className="rounded-md border-foreground/15 soft-shadow lg:h-full"
+          />
         </Reveal>
       </div>
     </section>
