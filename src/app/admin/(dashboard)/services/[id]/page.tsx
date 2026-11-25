@@ -12,6 +12,7 @@ import { formatAmount } from "@/lib/booking/price";
 
 interface Params {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ edit?: string }>;
 }
 
 function durLabel(min: number): string {
@@ -21,8 +22,9 @@ function durLabel(min: number): string {
   return m ? `${h} ч ${m} мин` : `${h} ч`;
 }
 
-export default async function CategoryEditPage({ params }: Params) {
+export default async function CategoryEditPage({ params, searchParams }: Params) {
   const { id } = await params;
+  const { edit } = await searchParams;
   const category = await db.query.serviceCategories.findFirst({ where: (c, { eq }) => eq(c.id, id) });
   if (!category) notFound();
 
@@ -99,6 +101,7 @@ export default async function CategoryEditPage({ params }: Params) {
                         categoryId={category.id}
                         groupTitles={groupTitles}
                         initial={i}
+                        defaultOpen={edit === i.id}
                         trigger={<Button variant="outline" size="sm">Редакция</Button>}
                       />
                       <DeleteButton action={del} />

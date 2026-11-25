@@ -11,6 +11,8 @@ import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
 import { KIND_BY_SLUG } from "@/lib/booking/kind";
 import { parallelWindowsFrom } from "@/lib/booking/parallel";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadPopalniData, staffDots, staffPopalni } from "@/lib/admin/popalni";
+import { PopalniCard } from "@/components/popalni-card";
 import { InstallBanner } from "@/components/staff/install-banner";
 import { StaffCancelButton } from "@/components/staff/cancel-booking-button";
 import { BookingStatusActions } from "@/components/staff/booking-status-actions";
@@ -185,8 +187,11 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
     return { key: dateKeyFmt.format(d), day: pillDay.format(d), num: pillNum.format(d) };
   });
 
+  // «Какво да попълниш» (визия №45): само липсите на този специалист.
+  const popalniRows = staffPopalni(await loadPopalniData(), resource.id);
+
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={staffDots(popalniRows)} kind={resource.kind}>
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground capitalize">{longFmt.format(dayStart)}</p>
@@ -212,11 +217,12 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
         </div>
       </div>
 
+      <PopalniCard rows={popalniRows} variant="staff" />
+
       <BiometricPrompt />
 
       <ScheduleSearch upcoming={upcoming}>
-        <ScheduleDateJump selected={selectedKey} todayKey={todayKey} />
-        <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-1">
+        <ScheduleDateJump selected={selectedKey} todayKey={todayKey}>
           {pills.map((p) => {
             const active = p.key === selectedKey;
             return (
@@ -233,7 +239,7 @@ export default async function StaffSchedulePage({ searchParams }: { searchParams
               </Link>
             );
           })}
-        </div>
+        </ScheduleDateJump>
 
         <InstallBanner />
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { HoursEditor, type DayHours, type TimeOffItem } from "@/components/staff/hours-editor";
 import { roundStartsKey } from "@/lib/booking/slots";
 
@@ -51,7 +52,7 @@ export default async function StaffHoursPage() {
   }));
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <div className="mb-5">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Управление</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Моите часове</h1>

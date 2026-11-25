@@ -6,6 +6,8 @@ import { getSalonRevenue } from "@/lib/actions/revenue";
 import { formatEur } from "@/lib/booking/revenue";
 import { sourceLabel, createdAtLabel } from "@/lib/booking/source";
 import { sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
+import { adminPopalni, loadPopalniData } from "@/lib/admin/popalni";
+import { PopalniCard } from "@/components/popalni-card";
 
 /** Последните записвания по МОМЕНТ НА ЗАПИСВАНЕ (не по час на посещение). */
 async function recentBookings(limit = 8) {
@@ -77,7 +79,7 @@ const stats = [
 ] as const;
 
 export default async function AdminDashboardPage() {
-  const [data, revenue, recent] = await Promise.all([counts(), getSalonRevenue(), recentBookings()]);
+  const [data, revenue, recent, popalniData] = await Promise.all([counts(), getSalonRevenue(), recentBookings(), loadPopalniData()]);
   const m = revenue.total.month;
 
   return (
@@ -89,6 +91,8 @@ export default async function AdminDashboardPage() {
           Бърз преглед на съдържанието и преки пътеки до управление.
         </p>
       </header>
+
+      <PopalniCard rows={adminPopalni(popalniData)} variant="admin" />
 
       <Link
         href="/admin/revenue"

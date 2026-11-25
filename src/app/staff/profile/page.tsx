@@ -4,6 +4,7 @@ import { BadgePercent, ChevronRight, Images } from "lucide-react";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { getMyRevenue } from "@/lib/actions/revenue";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { StaffProfileForm } from "@/components/staff/profile-form";
 import { StaffNotifications } from "@/components/staff/staff-notifications";
 import { TelegramConnect } from "@/components/staff/telegram-connect";
@@ -23,7 +24,7 @@ export default async function StaffProfilePage() {
   const revenue = await getMyRevenue();
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <div className="mb-4">
         <h1 className="font-display text-xl font-medium">Профил</h1>
         <p className="mt-0.5 text-xs text-muted-foreground">{session.user.email}</p>

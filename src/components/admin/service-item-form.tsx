@@ -20,10 +20,12 @@ interface Props {
   categoryId: string;
   groupTitles: string[];
   initial?: ServiceItem;
+  /** Отворена още при зареждане («Какво да попълниш» води направо тук с ?edit=<id>). */
+  defaultOpen?: boolean;
 }
 
-export function ServiceItemForm({ trigger, categoryId, groupTitles, initial }: Props) {
-  const [open, setOpen] = React.useState(false);
+export function ServiceItemForm({ trigger, categoryId, groupTitles, initial, defaultOpen = false }: Props) {
+  const [open, setOpen] = React.useState(defaultOpen);
   const [submitting, setSubmitting] = React.useState(false);
 
   const [groupTitle, setGroupTitle] = React.useState(initial?.groupTitle ?? groupTitles[0] ?? "");

@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/actions/auth-guard";
 import { db } from "@/lib/db";
 import { sofiaWallToUtc, sofiaDateStr, sofiaTimeLabel } from "@/lib/booking/time";
 import { StaffShell } from "@/components/staff/staff-shell";
+import { loadStaffDots } from "@/lib/admin/popalni";
 import { BookingBoard, type BoardBooking, type BoardDay } from "@/components/staff/booking-board";
 
 export const dynamic = "force-dynamic";
@@ -87,7 +88,7 @@ export default async function StaffBoardPage() {
   }
 
   return (
-    <StaffShell kind={resource.kind}>
+    <StaffShell dots={await loadStaffDots(resource.id)} kind={resource.kind}>
       <div className="mb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Премести с влачене</p>
         <h1 className="mt-1 font-display text-2xl font-medium">Дъска</h1>
