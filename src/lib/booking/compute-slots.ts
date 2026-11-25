@@ -67,3 +67,33 @@ export function computeDaySlots(p: ComputeSlotsParams): DaySlot[] {
 
   return out;
 }
+
+/**
+ * Pure: само началата в :00 и :30 (решение 4, настройка на изпълнителя за онлайн записа). София е с цели
+ * часове разлика от UTC, затова минутата в UTC е минутата на стената.
+ */
+export function roundStartsOnly(slots: DaySlot[]): DaySlot[] {
+  return slots.filter((s) => new Date(s.start).getUTCMinutes() % 30 === 0);
+}
+
+/**
+ * Pure: начала «веднага след предишния» (решение 4): краят на всеки час в деня, ако услугата се събира от
+ * там без застъпване (паузата вече е в края на часа), в работното време и не в миналото.
+ */
+export function startsAfterBookings(p: {
+  ends: number[];
+  open: number;
+  close: number;
+  neighbors: SlotNeighbor[];
+  blockMs: number;
+  minStart: number;
+}): string[] {
+  const out = new Set<number>();
+  for (const t of p.ends) {
+    const end = t + p.blockMs;
+    if (t < p.open || end > p.close || t < p.minStart) continue;
+    if (p.neighbors.some((n) => t < n.end && end > n.start)) continue;
+    out.add(t);
+  }
+  return [...out].sort((a, b) => a - b).map((t) => new Date(t).toISOString());
+}

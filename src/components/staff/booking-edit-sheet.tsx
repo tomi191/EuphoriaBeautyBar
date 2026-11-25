@@ -37,6 +37,9 @@ export interface EditServiceOpt {
   durationMin: number;
   /** Буфер след услугата — влиза в резервирания блок (виж onServiceChange). */
   bufferMin: number;
+  /** Активно време и престой на услугата (каталогът): сменят се заедно с услугата. */
+  activeMin: number;
+  processingMin: number;
 }
 
 export interface EditBookingData {
@@ -112,6 +115,9 @@ export function BookingEditSheet({
       // Резервираният блок = услуга + буфер (както при създаване). Полето „Минути"
       // е общата продължителност, която сървърът пише директно като endAt.
       setDuration(String(svc.durationMin + svc.bufferMin));
+      // Престоят е на услугата: друга услуга носи своето активно време и престой (решение 4).
+      setActiveMin(String(svc.activeMin));
+      setProcessingMin(String(svc.processingMin));
     }
   }
 

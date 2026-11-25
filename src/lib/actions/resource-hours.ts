@@ -8,6 +8,7 @@ import { db, schema } from "@/lib/db";
 import { requireStaff } from "@/lib/actions/auth-guard";
 import { sofiaDateStr, sofiaTimeLabel, sofiaWallToUtc, sofiaWeekday } from "@/lib/booking/time";
 import { conflictMessage, isNarrowed, isOutsideHours, isValidDateStr, isValidTimeStr } from "@/lib/booking/input-guards";
+import { roundStartsKey } from "@/lib/booking/slots";
 
 const hoursSchema = z
   .object({
@@ -21,6 +22,18 @@ const hoursSchema = z
   .refine((d) => d.closed || (!!d.openTime && !!d.closeTime && d.openTime < d.closeTime), {
     message: "Краят трябва да е след началото.",
   });
+
+/** Онлайн часове само в :00 и :30 (решение 4): настройка на изпълнителя, пази се в site_settings. */
+export async function setMyRoundStarts(on: boolean) {
+  const { resource } = await requireStaff();
+  const value = { on: on === true };
+  await db
+    .insert(schema.siteSettings)
+    .values({ key: roundStartsKey(resource.id), value, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: schema.siteSettings.key, set: { value, updatedAt: new Date() } });
+  revalidatePath("/staff/hours");
+  return { ok: true as const, on: value.on };
+}
 
 /** Задава собственото работно време на изпълнителя за даден ден от седмицата. */
 export async function setMyWorkingHours(input: z.infer<typeof hoursSchema>) {

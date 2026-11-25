@@ -19,6 +19,8 @@ export interface DayScheduleResult {
   open: string | null;
   close: string | null;
   slots: DaySlot[];
+  /** Началата «веднага след предишния» (краят на часовете в деня, където услугата се събира). */
+  afterPrev?: string[];
 }
 
 /** Дневен график за собствения изпълнител (без мин. предизвестие — ръчно записване). */
@@ -36,6 +38,7 @@ export async function fetchMySlots(serviceItemId: string, dateStr: string): Prom
     dateStr,
     minNoticeMin: 0,
     allowParallel: true,
+    withAfterPrev: true,
   });
   return res ?? { open: null, close: null, slots: [] };
 }

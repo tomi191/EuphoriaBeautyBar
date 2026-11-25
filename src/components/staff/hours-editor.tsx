@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FieldHint } from "@/components/ui/field-hint";
 import { FIELD_HINTS } from "@/lib/data/field-hints";
-import { setMyWorkingHours, addMyTimeOff, deleteMyTimeOff } from "@/lib/actions/resource-hours";
+import { setMyWorkingHours, addMyTimeOff, deleteMyTimeOff, setMyRoundStarts } from "@/lib/actions/resource-hours";
 
 export interface DayHours {
   weekday: number;
@@ -31,8 +31,25 @@ const DAY_LABEL: Record<number, string> = {
 
 const dtFmt = new Intl.DateTimeFormat("bg-BG", { timeZone: "Europe/Sofia", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 
-export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: TimeOffItem[] }) {
+export function HoursEditor({ days, timeOff, roundStarts }: { days: DayHours[]; timeOff: TimeOffItem[]; roundStarts: boolean }) {
   const [rows, setRows] = React.useState(days);
+  const [round, setRound] = React.useState(roundStarts);
+  const [savingRound, setSavingRound] = React.useState(false);
+
+  async function toggleRound(v: boolean) {
+    setSavingRound(true);
+    try {
+      const res = await setMyRoundStarts(v);
+      if (res.ok) {
+        setRound(res.on);
+        toast.success(res.on ? "Онлайн излизат само часове в :00 и :30." : "Онлайн излизат всички свободни часове.");
+      }
+    } catch {
+      toast.error("Грешка при запазване.");
+    } finally {
+      setSavingRound(false);
+    }
+  }
   const [savingHours, setSavingHours] = React.useState(false);
   const [offs, setOffs] = React.useState(timeOff);
 
@@ -136,6 +153,13 @@ export function HoursEditor({ days, timeOff }: { days: DayHours[]; timeOff: Time
         <Button onClick={saveHours} disabled={savingHours} className="mt-3 h-11 w-full rounded-full bg-foreground text-background hover:bg-primary">
           {savingHours ? <><Loader2 className="size-4 animate-spin" /> Запазване</> : "Запази работното време"}
         </Button>
+        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-border bg-background p-3.5">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium leading-tight">Онлайн часове само в :00 и :30</p>
+            <p className="text-xs text-muted-foreground">Клиентите на сайта виждат само кръгли начала, например 10:00 и 10:30. Тук в приложението записваш както досега.</p>
+          </div>
+          <Switch checked={round} disabled={savingRound} onCheckedChange={toggleRound} aria-label="Онлайн часове само в :00 и :30" />
+        </div>
       </section>
 
       {/* Почивки / отпуск */}
